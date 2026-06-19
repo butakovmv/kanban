@@ -31,4 +31,16 @@ internal class IdentityConfig {
             refreshTokenOperation = refreshTokenOperation,
             logoutOperation = logoutOperation,
         )
+
+    /**
+     * Создаёт обработчик запросов восстановления пароля.
+     *
+     * @param recoveryOperation операция восстановления
+     * @return экземпляр [RecoveryHandler]
+     */
+    @Bean
+    fun recoveryHandler(recoveryOperation: RecoveryOperation): RecoveryHandler =
+        RecoveryHandler(
+            recoveryOperation = recoveryOperation,
+        )
 }

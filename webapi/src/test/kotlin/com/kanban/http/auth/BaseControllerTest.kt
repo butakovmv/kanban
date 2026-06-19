@@ -3,6 +3,8 @@ package com.kanban.http.auth
 import com.kanban.identity.AuthHandler
 import com.kanban.identity.LoginWithPasswordOperation
 import com.kanban.identity.LogoutOperation
+import com.kanban.identity.RecoveryHandler
+import com.kanban.identity.RecoveryOperation
 import com.kanban.identity.RefreshTokenOperation
 import com.kanban.identity.RegisterUserOperation
 import io.mockk.mockk
@@ -21,6 +23,7 @@ internal abstract class BaseControllerTest {
     protected lateinit var loginWithPasswordOperation: LoginWithPasswordOperation
     protected lateinit var refreshTokenOperation: RefreshTokenOperation
     protected lateinit var logoutOperation: LogoutOperation
+    protected lateinit var recoveryOperation: RecoveryOperation
 
     /**
      * Создаёт WebTestClient привязанный к указанному контроллеру.
@@ -34,8 +37,9 @@ internal abstract class BaseControllerTest {
         loginWithPasswordOperation = mockk()
         refreshTokenOperation = mockk()
         logoutOperation = mockk()
+        recoveryOperation = mockk()
 
-        val handler =
+        val authHandler =
             AuthHandler(
                 registerUserOperation = registerUserOperation,
                 loginWithPasswordOperation = loginWithPasswordOperation,
@@ -43,12 +47,19 @@ internal abstract class BaseControllerTest {
                 logoutOperation = logoutOperation,
             )
 
+        val recoveryHandler =
+            RecoveryHandler(
+                recoveryOperation = recoveryOperation,
+            )
+
         val controller =
             when (controllerClass) {
-                RegisterController::class.java -> RegisterController(handler)
-                LoginController::class.java -> LoginController(handler)
-                RefreshController::class.java -> RefreshController(handler)
-                LogoutController::class.java -> LogoutController(handler)
+                RegisterController::class.java -> RegisterController(authHandler)
+                LoginController::class.java -> LoginController(authHandler)
+                RefreshController::class.java -> RefreshController(authHandler)
+                LogoutController::class.java -> LogoutController(authHandler)
+                RecoveryRequestController::class.java -> RecoveryRequestController(recoveryHandler)
+                RecoveryResetController::class.java -> RecoveryResetController(recoveryHandler)
                 else -> throw IllegalArgumentException("Unsupported controller: $controllerClass")
             }
 

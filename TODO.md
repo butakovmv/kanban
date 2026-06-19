@@ -34,13 +34,13 @@
    - Проверить валидацию входных данных (SQL injection, XSS)
    - Проверить права доступа (пользователь не может видеть/изменять чужие данные)
    - Проверить безопасность работы с файлами (path traversal, размер)
-7. **Остановиться**. Предоставить пользователю отчёт:
+7. Выполнить `./export_prompts_history.sh` для экспорта истории промптов в `docs/ai/prompts_history.md`
+8. **Остановиться**. Предоставить пользователю отчёт:
    - Что сделано, описание для коммита
    - Какие замечания линтеров были обнаружены и исправлены
    - Какие замечания тестов были обнаружены и исправлены
    - Какие замечания code review были обнаружены и исправлены
    - Какие проблемы безопасности обнаружены (если есть)
-8. Выполнить `./export_prompts_history.sh` для экспорта истории промптов в `docs/ai/prompts_history.md`
 9. **Запросить** у пользователя:
    - Approval («продолжить», «исправить X», «отменить»)
    - Разрешение на коммит (если нужен коммит в репозиторий)
@@ -120,8 +120,8 @@
 - [ ] Генерация секрета, QR-код
 
 ### 1.4 usecase: Recovery
-- [ ] `RecoveryOperation` — `request()`, `reset()`
-- [ ] Интеграция с email-сервисом (порт)
+- [x] `RecoveryOperation` — `request()`, `reset()`
+- [x] Интеграция с email-сервисом (порт)
 
 ### 1.5 usecase: Logout + Session
 - [x] `SessionOperation` — `logout()`, `refresh()`
@@ -138,10 +138,10 @@
 - [x] `POST /api/v1/auth/logout`
 
 ### 1.8 webapi: TOTP + Recovery
-- [ ] `POST /api/v1/auth/totp/enable`
-- [ ] `POST /api/v1/auth/totp/verify`
-- [ ] `POST /api/v1/auth/recovery/request`
-- [ ] `POST /api/v1/auth/recovery/reset`
+- [ ] `POST /api/v1/auth/totp/enable`  (TOTP отложен)
+- [ ] `POST /api/v1/auth/totp/verify`  (TOTP отложен)
+- [x] `POST /api/v1/auth/recovery/request`
+- [x] `POST /api/v1/auth/recovery/reset`
 
 ### 1.9 vue: Login + Register
 - [x] `LoginPage.vue`

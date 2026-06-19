@@ -1,6 +1,7 @@
 package com.kanban.http.auth
 
 import com.kanban.identity.AuthHandler
+import com.kanban.identity.RecoveryHandler
 import java.util.UUID
 
 /**
@@ -29,5 +30,16 @@ internal object RequestGenerator {
     fun logoutRequest(): AuthHandler.LogoutRequest =
         AuthHandler.LogoutRequest(
             refreshToken = "refresh-token-${UUID.randomUUID()}",
+        )
+
+    fun recoveryRequestRequest(): RecoveryHandler.RecoveryRequestRequest =
+        RecoveryHandler.RecoveryRequestRequest(
+            email = "user-${UUID.randomUUID().toString().take(8)}@kanban.test",
+        )
+
+    fun resetPasswordRequest(): RecoveryHandler.ResetPasswordRequest =
+        RecoveryHandler.ResetPasswordRequest(
+            token = "recovery-token-${UUID.randomUUID()}",
+            newPassword = "new-pwd-${UUID.randomUUID().toString().take(6)}",
         )
 }
