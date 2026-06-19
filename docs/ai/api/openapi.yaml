@@ -1,0 +1,2795 @@
+openapi: "3.0.3"
+info:
+  title: Kanban Board API
+  version: "1.0.0"
+  description: |
+    REST API для мультимодульной канбан-доски с real-time совместной работой.
+
+    - Все мутирующие операции — через REST (POST/PUT/PATCH/DELETE)
+    - Получение обновлений доски — через SSE (`GET /api/v1/projects/{id}/events`)
+    - Файлы — presigned URL для прямой загрузки в MinIO
+    - Аутентификация — Bearer JWT в заголовке `Authorization`
+    - Проектные эндпоинты проверяют членство пользователя в проекте и права его группы
+
+    Подробнее: [ADR 260619-0921](../../adr/260619-0921.md), [ADR 260619-1200](../../adr/260619-1200.md)
+
+servers:
+  - url: /api/v1
+    description: Базовый путь API
+
+tags:
+  - name: Auth
+    description: Аутентификация и профиль
+  - name: Projects
+    description: Управление проектами
+  - name: Board
+    description: Доска, колонки, бэклог, архив
+  - name: Tasks
+    description: Задачи и вложения
+  - name: Comments
+    description: Комментарии к задачам
+  - name: Documents
+    description: Документы проекта
+  - name: Search
+    description: Поиск по задачам
+  - name: Reports
+    description: Отчёты и аналитика
+  - name: Access
+    description: Управление доступом и группами
+  - name: Admin
+    description: Администрирование
+  - name: Realtime
+    description: SSE-события в реальном времени
+
+x-tag-groups:
+  - name: Публичные (без аутентификации)
+    tags:
+      - Auth (register, login, recover)
+  - name: Требуют аутентификации
+    tags:
+      - Auth (logout, session, tariff, totp)
+      - Projects
+      - Board
+      - Tasks
+      - Comments
+      - Documents
+      - Search
+      - Reports
+      - Access
+      - Admin
+      - Realtime
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ==================== Общие ====================
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Код ошибки
+          maxLength: 100
+        detail:
+          type: string
+          description: Описание ошибки
+          maxLength: 500
+        code:
+          type: string
+          description: Технический код ошибки
+          maxLength: 50
+      required:
+        - error
+
+    # ==================== Auth ====================
+    RegisterRequest:
+      type: object
+      required:
+        - login
+        - password
+        - email
+      properties:
+        login:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: "^[a-zA-Z0-9_]+$"
+          description: Уникальный логин. Только латиница, цифры и подчёркивание.
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Пароль. Минимум 8 символов.
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Email для восстановления доступа.
+
+    LoginPasswordRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 50
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    LoginTotpRequest:
+      type: object
+      required:
+        - login
+        - totpCode
+      properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 50
+        totpCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: "^[0-9]{6}$"
+          description: 6-значный код из аутентификатора.
+
+    TotpBindRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Подтверждение действия текущим паролем.
+
+    TotpVerifyRequest:
+      type: object
+      required:
+        - totpCode
+      properties:
+        totpCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: "^[0-9]{6}$"
+          description: Первый код для подтверждения привязки.
+
+    RecoverRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+
+    RecoverResetRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: Токен из письма восстановления.
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Новый пароль.
+
+    TotpDeleteRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    UserTariff:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        limits:
+          type: object
+          properties:
+            maxProjects:
+              type: integer
+              minimum: 1
+              maximum: 1000
+            maxColumns:
+              type: integer
+              minimum: 1
+              maximum: 100
+            maxAssignees:
+              type: integer
+              minimum: 1
+              maximum: 100
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+        email:
+          type: string
+        tariff:
+          $ref: "#/components/schemas/UserTariff"
+        hasTOTP:
+          type: boolean
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT для авторизации последующих запросов
+        user:
+          $ref: "#/components/schemas/UserProfile"
+
+    TotpBindResponse:
+      type: object
+      properties:
+        qrCodeUri:
+          type: string
+          format: uri
+        secret:
+          type: string
+          description: Секретный ключ в base32.
+
+    TotpVerifyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - bound
+
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+
+    SessionResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        login:
+          type: string
+        email:
+          type: string
+        tariff:
+          $ref: "#/components/schemas/UserTariff"
+
+    # =================== Projects ===================
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+          maxLength: 2000
+        ownerId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    ProjectCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+
+    ProjectUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+
+    ProjectListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        total:
+          type: integer
+
+    ProjectDetail:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          properties:
+            taskCounts:
+              type: object
+              properties:
+                backlog:
+                  type: integer
+                columns:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                archive:
+                  type: integer
+
+    # =================== Board ===================
+    TaskCard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 500
+        useCase:
+          type: string
+          nullable: true
+          maxLength: 200
+        priority:
+          $ref: "#/components/schemas/Priority"
+        assignee:
+          $ref: "#/components/schemas/AssigneeBrief"
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+
+    Column:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        order:
+          type: integer
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskCard"
+
+    BoardResponse:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Column"
+
+    ColumnCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    ColumnUpdateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    ColumnResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        order:
+          type: integer
+
+    ColumnReorderRequest:
+      type: object
+      required:
+        - taskIds
+      properties:
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+
+    BacklogResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskCard"
+
+    ArchiveResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskCard"
+        total:
+          type: integer
+
+    # =================== Tasks ===================
+    Priority:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+        - critical
+
+    AssigneeBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - title
+        - priority
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 10000
+        useCase:
+          type: string
+          maxLength: 200
+        priority:
+          $ref: "#/components/schemas/Priority"
+        labels:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          maxItems: 10
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    TaskCreateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: Всегда "backlog" при создании
+
+    TaskFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 260
+        size:
+          type: integer
+          maximum: 10485760
+          description: Размер в байтах (макс. 10 MB)
+
+    TaskDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+          nullable: true
+          maxLength: 10000
+        useCase:
+          type: string
+          nullable: true
+          maxLength: 200
+        priority:
+          $ref: "#/components/schemas/Priority"
+        status:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+        assignee:
+          $ref: "#/components/schemas/AssigneeBrief"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        workStartDate:
+          type: string
+          format: date-time
+          nullable: true
+        archivedAt:
+          type: string
+          format: date-time
+          nullable: true
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskFile"
+        commentCount:
+          type: integer
+
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 10000
+        useCase:
+          type: string
+          maxLength: 200
+        priority:
+          $ref: "#/components/schemas/Priority"
+        labels:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          maxItems: 10
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+
+    TaskStatusChangeRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          minLength: 1
+          maxLength: 36
+          description: "ID колонки (uuid), 'backlog' или 'archive'"
+
+    TaskArchiveResponse:
+      type: object
+      properties:
+        archivedAt:
+          type: string
+          format: date-time
+
+    TaskFileUploadResponse:
+      type: object
+      properties:
+        fileId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        size:
+          type: integer
+
+    TaskPresignedUrlResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        expiresIn:
+          type: integer
+          description: Время жизни ссылки в секундах
+
+    # =================== Comments ===================
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        author:
+          $ref: "#/components/schemas/AssigneeBrief"
+        text:
+          type: string
+          maxLength: 10000
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CommentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Comment"
+        total:
+          type: integer
+
+    CommentCreateRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+
+    CommentCreateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    CommentUpdateRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+
+    # =================== Documents ===================
+    DocumentType:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Ключ типа документа (customer_requirements, tech_requirements, ui_ux_requirements, user_stories, architecture, adr, c4_diagrams, use_cases, api_contracts, external_contracts, api_tests, ui_tests, acceptance_tests, report)"
+        label:
+          type: string
+        document:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+              maxLength: 260
+            updatedAt:
+              type: string
+              format: date-time
+            size:
+              type: integer
+
+    DocumentListResponse:
+      type: object
+      properties:
+        types:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentType"
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        name:
+          type: string
+          maxLength: 260
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        presignedUrl:
+          type: string
+          format: uri
+
+    DocumentCreateRequest:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Ключ типа документа
+        name:
+          type: string
+          maxLength: 260
+
+    # =================== Search ===================
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        priority:
+          $ref: "#/components/schemas/Priority"
+        assignee:
+          $ref: "#/components/schemas/AssigneeBrief"
+          nullable: true
+        useCase:
+          type: string
+          nullable: true
+
+    SearchResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+        total:
+          type: integer
+
+    # =================== Reports ===================
+    CfdResponse:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              counts:
+                type: object
+                additionalProperties:
+                  type: integer
+
+    LeadTimeResponse:
+      type: object
+      properties:
+        buckets:
+          type: array
+          items:
+            type: object
+            properties:
+              range:
+                type: string
+              count:
+                type: integer
+
+    GanttResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              title:
+                type: string
+              useCase:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+              workStartDate:
+                type: string
+                format: date-time
+                nullable: true
+              archivedAt:
+                type: string
+                format: date-time
+                nullable: true
+        useCases:
+          type: array
+          items:
+            type: string
+
+    EventLogItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        payload:
+          type: object
+        userId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+
+    EventLogResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventLogItem"
+        total:
+          type: integer
+
+    # =================== Access ===================
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        memberCount:
+          type: integer
+        permissions:
+          $ref: "#/components/schemas/Permissions"
+
+    Permissions:
+      type: object
+      properties:
+        "task:read":
+          type: boolean
+          default: false
+        "task:create":
+          type: boolean
+          default: false
+        "task:update":
+          type: boolean
+          default: false
+        "task:delete":
+          type: boolean
+          default: false
+        "column:create":
+          type: boolean
+          default: false
+        "column:update":
+          type: boolean
+          default: false
+        "column:delete":
+          type: boolean
+          default: false
+        "document:read":
+          type: boolean
+          default: false
+        "document:create":
+          type: boolean
+          default: false
+        "document:update":
+          type: boolean
+          default: false
+        "document:delete":
+          type: boolean
+          default: false
+
+    GroupListResponse:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/Group"
+
+    GroupCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    GroupCreateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+
+    GroupMemberAddRequest:
+      type: object
+      required:
+        - loginOrEmail
+      properties:
+        loginOrEmail:
+          type: string
+          minLength: 1
+          maxLength: 254
+          description: Логин или email пользователя для добавления в группу.
+
+    GroupMemberAddResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        login:
+          type: string
+
+    PermissionsUpdateRequest:
+      type: object
+      required:
+        - permissions
+      properties:
+        permissions:
+          $ref: "#/components/schemas/Permissions"
+
+    # =================== Admin ===================
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        login:
+          type: string
+        email:
+          type: string
+        tariff:
+          $ref: "#/components/schemas/UserTariff"
+
+    AdminUserSearchResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+
+    TariffChangeRequest:
+      type: object
+      required:
+        - tariffName
+      properties:
+        tariffName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Кодовое название тарифа (free, pro, enterprise).
+
+    TariffChangeResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        tariff:
+          $ref: "#/components/schemas/UserTariff"
+
+  # ==================== Common responses ====================
+  responses:
+    Unauthorized:
+      description: "**401** — отсутствует или недействителен JWT"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "**403** — недостаточно прав (не владелец, не участник проекта, не администратор)"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: "**404** — ресурс не найден"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unprocessable:
+      description: "**422** — превышен лимит тарифа"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: "**409** — конфликт (логин занят)"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+paths:
+  # =================== Auth ===================
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация нового пользователя
+      description: |
+        **Доступ:** без аутентификации.
+        **Проверки:** уникальность логина, валидация формата email, минимальная длина пароля.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Учётная запись создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Вход по логину и паролю
+      description: |
+        **Доступ:** без аутентификации.
+        Возвращает JWT для последующих запросов. Если у пользователя привязан TOTP — этот эндпоинт недоступен, используйте `/auth/login/totp`.
+      operationId: loginPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPasswordRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/login/totp:
+    post:
+      tags:
+        - Auth
+      summary: Вход с TOTP вместо пароля
+      description: |
+        **Доступ:** без аутентификации.
+        Требуется предварительно привязанный TOTP через `/auth/totp/bind`.
+      operationId: loginTotp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginTotpRequest"
+      responses:
+        "200":
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Неверный код TOTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/totp/bind:
+    post:
+      tags:
+        - Auth
+      summary: Начать привязку TOTP-аутентификатора
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Подтверждается текущим паролем. В ответ возвращается URI для QR-кода и секретный ключ.
+      security:
+        - BearerAuth: []
+      operationId: bindTotp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TotpBindRequest"
+      responses:
+        "200":
+          description: Секретный ключ и URI для QR-кода
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotpBindResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Неверный пароль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/totp/verify:
+    post:
+      tags:
+        - Auth
+      summary: Подтвердить привязку TOTP
+      description: |
+        **Доступ:** аутентифицированный пользователь (после `/auth/totp/bind`).
+        Проверяет первый код из аутентификатора и активирует TOTP.
+      security:
+        - BearerAuth: []
+      operationId: verifyTotp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TotpVerifyRequest"
+      responses:
+        "200":
+          description: TOTP привязан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotpVerifyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          description: Неверный код
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/totp:
+    delete:
+      tags:
+        - Auth
+      summary: Отвязать TOTP-аутентификатор
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Подтверждается текущим паролем.
+      security:
+        - BearerAuth: []
+      operationId: unbindTotp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TotpDeleteRequest"
+      responses:
+        "204":
+          description: TOTP отвязан
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Неверный пароль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/recover:
+    post:
+      tags:
+        - Auth
+      summary: Запросить восстановление доступа
+      description: |
+        **Доступ:** без аутентификации.
+        Сервер всегда отвечает 202, даже если email не найден (для предотвращения перебора email).
+      operationId: recoverAccess
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverRequest"
+      responses:
+        "202":
+          description: Письмо отправлено (или не отправлено — ответ одинаковый)
+
+  /auth/recover/reset:
+    post:
+      tags:
+        - Auth
+      summary: Сбросить пароль по токену
+      description: |
+        **Доступ:** без аутентификации (по токену из письма).
+        Токен одноразовый, действителен 1 час.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverResetRequest"
+      responses:
+        "200":
+          description: Пароль изменён
+        "400":
+          description: Неверный или истёкший токен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Завершить сессию
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Инвалидирует текущий JWT.
+      security:
+        - BearerAuth: []
+      operationId: logout
+      responses:
+        "204":
+          description: Сессия завершена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/session:
+    get:
+      tags:
+        - Auth
+      summary: Информация о текущей сессии
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Возвращает профиль и тариф текущего пользователя.
+      security:
+        - BearerAuth: []
+      operationId: getSession
+      responses:
+        "200":
+          description: Данные сессии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/tariff:
+    get:
+      tags:
+        - Auth
+      summary: Информация о тарифном плане
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Возвращает название тарифа и его лимиты.
+      security:
+        - BearerAuth: []
+      operationId: getTariff
+      responses:
+        "200":
+          description: Тарифный план и лимиты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTariff"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # =================== Projects ===================
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: Список проектов пользователя
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        Возвращает проекты, где пользователь является владельцем или участником.
+      security:
+        - BearerAuth: []
+      operationId: listProjects
+      parameters:
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Список проектов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags:
+        - Projects
+      summary: Создать проект
+      description: |
+        **Доступ:** аутентифицированный пользователь.
+        **Проверки:** лимит проектов по тарифу пользователя.
+        Создаёт проект с тремя колонками по умолчанию (To Do, In Progress, Done).
+      security:
+        - BearerAuth: []
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreateRequest"
+      responses:
+        "201":
+          description: Проект создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Превышен лимит проектов по тарифу
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /projects/{projectId}:
+    get:
+      tags:
+        - Projects
+      summary: Детали проекта
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+      security:
+        - BearerAuth: []
+      operationId: getProject
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      responses:
+        "200":
+          description: Детальная информация о проекте
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags:
+        - Projects
+      summary: Обновить проект
+      description: |
+        **Доступ:** владелец проекта.
+      security:
+        - BearerAuth: []
+      operationId: updateProject
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdateRequest"
+      responses:
+        "200":
+          description: Проект обновлён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - Projects
+      summary: Удалить проект
+      description: |
+        **Доступ:** владелец проекта.
+        Безвозвратно удаляет проект, задачи, колонки, документы, отчёты.
+      security:
+        - BearerAuth: []
+      operationId: deleteProject
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      responses:
+        "204":
+          description: Проект удалён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =================== Board ===================
+  /projects/{projectId}/board:
+    get:
+      tags:
+        - Board
+      summary: Состояние доски
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Возвращает колонки с задачами. Свимлайны группируются на фронте по полю `useCase` задач. Без бэклога и архива — запрашиваются отдельно.
+      security:
+        - BearerAuth: []
+      operationId: getBoard
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: filter[priority]
+          in: query
+          schema:
+            $ref: "#/components/schemas/Priority"
+        - name: filter[assignee]
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: filter[label]
+          in: query
+          schema:
+            type: string
+            maxLength: 50
+        - name: filter[useCase]
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+      responses:
+        "200":
+          description: Доска с колонками и задачами
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoardResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/columns:
+    post:
+      tags:
+        - Board
+      summary: Создать колонку
+      description: |
+        **Доступ:** участник проекта (право `column:create`).
+        **Проверки:** лимит колонок по тарифу.
+      security:
+        - BearerAuth: []
+      operationId: createColumn
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ColumnCreateRequest"
+      responses:
+        "201":
+          description: Колонка создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ColumnResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Превышен лимит колонок или недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /projects/{projectId}/columns/{columnId}:
+    put:
+      tags:
+        - Board
+      summary: Обновить колонку
+      description: |
+        **Доступ:** участник проекта (право `column:update`).
+      security:
+        - BearerAuth: []
+      operationId: updateColumn
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/columnId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ColumnUpdateRequest"
+      responses:
+        "200":
+          description: Колонка обновлена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - Board
+      summary: Удалить колонку
+      description: |
+        **Доступ:** участник проекта (право `column:delete`).
+        Задачи удалённой колонки переносятся в бэклог.
+      security:
+        - BearerAuth: []
+      operationId: deleteColumn
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/columnId"
+      responses:
+        "204":
+          description: Колонка удалена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /projects/{projectId}/columns/{columnId}/order:
+    put:
+      tags:
+        - Board
+      summary: Сохранить порядок задач в колонке
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        Принимает полный упорядоченный список ID задач в колонке.
+      security:
+        - BearerAuth: []
+      operationId: reorderColumn
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/columnId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ColumnReorderRequest"
+      responses:
+        "200":
+          description: Порядок сохранён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/backlog:
+    get:
+      tags:
+        - Board
+      summary: Задачи в бэклоге
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Сортировка по приоритету (от высокого к низкому).
+      security:
+        - BearerAuth: []
+      operationId: getBacklog
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: filter[priority]
+          in: query
+          schema:
+            $ref: "#/components/schemas/Priority"
+        - name: filter[assignee]
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Задачи бэклога
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacklogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/archive:
+    get:
+      tags:
+        - Board
+      summary: Задачи в архиве
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Сортировка по дате архивирования (от новых к старым).
+      security:
+        - BearerAuth: []
+      operationId: getArchive
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Задачи архива с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchiveResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Tasks ===================
+  /projects/{projectId}/tasks:
+    post:
+      tags:
+        - Tasks
+      summary: Создать задачу
+      description: |
+        **Доступ:** участник проекта (право `task:create`).
+        Задача создаётся в бэклоге.
+      security:
+        - BearerAuth: []
+      operationId: createTask
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreateRequest"
+      responses:
+        "201":
+          description: Задача создана в бэклоге
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCreateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
+  /projects/{projectId}/tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Полная информация о задаче
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Возвращает поля задачи, прикреплённые файлы и количество комментариев.
+      security:
+        - BearerAuth: []
+      operationId: getTask
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      responses:
+        "200":
+          description: Детали задачи
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags:
+        - Tasks
+      summary: Обновить задачу
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        **Проверки:** лимит исполнителей по тарифу при назначении нового.
+      security:
+        - BearerAuth: []
+      operationId: updateTask
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdateRequest"
+      responses:
+        "200":
+          description: Задача обновлена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
+  /projects/{projectId}/tasks/{taskId}/status:
+    patch:
+      tags:
+        - Tasks
+      summary: Переместить задачу (смена статуса)
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        Принимает ID колонки, "backlog" или "archive". При первом перемещении из бэклога в колонку сервер фиксирует дату взятия в работу. Свимлайны управляются на фронте.
+      security:
+        - BearerAuth: []
+      operationId: moveTask
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskStatusChangeRequest"
+      responses:
+        "200":
+          description: Статус задачи изменён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/tasks/{taskId}/archive:
+    post:
+      tags:
+        - Tasks
+      summary: Архивировать задачу
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        Эквивалент `PATCH .../status` с `"archive"`. Выделен для удобства UI.
+      security:
+        - BearerAuth: []
+      operationId: archiveTask
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      responses:
+        "200":
+          description: Задача архивирована
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskArchiveResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/tasks/{taskId}/files:
+    post:
+      tags:
+        - Tasks
+      summary: Прикрепить файл к задаче
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        Файл загружается на сервер (multipart) и сохраняется в MinIO. Ограничение — 10 MB на файл.
+      security:
+        - BearerAuth: []
+      operationId: attachFile
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "201":
+          description: Файл прикреплён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskFileUploadResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/tasks/{taskId}/files/{fileId}:
+    delete:
+      tags:
+        - Tasks
+      summary: Удалить прикреплённый файл
+      description: |
+        **Доступ:** участник проекта (право `task:update`).
+        Удаляет файл из MinIO и метаданные из БД.
+      security:
+        - BearerAuth: []
+      operationId: deleteTaskFile
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+        - $ref: "#/components/parameters/fileId"
+      responses:
+        "204":
+          description: Файл удалён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/tasks/{taskId}/files/{fileId}/presigned-url:
+    get:
+      tags:
+        - Tasks
+      summary: Получить presigned URL для файла
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Возвращает временную ссылку для прямой загрузки/скачивания файла из MinIO, минуя API.
+      security:
+        - BearerAuth: []
+      operationId: getFilePresignedUrl
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+        - $ref: "#/components/parameters/fileId"
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum:
+              - download
+              - upload
+            default: download
+      responses:
+        "200":
+          description: Presigned URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskPresignedUrlResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Comments ===================
+  /projects/{projectId}/tasks/{taskId}/comments:
+    get:
+      tags:
+        - Comments
+      summary: Список комментариев
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Пагинированный список, сортировка от старых к новым.
+      security:
+        - BearerAuth: []
+      operationId: listComments
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+      responses:
+        "200":
+          description: Список комментариев
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - Comments
+      summary: Добавить комментарий
+      description: |
+        **Доступ:** участник проекта (право `task:update` — комментарий считается изменением задачи).
+      security:
+        - BearerAuth: []
+      operationId: addComment
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreateRequest"
+      responses:
+        "201":
+          description: Комментарий добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentCreateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/tasks/{taskId}/comments/{commentId}:
+    put:
+      tags:
+        - Comments
+      summary: Редактировать комментарий
+      description: |
+        **Доступ:** автор комментария.
+      security:
+        - BearerAuth: []
+      operationId: updateComment
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+        - $ref: "#/components/parameters/commentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdateRequest"
+      responses:
+        "200":
+          description: Комментарий обновлён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags:
+        - Comments
+      summary: Удалить комментарий
+      description: |
+        **Доступ:** автор комментария.
+      security:
+        - BearerAuth: []
+      operationId: deleteComment
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/taskId"
+        - $ref: "#/components/parameters/commentId"
+      responses:
+        "204":
+          description: Комментарий удалён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Documents ===================
+  /projects/{projectId}/documents:
+    get:
+      tags:
+        - Documents
+      summary: Список документов проекта
+      description: |
+        **Доступ:** участник проекта (право `document:read`).
+        Возвращает все 14 типов документов с указанием, загружен ли файл.
+      security:
+        - BearerAuth: []
+      operationId: listDocuments
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      responses:
+        "200":
+          description: Список типов документов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - Documents
+      summary: Загрузить новый документ
+      description: |
+        **Доступ:** участник проекта (право `document:create`).
+        Принимает multipart (файл + тип) или JSON (только тип, для создания пустого документа).
+      security:
+        - BearerAuth: []
+      operationId: createDocument
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+              required:
+                - type
+                - file
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentCreateRequest"
+      responses:
+        "201":
+          description: Документ создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/documents/{documentId}:
+    get:
+      tags:
+        - Documents
+      summary: Получить содержимое документа
+      description: |
+        **Доступ:** участник проекта (право `document:read`).
+        Возвращает метаданные и presigned URL для скачивания.
+      security:
+        - BearerAuth: []
+      operationId: getDocument
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/documentId"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum:
+              - json
+              - markdown
+            default: json
+      responses:
+        "200":
+          description: Метаданные и presigned URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags:
+        - Documents
+      summary: Обновить содержимое документа
+      description: |
+        **Доступ:** участник проекта (право `document:update`).
+      security:
+        - BearerAuth: []
+      operationId: updateDocument
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/documentId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: Документ обновлён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags:
+        - Documents
+      summary: Удалить документ
+      description: |
+        **Доступ:** участник проекта (право `document:delete`).
+      security:
+        - BearerAuth: []
+      operationId: deleteDocument
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/documentId"
+      responses:
+        "204":
+          description: Документ удалён
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Search ===================
+  /projects/{projectId}/search:
+    get:
+      tags:
+        - Search
+      summary: Поиск задач по тексту
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Полнотекстовый поиск по названию, описанию и опционально по комментариям.
+      security:
+        - BearerAuth: []
+      operationId: searchTasks
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 500
+        - name: includeBacklog
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: includeArchive
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: includeComments
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Reports ===================
+  /projects/{projectId}/reports/cfd:
+    get:
+      tags:
+        - Reports
+      summary: Cumulative Flow Diagram
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Данные для построения графика накопления задач по колонкам.
+      security:
+        - BearerAuth: []
+      operationId: getCfd
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum:
+              - day
+              - week
+            default: day
+      responses:
+        "200":
+          description: Данные для CFD
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CfdResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/reports/lead-time:
+    get:
+      tags:
+        - Reports
+      summary: Lead Time Distribution Chart
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Гистограмма распределения времени выполнения задач.
+      security:
+        - BearerAuth: []
+      operationId: getLeadTime
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: buckets
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 5
+            maximum: 50
+      responses:
+        "200":
+          description: Гистограмма lead time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadTimeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/reports/gantt:
+    get:
+      tags:
+        - Reports
+      summary: Диаграмма Гантта по Use Case
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Задачи, сгруппированные по Use Case с временной шкалой.
+      security:
+        - BearerAuth: []
+      operationId: getGantt
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      responses:
+        "200":
+          description: Данные для Гантта
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GanttResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/reports/events:
+    get:
+      tags:
+        - Reports
+      summary: Лог событий доски
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        История изменений на доске с пагинацией (по 100 записей).
+      security:
+        - BearerAuth: []
+      operationId: getEventLog
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: События с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventLogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Access Control ===================
+  /projects/{projectId}/groups:
+    get:
+      tags:
+        - Access
+      summary: Список групп проекта
+      description: |
+        **Доступ:** владелец проекта.
+      security:
+        - BearerAuth: []
+      operationId: listGroups
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      responses:
+        "200":
+          description: Список групп с правами
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - Access
+      summary: Создать группу
+      description: |
+        **Доступ:** владелец проекта.
+      security:
+        - BearerAuth: []
+      operationId: createGroup
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupCreateRequest"
+      responses:
+        "201":
+          description: Группа создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupCreateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/groups/{groupId}:
+    delete:
+      tags:
+        - Access
+      summary: Удалить группу
+      description: |
+        **Доступ:** владелец проекта.
+      security:
+        - BearerAuth: []
+      operationId: deleteGroup
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/groupId"
+      responses:
+        "204":
+          description: Группа удалена
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/groups/{groupId}/members:
+    post:
+      tags:
+        - Access
+      summary: Добавить пользователя в группу
+      description: |
+        **Доступ:** владелец проекта.
+        Поиск пользователя по логину или email. Если пользователь не найден — 404.
+      security:
+        - BearerAuth: []
+      operationId: addGroupMember
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/groupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupMemberAddRequest"
+      responses:
+        "201":
+          description: Пользователь добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMemberAddResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /projects/{projectId}/groups/{groupId}/members/{userId}:
+    delete:
+      tags:
+        - Access
+      summary: Удалить пользователя из группы
+      description: |
+        **Доступ:** владелец проекта.
+      security:
+        - BearerAuth: []
+      operationId: removeGroupMember
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/groupId"
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Пользователь удалён из группы
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /projects/{projectId}/groups/{groupId}/permissions:
+    put:
+      tags:
+        - Access
+      summary: Настроить права доступа группы
+      description: |
+        **Доступ:** владелец проекта.
+        Передаются все права (отсутствующие в запросе сбрасываются в false).
+      security:
+        - BearerAuth: []
+      operationId: updatePermissions
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - $ref: "#/components/parameters/groupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionsUpdateRequest"
+      responses:
+        "200":
+          description: Права обновлены
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # =================== Admin ===================
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: Поиск пользователей (админ)
+      description: |
+        **Доступ:** системный пользователь с ролью `admin`.
+        Поиск по логину или email (частичное совпадение).
+      security:
+        - BearerAuth: []
+      operationId: adminSearchUsers
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - $ref: "#/components/parameters/offset"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserSearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/users/{userId}/tariff:
+    put:
+      tags:
+        - Admin
+      summary: Изменить тариф пользователя (админ)
+      description: |
+        **Доступ:** системный пользователь с ролью `admin`.
+        Меняет тарифный план и активирует новые лимиты.
+      security:
+        - BearerAuth: []
+      operationId: adminChangeTariff
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TariffChangeRequest"
+      responses:
+        "200":
+          description: Тариф изменён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TariffChangeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =================== SSE Realtime ===================
+  /projects/{projectId}/events:
+    get:
+      tags:
+        - Realtime
+      summary: SSE-поток событий доски
+      description: |
+        **Доступ:** участник проекта (право `task:read`).
+        Устанавливает SSE-соединение. Сервер отправляет события в формате `text/event-stream`.
+
+        **Типы событий:**
+        - `task_moved`, `task_updated`, `task_created`, `task_archived`
+        - `column_created`, `column_updated`, `column_deleted`, `column_reordered`
+        - `comment_added`, `comment_deleted`
+
+        **Переподключение:** браузер отправляет `Last-Event-ID`, сервер восполняет пропущенные события из буфера.
+        При разрыве > 30 сек клиент перезагружает доску через `GET /board`.
+      security:
+        - BearerAuth: []
+      operationId: subscribeToEvents
+      parameters:
+        - $ref: "#/components/parameters/projectId"
+        - name: Last-Event-ID
+          in: header
+          schema:
+            type: string
+            maxLength: 100
+          description: ID последнего полученного события
+      responses:
+        "200":
+          description: |
+            SSE-поток. `Content-Type: text/event-stream`.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: task_moved
+                  data: {"type":"TASK_MOVED","payload":{"taskId":"uuid","fromColumnId":"uuid","toColumnId":"uuid","position":0},"userId":"uuid","timestamp":"2026-06-19T12:00:00Z"}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+parameters:
+  projectId:
+    name: projectId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  columnId:
+    name: columnId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  taskId:
+    name: taskId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  commentId:
+    name: commentId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  fileId:
+    name: fileId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  documentId:
+    name: documentId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  groupId:
+    name: groupId
+    in: path
+    required: true
+    schema:
+      type: string
+      format: uuid
+  offset:
+    name: offset
+    in: query
+    schema:
+      type: integer
+      minimum: 0
+      default: 0
+  limit:
+    name: limit
+    in: query
+    schema:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 50
