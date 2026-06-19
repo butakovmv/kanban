@@ -97,3 +97,18 @@ CREATE TABLE IF NOT EXISTS file_attachments (
     uploaded_by VARCHAR(36) NOT NULL,
     uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS documents (
+    id VARCHAR(36) PRIMARY KEY,
+    project_id VARCHAR(36) NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    description TEXT,
+    file_name VARCHAR(500) NOT NULL,
+    content_type VARCHAR(255) NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    storage_key VARCHAR(1000) NOT NULL,
+    version INT NOT NULL DEFAULT 1,
+    uploaded_by VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

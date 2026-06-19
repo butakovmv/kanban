@@ -273,13 +273,13 @@
 ## Фаза 4 — Документы
 
 ### 4.1 usecase+pg: Document
-- [ ] Сущность: `Document`
-- [ ] Миграция: `documents`
-- [ ] `DocumentOperation` — CRUD, замена, версионирование
+- [x] Сущность: `Document`
+- [x] Миграция: `documents`
+- [x] `DocumentOperation` — CRUD, замена, версионирование
 
 ### 4.2 webapi: DocumentController
-- [ ] `POST/GET /api/v1/documents`
-- [ ] `PUT/DELETE /api/v1/documents/{id}`
+- [x] `POST/GET /api/v1/documents`
+- [x] `PUT/DELETE /api/v1/documents/{id}`
 
 ### 4.3 vue: DocumentListPage
 - [ ] `DocumentListPage.vue` — таблица документов
@@ -289,8 +289,8 @@
 - [ ] `DocumentUpload.vue` — загрузка с прогрессом
 
 ### 4.5 MinIO интеграция
-- [ ] Presigned URL для документов
-- [ ] Дополнение к FileController
+- [x] Presigned URL для документов (через DocumentStorage port)
+- [x] Дополнение к FileController (загрузка в существующем FileHandler)
 
 ### T4.1 Document тесты
 - [ ] API: CRUD document, presigned URL
