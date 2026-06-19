@@ -95,3 +95,16 @@ export function del<T>(url: string): Promise<T> {
     method: 'DELETE',
   })
 }
+
+/**
+ * PATCH-запрос к API с JSON-телом.
+ * @param url - относительный путь
+ * @param body - тело запроса (сериализуется в JSON)
+ * @returns ответ типом T
+ */
+export function patch<T>(url: string, body: unknown): Promise<T> {
+  return request<T>(url, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+}

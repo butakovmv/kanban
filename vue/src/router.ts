@@ -7,6 +7,10 @@ import { createRouter, createWebHistory } from 'vue-router'
  * - `/` — редирект на `/login`
  * - `/login` — страница входа
  * - `/register` — страница регистрации
+ * - `/projects` — список проектов
+ * - `/projects/:id` — настройки проекта
+ * - `/boards/:id` — доска с колонками
+ * - `/tasks/:id` — детали задачи
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -24,6 +28,31 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('./module/auth/RegisterPage.vue'),
+    },
+    {
+      path: '/projects',
+      name: 'projects',
+      component: () => import('./module/project/ProjectListPage.vue'),
+    },
+    {
+      path: '/projects/:id',
+      name: 'project-settings',
+      component: () => import('./module/project/ProjectSettingsPage.vue'),
+    },
+    {
+      path: '/projects/:id/documents',
+      name: 'project-documents',
+      component: () => import('./module/document/DocumentListPage.vue'),
+    },
+    {
+      path: '/boards/:id',
+      name: 'board',
+      component: () => import('./module/board/BoardPage.vue'),
+    },
+    {
+      path: '/tasks/:id',
+      name: 'task-detail',
+      component: () => import('./module/task/TaskDetailPage.vue'),
     },
   ],
 })
