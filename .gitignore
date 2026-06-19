@@ -1,0 +1,39 @@
+# Gradle
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vue / Node
+node_modules/
+dist/
+
+# Docker
+.env
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Agent generated
+docs/ai/scratch/
+
+# Java
+*.class
+
+# Gradle wrapper (keep)
+!gradlew
+!gradlew.bat

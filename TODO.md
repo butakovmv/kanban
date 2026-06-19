@@ -5,50 +5,82 @@
 - `[ ]` — задача не начата
 - `[➜]` — задача в работе
 - `[x]` — задача завершена
-- После завершения задачи запускать `./gradlew build` и `npm run lint` (там где применимо)
-- Каждая задача PR → code review → merge
+
+## Процесс работы над пунктом
+
+1. Взять в работу **один** пункт (не более), отметить `[➜]`
+2. Реализовать код согласно требованиям и архитектуре
+3. Запустить **линтеры**:
+   - Бэкенд: `./gradlew ktlintMainCheck detekt` (если подключены)
+   - Фронтенд: `npm run lint` или `eslint .`
+   - Исправить все найденные замечания
+4. Запустить **тесты**:
+   - `./gradlew test`
+   - При наличии изменений во vue: `npx vitest run`
+   - Исправить все найденные замечания
+5. Провести **code review** написанного кода:
+   - Проверить соответствие архитектуре (hexagonal, Operation, etc.)
+   - Проверить naming, style, отсутствие дублирования
+   - Проверить обработку ошибок и edge cases
+   - Исправить все найденные замечания
+6. Провести **critical security review**:
+   - Проверить, не попадают ли секреты/токены в логи или ответы
+   - Проверить, не попадают ли секреты/токены в файлы исходного кода
+   - Проверить валидацию входных данных (SQL injection, XSS)
+   - Проверить права доступа (пользователь не может видеть/изменять чужие данные)
+   - Проверить безопасность работы с файлами (path traversal, размер)
+7. **Остановиться**. Предоставить пользователю отчёт:
+   - Что сделано, описание для коммита
+   - Какие замечания линтеров были обнаружены и исправлены
+   - Какие замечания тестов были обнаружены и исправлены
+   - Какие замечания code review были обнаружены и исправлены
+   - Какие проблемы безопасности обнаружены (если есть)
+8. **Запросить** у пользователя:
+   - Approval («продолжить», «исправить X», «отменить»)
+   - Разрешение на коммит (если нужен коммит в репозиторий)
+9. После получения approval — отметить пункт `[x]`, перейти к следующему
 
 ---
 
 ## Фаза 0 — Инфраструктура и каркас
 
 ### 0.1 Корневой Gradle-билд
-- [ ] `settings.gradle.kts` — подключить все модули
-- [ ] `build.gradle.kts` — общие плагины (kotlin, spring), detekt, ktlint
-- [ ] `gradle.properties` — версии библиотек
+- [x] `settings.gradle.kts` — подключить все модули
+- [x] `build.gradle.kts` — общие плагины (kotlin, spring), detekt, ktlint
+- [x] `gradle.properties` — версии библиотек
 
 ### 0.2 spring-модуль
-- [ ] Точка входа: `Application.kt`
-- [ ] Actuator, метрики, healthcheck
-- [ ] SecurityConfig: JWT-фильтр, CORS
-- [ ] Dockerfile (multi-stage)
+- [x] Точка входа: `Application.kt`
+- [x] Actuator, метрики, healthcheck
+- [x] SecurityConfig: JWT-фильтр, CORS
+- [x] Dockerfile (multi-stage)
 
 ### 0.3 usecase-модуль
-- [ ] Пакеты: `domain`, `operation`, `port`
-- [ ] Базовый `Operation.kt` (архитектура CQRS: Arg / Result)
+- [x] Пакеты: `domain`, `operation`, `port`
+- [x] Базовый `Operation.kt` (архитектура CQRS: Arg / Result)
 
 ### 0.4 webapi-модуль
-- [ ] WebFlux-конфигурация, ObjectMapper
-- [ ] Global error handler (`@RestControllerAdvice`)
-- [ ] CORS-конфигурация
+- [x] WebFlux-конфигурация, ObjectMapper
+- [x] Global error handler (`@RestControllerAdvice`)
+- [x] CORS-конфигурация
 
 ### 0.5 postgres-модуль
-- [ ] R2DBC-конфигурация, ConnectionFactory
-- [ ] Flyway интеграция, пустая миграция
+- [x] R2DBC-конфигурация, ConnectionFactory
+- [x] Flyway интеграция, пустая миграция
 
 ### 0.6 nats-модуль (заглушка)
-- [ ] Интерфейс `EventPublisher`, заглушка-реализация
+- [x] Интерфейс `EventPublisher`, заглушка-реализация
 
 ### 0.7 Docker Compose (dev-стенд)
-- [ ] `docker-compose.yml` — postgres, minio, nginx
-- [ ] Скрипты инициализации
+- [x] `docker-compose.yml` — postgres, minio, nginx
+- [x] `.env.example`
 
 ### 0.8 Vue-каркас
-- [ ] Vite + Vue 3 + TypeScript
-- [ ] Router (vue-router), Pinia store
-- [ ] SCSS-темы (тёмная/светлая)
-- [ ] `request<T>()` — fetch-клиент с JWT
-- [ ] Dockerfile (nginx static)
+- [x] Vite + Vue 3 + TypeScript
+- [x] Router (vue-router), Pinia store
+- [x] SCSS-темы (тёмная/светлая)
+- [x] `request<T>()` — fetch-клиент с JWT
+- [x] Dockerfile (nginx static)
 
 ### T0.1 Playwright-проект
 - [ ] `e2etest` модуль: `playwright.config.ts`
@@ -102,8 +134,8 @@
 - [ ] `POST /api/v1/auth/recovery/reset`
 
 ### 1.9 vue: Login + Register
-- [ ] `LoginPage.vue`
-- [ ] `RegisterPage.vue`
+- [x] `LoginPage.vue`
+- [x] `RegisterPage.vue`
 - [ ] Pinia store: `authStore`
 - [ ] api.ts: auth-методы
 
