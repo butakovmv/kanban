@@ -107,9 +107,11 @@
 - [x] Реализации (`internal`) + unit-тесты (87% покрытие usecase)
 
 ### 1.2 usecase: Register + Login
-- [ ] `AuthOperation` — `register()`, `login()`
-- [ ] Аргументы: `RegisterArg`, `LoginArg`
-- [ ] Результаты: `AuthResult` (JWT пара)
+- [x] `RegisterUserOperation`, `LoginWithPasswordOperation`
+- [x] Аргументы: `RegisterArg`, `LoginArg`
+- [x] Результаты: `AuthTokens` (access + refresh)
+- [x] Порт: `PasswordHasher`, `TokenProvider`
+- [x] Реализации + unit-тесты (90% покрытие usecase)
 
 ### 1.3 usecase: TOTP
 - [ ] `TotpOperation` — `enable()`, `verify()`, `disable()`
