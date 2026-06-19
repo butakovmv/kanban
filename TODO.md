@@ -93,17 +93,18 @@
 - [x] Базовая структура spec-файлов
 
 ### T0.2 Фабрики тестовых данных
-- [ ] Генераторы: User, Project, Board, Task, Comment
+- [x] Генераторы: User, Project, Board, Task, Comment
 
 ---
 
 ## Фаза 1 — Аутентификация
 
 ### 1.1 usecase: User + Tariff
-- [ ] Сущности: `User`, `Tariff`, `TariffLimit`
-- [ ] `UserOperation` — create, get, update
-- [ ] `TariffOperation` — проверить лимиты
-- [ ] `UserRepository` — порт
+- [x] Сущности: `User`, `Tariff`, `TariffLimit`, `UserTariff`
+- [x] Value objects: `UserId`, `TariffId`, `Email`, `PasswordHash`
+- [x] `CreateUserOperation`, `GetUserOperation`, `UpdateUserOperation`, `CheckTariffLimitsOperation`
+- [x] `UserRepository`, `TariffRepository`, `UserTariffRepository` — порты
+- [x] Реализации (`internal`) + unit-тесты (87% покрытие usecase)
 
 ### 1.2 usecase: Register + Login
 - [ ] `AuthOperation` — `register()`, `login()`

@@ -39,6 +39,8 @@ style:
   active: true
   MagicNumber:
     active: false
+  ReturnCount:
+    max: 3
 
   UnusedPrivateMember:
     active: true
