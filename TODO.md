@@ -177,9 +177,9 @@
 - [x] `PUT/DELETE /api/v1/projects/{id}`
 
 ### 2.4 vue: ProjectList + Settings
-- [ ] `ProjectListPage.vue`
-- [ ] `ProjectSettingsPage.vue`
-- [ ] Pinia store: `projectStore`
+- [x] `ProjectListPage.vue`
+- [x] `ProjectSettingsPage.vue`
+- [x] Pinia store: `projectStore`
 
 ### 2.5 usecase: Board
 - [x] `BoardOperation` — getBoard (query), archive, backlog
@@ -192,17 +192,17 @@
 - [ ] `POST /api/v1/boards/{id}/archive/{taskId}`  (будет с Phase 3)
 
 ### 2.7 vue: BoardPage layout
-- [ ] `BoardPage.vue` — горизонтальные колонки
-- [ ] `Column.vue` — колонка с задачами
-- [ ] `TaskCard.vue` — карточка задачи
+- [x] `BoardPage.vue` — горизонтальные колонки
+- [x] `Column.vue` — колонка с задачами
+- [x] `TaskCard.vue` — карточка задачи
 
 ### 2.8 vue: Column CRUD UI
-- [ ] Создание/редактирование/удаление колонки
-- [ ] Перетаскивание колонок (реордер)
+- [x] Создание/редактирование/удаление колонки
+- [x] Перетаскивание колонок (реордер)
 
 ### 2.9 vue: Swimlane (frontend-only)
-- [ ] Группировка задач по горизонтальным полосам
-- [ ] Переключение swimlane on/off
+- [x] Группировка задач по горизонтальным полосам
+- [x] Переключение swimlane on/off
 
 ### T2.1 Project/Board тесты
 - [ ] API: CRUD project, board view, backlog, archive
@@ -249,20 +249,20 @@
 - [x] `DELETE /api/v1/files/{id}`
 
 ### 3.9 vue: TaskCard + Create
-- [ ] `CreateTaskModal.vue`
-- [ ] `TaskCard.vue` (обновление: лейблы, сроки, исполнитель)
-- [ ] Drag & Drop между колонками
+- [x] `CreateTaskModal.vue`
+- [x] `TaskCard.vue` (обновление: лейблы, сроки, исполнитель)
+- [x] Drag & Drop между колонками
 
 ### 3.10 vue: DnD columns
-- [ ] Сортировка задач внутри колонки
+- [x] Сортировка задач внутри колонки
 
 ### 3.11 vue: TaskDetailPage
-- [ ] `TaskDetailPage.vue` — полная карточка
-- [ ] Редактирование полей, смена статуса, архив
+- [x] `TaskDetailPage.vue` — полная карточка
+- [x] Редактирование полей, смена статуса, архив
 
 ### 3.12 vue: Comments + Files UI
-- [ ] `CommentSystem.vue` — добавление/редактирование
-- [ ] `FileUpload.vue` — drag & drop файлов
+- [x] `CommentSystem.vue` — добавление/редактирование
+- [x] `FileUpload.vue` — drag & drop файлов
 
 ### T3.1 Task тесты
 - [ ] API: CRUD task, move, comment, file upload
@@ -282,11 +282,11 @@
 - [x] `PUT/DELETE /api/v1/documents/{id}`
 
 ### 4.3 vue: DocumentListPage
-- [ ] `DocumentListPage.vue` — таблица документов
-- [ ] Фильтр по проекту
+- [x] `DocumentListPage.vue` — таблица документов
+- [x] Фильтр по проекту
 
 ### 4.4 vue: DocumentUpload
-- [ ] `DocumentUpload.vue` — загрузка с прогрессом
+- [x] `DocumentUpload.vue` — загрузка с прогрессом
 
 ### 4.5 MinIO интеграция
 - [x] Presigned URL для документов (через DocumentStorage port)
