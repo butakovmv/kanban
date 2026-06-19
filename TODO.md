@@ -146,8 +146,8 @@
 ### 1.9 vue: Login + Register
 - [x] `LoginPage.vue`
 - [x] `RegisterPage.vue`
-- [ ] Pinia store: `authStore`
-- [ ] api.ts: auth-методы
+- [x] Pinia store: `authStore`
+- [x] api.ts: auth-методы
 
 ### 1.10 vue: Profile + TOTP
 - [ ] `ProfilePage.vue`

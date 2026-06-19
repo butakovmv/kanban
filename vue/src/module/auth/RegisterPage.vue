@@ -6,20 +6,24 @@
  */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from './store'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const { error, loading } = storeToRefs(authStore)
 const email = ref('')
 const password = ref('')
 const displayName = ref('')
-const error = ref('')
 
 async function handleSubmit() {
-  error.value = ''
-  try {
-    // TODO: call auth API
+  const success = await authStore.register({
+    email: email.value,
+    password: password.value,
+    displayName: displayName.value,
+  })
+  if (success) {
     await router.push('/login')
-  } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : 'Registration failed'
   }
 }
 </script>
@@ -41,7 +45,7 @@ async function handleSubmit() {
         Password
         <input v-model="password" type="password" required />
       </label>
-      <button type="submit">Register</button>
+      <button type="submit" :disabled="loading">Register</button>
       <RouterLink to="/login">Login</RouterLink>
     </form>
   </div>
@@ -92,5 +96,9 @@ button {
 }
 button:hover {
   background: var(--color-primary-hover);
+}
+button:disabled {
+  background: var(--color-text-secondary);
+  cursor: not-allowed;
 }
 </style>

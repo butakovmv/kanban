@@ -1,11 +1,13 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import { nextTick } from 'vue'
+import { setActivePinia, createPinia } from 'pinia'
 import LoginPage from '../LoginPage.vue'
+import { useAuthStore } from '../store'
 
-function createTestRouter(initialRoute = '/login') {
-  const r = createRouter({
+function createTestRouter() {
+  return createRouter({
     history: createWebHistory(),
     routes: [
       { path: '/login', name: 'login', component: LoginPage },
@@ -13,10 +15,13 @@ function createTestRouter(initialRoute = '/login') {
       { path: '/register', component: { template: '<div>Register</div>' } },
     ],
   })
-  return r
 }
 
 describe('LoginPage', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('renders login form with email, password fields and submit button', async () => {
     const router = createTestRouter()
     await router.push('/login')
@@ -32,16 +37,60 @@ describe('LoginPage', () => {
     expect(wrapper.find('button[type="submit"]').text()).toBe('Login')
   })
 
-  it('shows error message when login fails', async () => {
+  it('navigates to board on successful login', async () => {
     const router = createTestRouter()
     await router.push('/login')
     await router.isReady()
+
+    const authStore = useAuthStore()
+    vi.spyOn(authStore, 'login').mockResolvedValue(true)
+    vi.spyOn(router, 'push').mockResolvedValue(undefined)
 
     const wrapper = mount(LoginPage, {
       global: { plugins: [router] },
     })
 
-    vi.spyOn(router, 'push').mockRejectedValue(new Error('Login failed'))
+    await wrapper.find('input[type="email"]').setValue('test@kanban.test')
+    await wrapper.find('input[type="password"]').setValue('correct')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    await nextTick()
+
+    expect(authStore.login).toHaveBeenCalledWith({
+      email: 'test@kanban.test',
+      password: 'correct',
+    })
+    expect(router.push).toHaveBeenCalledWith('/board')
+  })
+
+  it('shows error message when login fails', async () => {
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
+
+    const authStore = useAuthStore()
+    authStore.error = 'Invalid email or password'
+
+    const wrapper = mount(LoginPage, {
+      global: { plugins: [router] },
+    })
+
+    expect(wrapper.find('.login__error').exists()).toBe(true)
+    expect(wrapper.find('.login__error').text()).toBe('Invalid email or password')
+  })
+
+  it('does not navigate when login fails', async () => {
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
+
+    const authStore = useAuthStore()
+    vi.spyOn(authStore, 'login').mockResolvedValue(false)
+    const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined)
+
+    const wrapper = mount(LoginPage, {
+      global: { plugins: [router] },
+    })
 
     await wrapper.find('input[type="email"]').setValue('test@kanban.test')
     await wrapper.find('input[type="password"]').setValue('wrong')
@@ -49,9 +98,8 @@ describe('LoginPage', () => {
     await flushPromises()
     await nextTick()
 
-    expect(router.push).toHaveBeenCalledWith('/board')
-    expect(wrapper.find('.login__error').exists()).toBe(true)
-    expect(wrapper.find('.login__error').text()).toBe('Login failed')
+    expect(authStore.login).toHaveBeenCalled()
+    expect(pushSpy).not.toHaveBeenCalled()
   })
 
   it('has a link to register page', async () => {
