@@ -4,6 +4,7 @@ import com.kanban.common.Email
 import com.kanban.common.PasswordHash
 import com.kanban.common.UserId
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -41,6 +42,9 @@ class UpdateUserOperationImplTest {
             val success = assertIs<UpdateUserOperation.Result.Success>(result)
             assertEquals("New Name", success.user.displayName)
             assertEquals("old@kanban.test", success.user.email.value)
+
+            coVerify { userRepository.findById("user-1") }
+            coVerify { userRepository.save(any()) }
         }
 
     @Test
@@ -56,6 +60,9 @@ class UpdateUserOperationImplTest {
 
             val success = assertIs<UpdateUserOperation.Result.Success>(result)
             assertEquals("new@kanban.test", success.user.email.value)
+
+            coVerify { userRepository.findById("user-1") }
+            coVerify { userRepository.save(any()) }
         }
 
     @Test
@@ -69,6 +76,9 @@ class UpdateUserOperationImplTest {
                 )
 
             assertIs<UpdateUserOperation.Result.NotFound>(result)
+
+            coVerify { userRepository.findById("missing") }
+            coVerify(inverse = true) { userRepository.save(any()) }
         }
 
     @Test
@@ -81,6 +91,10 @@ class UpdateUserOperationImplTest {
                     UpdateUserOperation.Arg(userId = "user-1", displayName = null, email = "bad"),
                 )
 
-            assertIs<UpdateUserOperation.Result.Failure>(result)
+            val failure = assertIs<UpdateUserOperation.Result.Failure>(result)
+            assertEquals("Invalid email: bad", failure.reason)
+
+            coVerify { userRepository.findById("user-1") }
+            coVerify(inverse = true) { userRepository.save(any()) }
         }
 }

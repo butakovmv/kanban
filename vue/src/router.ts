@@ -1,5 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+/**
+ * Маршрутизатор приложения с history-режимом.
+ *
+ * Доступные маршруты:
+ * - `/` — редирект на `/login`
+ * - `/login` — страница входа
+ * - `/register` — страница регистрации
+ */
 const router = createRouter({
   history: createWebHistory(),
   routes: [

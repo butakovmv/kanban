@@ -12,9 +12,21 @@ import org.springframework.http.codec.json.Jackson2JsonEncoder
 import org.springframework.web.reactive.config.EnableWebFlux
 import org.springframework.web.reactive.config.WebFluxConfigurer
 
+/**
+ * Конфигурация WebFlux для HTTP-слоя приложения.
+ * Настраивает ObjectMapper в стиле snake_case и регистрирует
+ * JSON-кодеки для сообщений HTTP.
+ */
 @Configuration
 @EnableWebFlux
 class WebConfig : WebFluxConfigurer {
+    /**
+     * Создаёт и настраивает ObjectMapper для сериализации/десериализации JSON.
+     * - Добавляет модуль Kotlin для поддержки data-классов
+     * - Устанавливает стратегию именования свойств snake_case
+     *
+     * @return настроенный экземпляр ObjectMapper
+     */
     @Bean
     fun objectMapper(): ObjectMapper =
         jsonMapper {
@@ -22,6 +34,11 @@ class WebConfig : WebFluxConfigurer {
             propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
         }
 
+    /**
+     * Настраивает кодеки HTTP-сообщений на использование кастомного ObjectMapper.
+     *
+     * @param configurer конфигуратор кодеков сервера
+     */
     override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
         val mapper = objectMapper()
         configurer.defaultCodecs().jackson2JsonEncoder(Jackson2JsonEncoder(mapper))

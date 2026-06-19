@@ -47,6 +47,8 @@ class RegisterUserOperationImplTest {
             assertEquals("access-token", success.tokens.accessToken.value)
             assertEquals("refresh-token", success.tokens.refreshToken.value)
 
+            coVerify { passwordHasher.hash(password) }
+            coVerify { userRepository.existsByEmail(email) }
             coVerify { userRepository.save(any()) }
             coVerify { tokenProvider.generateTokens(any()) }
         }
@@ -61,7 +63,12 @@ class RegisterUserOperationImplTest {
                     RegisterUserOperation.Arg(email = "existing@kanban.test", password = "pwd", displayName = "n"),
                 )
 
-            assertIs<RegisterUserOperation.Result.Failure>(result)
+            val failure = assertIs<RegisterUserOperation.Result.Failure>(result)
+            assertEquals("Email already registered", failure.reason)
+
+            coVerify { userRepository.existsByEmail("existing@kanban.test") }
+            coVerify(inverse = true) { passwordHasher.hash(any()) }
+            coVerify(inverse = true) { userRepository.save(any()) }
         }
 
     @Test
@@ -72,6 +79,10 @@ class RegisterUserOperationImplTest {
                     RegisterUserOperation.Arg(email = "bad", password = "pwd", displayName = "n"),
                 )
 
-            assertIs<RegisterUserOperation.Result.Failure>(result)
+            val failure = assertIs<RegisterUserOperation.Result.Failure>(result)
+            assertEquals("Invalid email: bad", failure.reason)
+
+            coVerify(inverse = true) { userRepository.save(any()) }
+            coVerify(inverse = true) { tokenProvider.generateTokens(any()) }
         }
 }

@@ -1,5 +1,9 @@
 package com.kanban.identity
 
+/**
+ * Реализация операции входа по паролю.
+ * Находит пользователя по email, проверяет пароль через PasswordHasher и генерирует токены.
+ */
 internal class LoginWithPasswordOperationImpl(
     private val userRepository: UserRepository,
     private val passwordHasher: PasswordHasher,

@@ -7,6 +7,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import java.time.Instant
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -35,7 +36,7 @@ class GetUserOperationImplTest {
             val result = operation.execute(GetUserOperation.Arg(userId = "user-1"))
 
             val success = assertIs<GetUserOperation.Result.Success>(result)
-            assert(success.user == sampleUser)
+            assertEquals(sampleUser, success.user)
             coVerify { userRepository.findById("user-1") }
         }
 

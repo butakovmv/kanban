@@ -7,6 +7,7 @@ import com.kanban.common.PasswordHash
 import com.kanban.common.RefreshToken
 import com.kanban.common.UserId
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.time.Instant
@@ -51,6 +52,13 @@ class LoginWithPasswordOperationImplTest {
 
             val success = assertIs<LoginWithPasswordOperation.Result.Success>(result)
             assertEquals("access-token", success.tokens.accessToken.value)
+            assertEquals("refresh-token", success.tokens.refreshToken.value)
+            assertEquals("user-1", success.user.id.value)
+            assertEquals("User", success.user.displayName)
+
+            coVerify { userRepository.findByEmail("user@kanban.test") }
+            coVerify { passwordHasher.verify("correct-password", "hashed-password") }
+            coVerify { tokenProvider.generateTokens("user-1") }
         }
 
     @Test
@@ -64,7 +72,12 @@ class LoginWithPasswordOperationImplTest {
                     LoginWithPasswordOperation.Arg(email = "user@kanban.test", password = "wrong-password"),
                 )
 
-            assertIs<LoginWithPasswordOperation.Result.Failure>(result)
+            val failure = assertIs<LoginWithPasswordOperation.Result.Failure>(result)
+            assertEquals("Invalid email or password", failure.reason)
+
+            coVerify { userRepository.findByEmail("user@kanban.test") }
+            coVerify { passwordHasher.verify("wrong-password", "hashed-password") }
+            coVerify(inverse = true) { tokenProvider.generateTokens(any()) }
         }
 
     @Test
@@ -77,6 +90,11 @@ class LoginWithPasswordOperationImplTest {
                     LoginWithPasswordOperation.Arg(email = "unknown@kanban.test", password = "pwd"),
                 )
 
-            assertIs<LoginWithPasswordOperation.Result.Failure>(result)
+            val failure = assertIs<LoginWithPasswordOperation.Result.Failure>(result)
+            assertEquals("Invalid email or password", failure.reason)
+
+            coVerify { userRepository.findByEmail("unknown@kanban.test") }
+            coVerify(inverse = true) { passwordHasher.verify(any(), any()) }
+            coVerify(inverse = true) { tokenProvider.generateTokens(any()) }
         }
 }

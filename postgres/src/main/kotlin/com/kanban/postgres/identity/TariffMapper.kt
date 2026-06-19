@@ -5,6 +5,10 @@ import com.kanban.identity.Tariff
 import com.kanban.identity.TariffLimits
 import java.time.ZoneId
 
+/**
+ * Маппинг табличной сущности [TariffTable] в доменную сущность [Tariff].
+ * Преобразует поля лимитов из отдельных примитивов в структуру [TariffLimits], а LocalDateTime в Instant.
+ */
 internal fun TariffTable.toDomain(): Tariff =
     Tariff(
         id = TariffId(id),
@@ -20,6 +24,10 @@ internal fun TariffTable.toDomain(): Tariff =
         createdAt = createdAt.atZone(ZoneId.systemDefault()).toInstant(),
     )
 
+/**
+ * Маппинг доменной сущности [Tariff] в табличную сущность [TariffTable].
+ * Разворачивает структуру [TariffLimits] в отдельные поля и преобразует Instant в LocalDateTime.
+ */
 internal fun Tariff.toTable(): TariffTable =
     TariffTable(
         id = id.value,

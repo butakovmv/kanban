@@ -6,6 +6,10 @@ import com.kanban.common.UserId
 import java.time.Instant
 import java.util.UUID
 
+/**
+ * Реализация операции создания пользователя.
+ * Валидирует email, проверяет уникальность, создаёт сущность пользователя и сохраняет в репозиторий.
+ */
 internal class CreateUserOperationImpl(
     private val userRepository: UserRepository,
 ) : CreateUserOperation {

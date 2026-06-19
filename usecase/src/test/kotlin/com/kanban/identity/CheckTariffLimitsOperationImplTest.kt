@@ -1,8 +1,10 @@
 package com.kanban.identity
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import java.time.Instant
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -53,6 +55,9 @@ class CheckTariffLimitsOperationImplTest {
                 )
 
             assertIs<CheckTariffLimitsOperation.Result.Allowed>(result)
+
+            coVerify { userTariffRepository.findActiveByUserId("user-1") }
+            coVerify { tariffRepository.findById("t-1") }
         }
 
     @Test
@@ -70,7 +75,29 @@ class CheckTariffLimitsOperationImplTest {
                     ),
                 )
 
-            assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            val denied = assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            assertEquals("Project limit exceeded: max 2", denied.reason)
+
+            coVerify { userTariffRepository.findActiveByUserId("user-1") }
+            coVerify { tariffRepository.findById("t-1") }
+        }
+
+    @Test
+    fun `should allow at exact boundary`() =
+        runTest {
+            coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
+            coEvery { tariffRepository.findById("t-1") } returns freeTariff
+
+            val result =
+                operation.execute(
+                    CheckTariffLimitsOperation.Arg(
+                        userId = "user-1",
+                        resourceType = CheckTariffLimitsOperation.ResourceType.PROJECT,
+                        requestedCount = 2,
+                    ),
+                )
+
+            assertIs<CheckTariffLimitsOperation.Result.Allowed>(result)
         }
 
     @Test
@@ -87,7 +114,11 @@ class CheckTariffLimitsOperationImplTest {
                     ),
                 )
 
-            assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            val denied = assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            assertEquals("No active tariff", denied.reason)
+
+            coVerify { userTariffRepository.findActiveByUserId("user-1") }
+            coVerify(inverse = true) { tariffRepository.findById(any()) }
         }
 
     @Test
@@ -105,16 +136,20 @@ class CheckTariffLimitsOperationImplTest {
                     ),
                 )
 
-            assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            val denied = assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            assertEquals("Tariff not found", denied.reason)
+
+            coVerify { userTariffRepository.findActiveByUserId("user-1") }
+            coVerify { tariffRepository.findById("t-1") }
         }
 
     @Test
-    fun `should check board limit`() =
+    fun `should allow board when within limit`() =
         runTest {
             coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
             coEvery { tariffRepository.findById("t-1") } returns freeTariff
 
-            val allowed =
+            val result =
                 operation.execute(
                     CheckTariffLimitsOperation.Arg(
                         userId = "user-1",
@@ -122,9 +157,17 @@ class CheckTariffLimitsOperationImplTest {
                         requestedCount = 2,
                     ),
                 )
-            assertIs<CheckTariffLimitsOperation.Result.Allowed>(allowed)
 
-            val denied =
+            assertIs<CheckTariffLimitsOperation.Result.Allowed>(result)
+        }
+
+    @Test
+    fun `should deny board when limit exceeded`() =
+        runTest {
+            coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
+            coEvery { tariffRepository.findById("t-1") } returns freeTariff
+
+            val result =
                 operation.execute(
                     CheckTariffLimitsOperation.Arg(
                         userId = "user-1",
@@ -132,16 +175,18 @@ class CheckTariffLimitsOperationImplTest {
                         requestedCount = 5,
                     ),
                 )
-            assertIs<CheckTariffLimitsOperation.Result.Denied>(denied)
+
+            val denied = assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            assertEquals("Board limit exceeded: max 3", denied.reason)
         }
 
     @Test
-    fun `should check task limit`() =
+    fun `should allow task when within limit`() =
         runTest {
             coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
             coEvery { tariffRepository.findById("t-1") } returns freeTariff
 
-            val allowed =
+            val result =
                 operation.execute(
                     CheckTariffLimitsOperation.Arg(
                         userId = "user-1",
@@ -149,9 +194,17 @@ class CheckTariffLimitsOperationImplTest {
                         requestedCount = 5,
                     ),
                 )
-            assertIs<CheckTariffLimitsOperation.Result.Allowed>(allowed)
 
-            val denied =
+            assertIs<CheckTariffLimitsOperation.Result.Allowed>(result)
+        }
+
+    @Test
+    fun `should deny task when limit exceeded`() =
+        runTest {
+            coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
+            coEvery { tariffRepository.findById("t-1") } returns freeTariff
+
+            val result =
                 operation.execute(
                     CheckTariffLimitsOperation.Arg(
                         userId = "user-1",
@@ -159,6 +212,26 @@ class CheckTariffLimitsOperationImplTest {
                         requestedCount = 15,
                     ),
                 )
-            assertIs<CheckTariffLimitsOperation.Result.Denied>(denied)
+
+            val denied = assertIs<CheckTariffLimitsOperation.Result.Denied>(result)
+            assertEquals("Task limit exceeded: max 10", denied.reason)
+        }
+
+    @Test
+    fun `should allow requestedCount zero`() =
+        runTest {
+            coEvery { userTariffRepository.findActiveByUserId("user-1") } returns activeUserTariff
+            coEvery { tariffRepository.findById("t-1") } returns freeTariff
+
+            val result =
+                operation.execute(
+                    CheckTariffLimitsOperation.Arg(
+                        userId = "user-1",
+                        resourceType = CheckTariffLimitsOperation.ResourceType.PROJECT,
+                        requestedCount = 0,
+                    ),
+                )
+
+            assertIs<CheckTariffLimitsOperation.Result.Allowed>(result)
         }
 }

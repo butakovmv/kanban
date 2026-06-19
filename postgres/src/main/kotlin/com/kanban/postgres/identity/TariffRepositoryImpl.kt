@@ -7,10 +7,19 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 
+/**
+ * Реализация [TariffRepository] через R2DBC и DatabaseClient.
+ * Предоставляет методы поиска тарифов по идентификатору, имени и получения полного списка.
+ */
 @Repository
 internal class TariffRepositoryImpl(
     private val db: DatabaseClient,
 ) : TariffRepository {
+    /**
+     * Поиск тарифа по идентификатору.
+     * @param tariffId строковый идентификатор тарифа
+     * @return [Tariff] или null, если тариф не найден
+     */
     override suspend fun findById(tariffId: String): Tariff? =
         db
             .sql("SELECT * FROM tariffs WHERE id = :id")
@@ -19,6 +28,11 @@ internal class TariffRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
+    /**
+     * Поиск тарифа по названию.
+     * @param name название тарифа
+     * @return [Tariff] или null, если тариф не найден
+     */
     override suspend fun findByName(name: String): Tariff? =
         db
             .sql("SELECT * FROM tariffs WHERE name = :name")
@@ -27,6 +41,10 @@ internal class TariffRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
+    /**
+     * Получение списка всех тарифов, отсортированных по названию.
+     * @return список всех [Tariff]
+     */
     override suspend fun listAll(): List<Tariff> =
         db
             .sql("SELECT * FROM tariffs ORDER BY name")
@@ -35,6 +53,12 @@ internal class TariffRepositoryImpl(
             .collectList()
             .awaitSingle()
 
+    /**
+     * Преобразование строки результата запроса R2DBC в доменную сущность [Tariff].
+     * Считывает колонки таблицы `tariffs` и создаёт [TariffTable], затем маппит в домен.
+     * @param row строка результата запроса
+     * @return доменная сущность [Tariff]
+     */
     private fun io.r2dbc.spi.Row.toTariff(): Tariff {
         val table =
             TariffTable(

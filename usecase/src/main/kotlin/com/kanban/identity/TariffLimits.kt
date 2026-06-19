@@ -1,5 +1,15 @@
 package com.kanban.identity
 
+/**
+ * Value-объект, содержащий числовые лимиты тарифа.
+ * Все значения должны быть не менее 1.
+ *
+ * @property maxProjects максимальное количество проектов
+ * @property maxBoardsPerProject максимальное количество досок на проект
+ * @property maxTasksPerBoard максимальное количество задач на доску
+ * @property maxFileSizeMb максимальный размер файла в мегабайтах
+ * @property maxStorageMb максимальный объём хранилища в мегабайтах
+ */
 data class TariffLimits(
     val maxProjects: Int,
     val maxBoardsPerProject: Int,

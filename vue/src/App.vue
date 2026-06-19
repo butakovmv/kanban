@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Корневой компонент приложения.
+ * Содержит верхнюю навигационную панель с логотипом и ссылками,
+ * а также `<RouterView />` для отображения страниц-потомков.
+ */
 import { RouterView, RouterLink } from 'vue-router'
 </script>
 

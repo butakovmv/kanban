@@ -52,6 +52,9 @@ class CreateUserOperationImplTest {
 
             val failure = assertIs<CreateUserOperation.Result.Failure>(result)
             assertEquals("Email already registered", failure.reason)
+
+            coVerify { userRepository.existsByEmail(email) }
+            coVerify(inverse = true) { userRepository.save(any()) }
         }
 
     @Test
@@ -62,6 +65,10 @@ class CreateUserOperationImplTest {
                     CreateUserOperation.Arg(email = "not-an-email", passwordHash = "pwd", displayName = "n"),
                 )
 
-            assertIs<CreateUserOperation.Result.Failure>(result)
+            val failure = assertIs<CreateUserOperation.Result.Failure>(result)
+            assertEquals("Invalid email: not-an-email", failure.reason)
+
+            coVerify(inverse = true) { userRepository.existsByEmail(any()) }
+            coVerify(inverse = true) { userRepository.save(any()) }
         }
 }

@@ -1,6 +1,10 @@
 package com.kanban.postgres.identity
 
+import com.kanban.identity.UserTariff
 import com.kanban.identity.UserTariffRepository
+import java.time.Instant
+import java.time.LocalDateTime
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.coroutines.test.runTest
@@ -47,6 +51,8 @@ internal class UserTariffRepositoryImplTest {
             val active = userTariffRepository.findActiveByUserId(userId)
 
             assertNotNull(active)
+            assertEquals(userId, active.userId)
+            assertEquals(tariffId, active.tariffId)
         }
 
     @Test
@@ -56,6 +62,46 @@ internal class UserTariffRepositoryImplTest {
 
             val active = userTariffRepository.findActiveByUserId(userId)
 
+            assertNull(active)
+        }
+
+    @Test
+    fun `should save new user tariff`() =
+        runTest {
+            val userId = userGenerator.createAndInsert()
+            val tariffId = tariffGenerator.createAndInsert()
+            val userTariff =
+                UserTariff(
+                    id = "custom-ut-id",
+                    userId = userId,
+                    tariffId = tariffId,
+                    startsAt = Instant.now().minusSeconds(86400),
+                    expiresAt = null,
+                    createdAt = Instant.now(),
+                )
+
+            val saved = userTariffRepository.save(userTariff)
+
+            assertEquals("custom-ut-id", saved.id)
+
+            val active = userTariffRepository.findActiveByUserId(userId)
+            assertNotNull(active)
+            assertEquals("custom-ut-id", active.id)
+            assertEquals(tariffId, active.tariffId)
+        }
+
+    @Test
+    fun `should return null for expired tariff`() =
+        runTest {
+            val userId = userGenerator.createAndInsert()
+            val tariffId = tariffGenerator.createAndInsert()
+            userTariffGenerator.createAndInsert(
+                userId = userId,
+                tariffId = tariffId,
+                expiresAt = LocalDateTime.now().minusDays(1),
+            )
+
+            val active = userTariffRepository.findActiveByUserId(userId)
             assertNull(active)
         }
 }

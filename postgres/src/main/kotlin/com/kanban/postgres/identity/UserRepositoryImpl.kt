@@ -9,6 +9,11 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 
+/**
+ * Реализация [UserRepository] через R2DBC и DatabaseClient.
+ * Реализует паттерн Upsert: при сохранении проверяет существование пользователя
+ * и выполняет INSERT или UPDATE соответственно.
+ */
 @Repository
 internal class UserRepositoryImpl(
     private val db: DatabaseClient,
@@ -25,6 +30,11 @@ internal class UserRepositoryImpl(
         return user
     }
 
+    /**
+     * Обновление существующей записи пользователя в таблице `users`.
+     * @param user доменная сущность пользователя с обновлёнными данными
+     * @param updatedAt метка времени обновления в часовом поясе системы
+     */
     private suspend fun updateUser(
         user: User,
         updatedAt: LocalDateTime,
@@ -55,6 +65,12 @@ internal class UserRepositoryImpl(
             .awaitSingle()
     }
 
+    /**
+     * Вставка новой записи пользователя в таблицу `users`.
+     * @param user доменная сущность пользователя для сохранения
+     * @param createdAt метка времени создания
+     * @param updatedAt метка времени обновления
+     */
     private suspend fun insertUser(
         user: User,
         createdAt: LocalDateTime,
@@ -84,6 +100,11 @@ internal class UserRepositoryImpl(
             .awaitSingle()
     }
 
+    /**
+     * Поиск пользователя по идентификатору.
+     * @param userId строковый идентификатор пользователя
+     * @return [User] или null, если пользователь не найден
+     */
     override suspend fun findById(userId: String): User? =
         db
             .sql("SELECT * FROM users WHERE id = :id")
@@ -92,6 +113,11 @@ internal class UserRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
+    /**
+     * Поиск пользователя по email.
+     * @param email строковый email пользователя
+     * @return [User] или null, если пользователь не найден
+     */
     override suspend fun findByEmail(email: String): User? =
         db
             .sql("SELECT * FROM users WHERE email = :email")
@@ -100,6 +126,11 @@ internal class UserRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
+    /**
+     * Проверка существования пользователя с указанным email.
+     * @param email строковый email для проверки
+     * @return true, если пользователь с таким email существует
+     */
     override suspend fun existsByEmail(email: String): Boolean =
         db
             .sql("SELECT COUNT(*) as cnt FROM users WHERE email = :email")
@@ -108,6 +139,12 @@ internal class UserRepositoryImpl(
             .one()
             .awaitSingle() > 0L
 
+    /**
+     * Преобразование строки результата запроса R2DBC в доменную сущность [User].
+     * Считывает колонки таблицы `users` и создаёт [UserTable], затем маппит в домен.
+     * @param row строка результата запроса
+     * @return доменная сущность [User]
+     */
     private fun io.r2dbc.spi.Row.toUser(): User {
         val table =
             UserTable(

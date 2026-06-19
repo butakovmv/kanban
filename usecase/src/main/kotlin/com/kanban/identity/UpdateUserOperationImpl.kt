@@ -3,6 +3,10 @@ package com.kanban.identity
 import com.kanban.common.Email
 import java.time.Instant
 
+/**
+ * Реализация операции обновления пользователя.
+ * Находит пользователя по ID, обновляет поля (email с валидацией, displayName) и сохраняет.
+ */
 internal class UpdateUserOperationImpl(
     private val userRepository: UserRepository,
 ) : UpdateUserOperation {

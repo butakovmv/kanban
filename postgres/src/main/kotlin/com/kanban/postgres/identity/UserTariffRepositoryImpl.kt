@@ -5,13 +5,24 @@ import com.kanban.identity.UserTariffRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 
+/**
+ * Реализация [UserTariffRepository] через R2DBC и DatabaseClient.
+ * Управляет назначениями тарифов пользователям: поиск активного тарифа и сохранение с поддержкой Upsert.
+ */
 @Repository
 internal class UserTariffRepositoryImpl(
     private val db: DatabaseClient,
 ) : UserTariffRepository {
+    /**
+     * Поиск активного тарифа пользователя.
+     * Возвращает последнюю по дате создания запись, у которой срок действия не истёк или не указан.
+     * @param userId идентификатор пользователя
+     * @return [UserTariff] или null, если активный тариф не найден
+     */
     override suspend fun findActiveByUserId(userId: String): UserTariff? =
         db
             .sql(
@@ -28,28 +39,83 @@ internal class UserTariffRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
+    /**
+     * Сохранение назначения тарифа пользователю.
+     * Выполняет поиск по идентификатору и в зависимости от результата
+     * обновляет существующую запись или вставляет новую.
+     * @param userTariff доменная сущность назначения тарифа
+     * @return сохранённая сущность [UserTariff]
+     */
     override suspend fun save(userTariff: UserTariff): UserTariff {
-        db
-            .sql(
-                """
-            INSERT INTO user_tariffs (id, user_id, tariff_id, starts_at, expires_at, created_at)
-            VALUES (:id, :userId, :tariffId, :startsAt, :expiresAt, :createdAt)
-            ON CONFLICT (id) DO UPDATE SET
-                tariff_id = EXCLUDED.tariff_id,
-                expires_at = EXCLUDED.expires_at
-        """,
-            ).bind("id", userTariff.id)
-            .bind("userId", userTariff.userId)
-            .bind("tariffId", userTariff.tariffId)
-            .bind("startsAt", userTariff.startsAt.atZone(ZoneId.systemDefault()).toLocalDateTime())
-            .bind("expiresAt", userTariff.expiresAt?.atZone(ZoneId.systemDefault())?.toLocalDateTime())
-            .bind("createdAt", userTariff.createdAt.atZone(ZoneId.systemDefault()).toLocalDateTime())
-            .fetch()
-            .rowsUpdated()
-            .awaitFirstOrNull()
+        val existing = findActiveByUserId(userTariff.userId)
+        if (existing != null) {
+            updateUserTariff(userTariff)
+        } else {
+            insertUserTariff(userTariff)
+        }
         return userTariff
     }
 
+    /**
+     * Обновление существующей записи назначения тарифа.
+     */
+    private suspend fun updateUserTariff(userTariff: UserTariff) {
+        val z = ZoneId.systemDefault()
+        db
+            .sql(
+                """
+                UPDATE user_tariffs SET
+                    tariff_id = :tariffId, expires_at = :expiresAt
+                WHERE id = :id
+            """,
+            ).bind("id", userTariff.id)
+            .bind("tariffId", userTariff.tariffId)
+            .let { spec ->
+                val expiresAtLdt = userTariff.expiresAt?.atZone(z)?.toLocalDateTime()
+                if (expiresAtLdt != null) {
+                    spec.bind("expiresAt", expiresAtLdt)
+                } else {
+                    spec.bindNull("expiresAt", LocalDateTime::class.java)
+                }
+            }.fetch()
+            .rowsUpdated()
+            .awaitSingle()
+    }
+
+    /**
+     * Вставка новой записи назначения тарифа.
+     */
+    private suspend fun insertUserTariff(userTariff: UserTariff) {
+        val z = ZoneId.systemDefault()
+        db
+            .sql(
+                """
+                INSERT INTO user_tariffs (id, user_id, tariff_id, starts_at, expires_at, created_at)
+                VALUES (:id, :userId, :tariffId, :startsAt, :expiresAt, :createdAt)
+            """,
+            ).bind("id", userTariff.id)
+            .bind("userId", userTariff.userId)
+            .bind("tariffId", userTariff.tariffId)
+            .bind("startsAt", userTariff.startsAt.atZone(z).toLocalDateTime())
+            .let { spec ->
+                val expiresAtLdt = userTariff.expiresAt?.atZone(z)?.toLocalDateTime()
+                if (expiresAtLdt != null) {
+                    spec.bind("expiresAt", expiresAtLdt)
+                } else {
+                    spec.bindNull("expiresAt", LocalDateTime::class.java)
+                }
+            }.bind("createdAt", userTariff.createdAt.atZone(z).toLocalDateTime())
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+    }
+
+    /**
+     * Преобразование строки результата запроса R2DBC в доменную сущность [UserTariff].
+     * Считывает колонки таблицы `user_tariffs` и создаёт [UserTariffTable], затем маппит в домен.
+     * @param row строка результата запроса
+     * @return доменная сущность [UserTariff]
+     */
     private fun io.r2dbc.spi.Row.toUserTariff(): UserTariff {
         val table =
             UserTariffTable(

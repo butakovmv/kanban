@@ -1,5 +1,9 @@
 package com.kanban.identity
 
+/**
+ * Реализация операции получения пользователя.
+ * Делегирует поиск в репозиторий пользователей.
+ */
 internal class GetUserOperationImpl(
     private val userRepository: UserRepository,
 ) : GetUserOperation {

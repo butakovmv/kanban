@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Страница регистрации нового пользователя.
+ * Содержит форму с полями name, email и password.
+ * После успешной регистрации перенаправляет на `/login`.
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -12,7 +17,7 @@ async function handleSubmit() {
   error.value = ''
   try {
     // TODO: call auth API
-    router.push('/login')
+    await router.push('/login')
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Registration failed'
   }

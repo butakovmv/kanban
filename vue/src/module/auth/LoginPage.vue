@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Страница входа в систему.
+ * Содержит форму с полями email и password.
+ * После успешного входа перенаправляет на `/board`.
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -11,7 +16,7 @@ async function handleSubmit() {
   error.value = ''
   try {
     // TODO: call auth API
-    router.push('/board')
+    await router.push('/board')
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Login failed'
   }

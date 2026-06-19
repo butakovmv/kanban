@@ -1,5 +1,9 @@
 package com.kanban.common
 
+/**
+ * Value-объект, представляющий email-адрес пользователя.
+ * Валидирует длину (до 254 символов) и наличие символа '@'.
+ */
 data class Email(
     val value: String,
 ) {

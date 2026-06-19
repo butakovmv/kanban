@@ -1,5 +1,9 @@
 package com.kanban.identity
 
+/**
+ * Реализация операции проверки лимитов тарифа.
+ * Находит активный тариф пользователя и сверяет запрошенное количество ресурсов с лимитом.
+ */
 internal class CheckTariffLimitsOperationImpl(
     private val userTariffRepository: UserTariffRepository,
     private val tariffRepository: TariffRepository,

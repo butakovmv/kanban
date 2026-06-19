@@ -1,6 +1,7 @@
 package com.kanban.postgres.identity
 
 import com.kanban.identity.TariffRepository
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -35,11 +36,13 @@ internal class TariffRepositoryImplTest {
     @Test
     fun `should find by id`() =
         runTest {
-            val tariffId = tariffGenerator.createAndInsert()
+            val tariffId = tariffGenerator.createAndInsert(TariffParams(name = "Premium"))
 
             val found = tariffRepository.findById(tariffId)
 
             assertNotNull(found)
+            assertEquals(tariffId, found.id.value)
+            assertEquals("Premium", found.name)
         }
 
     @Test
@@ -51,12 +54,20 @@ internal class TariffRepositoryImplTest {
             val found = tariffRepository.findByName(name)
 
             assertNotNull(found)
+            assertEquals(name, found.name)
         }
 
     @Test
     fun `should return null for unknown id`() =
         runTest {
             val found = tariffRepository.findById("unknown-id")
+            assertNull(found)
+        }
+
+    @Test
+    fun `should return null for unknown name`() =
+        runTest {
+            val found = tariffRepository.findByName("NonExistent")
             assertNull(found)
         }
 
@@ -69,5 +80,14 @@ internal class TariffRepositoryImplTest {
             val all = tariffRepository.listAll()
 
             assertTrue(all.size >= 2)
+            assertEquals("Free", all[0].name)
+            assertEquals("Pro", all[1].name)
+        }
+
+    @Test
+    fun `should return empty list when no tariffs`() =
+        runTest {
+            val all = tariffRepository.listAll()
+            assertTrue(all.isEmpty())
         }
 }

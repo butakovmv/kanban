@@ -3,6 +3,11 @@ package com.kanban.postgres.identity
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 
+/**
+ * Таблица `users` — хранит учётные записи пользователей.
+ * Содержит email, хеш пароля, отображаемое имя, настройки TOTP-аутентификации,
+ * а также метки времени создания и обновления записи.
+ */
 @Table("users")
 internal data class UserTable(
     @Id

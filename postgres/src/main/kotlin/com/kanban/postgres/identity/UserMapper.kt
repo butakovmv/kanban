@@ -6,6 +6,10 @@ import com.kanban.common.UserId
 import com.kanban.identity.User
 import java.time.ZoneId
 
+/**
+ * Маппинг табличной сущности [UserTable] в доменную сущность [User].
+ * Преобразует сырые типы (String, LocalDateTime) в типы предметной области (UserId, Email, PasswordHash, Instant).
+ */
 internal fun UserTable.toDomain(): User =
     User(
         id = UserId(id),
@@ -18,6 +22,10 @@ internal fun UserTable.toDomain(): User =
         updatedAt = updatedAt.atZone(ZoneId.systemDefault()).toInstant(),
     )
 
+/**
+ * Маппинг доменной сущности [User] в табличную сущность [UserTable].
+ * Обратное преобразование типов предметной области в сырые типы для сохранения в БД.
+ */
 internal fun User.toTable(): UserTable =
     UserTable(
         id = id.value,

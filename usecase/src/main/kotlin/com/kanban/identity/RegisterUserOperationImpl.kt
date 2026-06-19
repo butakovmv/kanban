@@ -6,6 +6,10 @@ import com.kanban.common.UserId
 import java.time.Instant
 import java.util.UUID
 
+/**
+ * Реализация операции регистрации пользователя.
+ * Валидирует email, проверяет уникальность, хеширует пароль, создаёт пользователя и генерирует токены.
+ */
 internal class RegisterUserOperationImpl(
     private val userRepository: UserRepository,
     private val passwordHasher: PasswordHasher,

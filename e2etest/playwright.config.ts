@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test'
 
+/**
+ * Конфигурация Playwright для E2E-тестирования.
+ * Запускает тесты в Chromium, Firefox и WebKit.
+ * В CI использует 1 воркер и 2 ретрая.
+ * Базовый URL берётся из переменной окружения BASE_URL (по умолч. http://localhost:80).
+ */
 export default defineConfig({
   testDir: './specs',
   fullyParallel: true,

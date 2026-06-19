@@ -10,10 +10,21 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 
+/**
+ * Реализация [RefreshTokenRepository] через R2DBC и DatabaseClient.
+ * Управляет refresh-токенами: сохранение новых, поиск по хешу и удаление по идентификатору пользователя.
+ */
 @Repository
 internal class RefreshTokenRepositoryImpl(
     private val db: DatabaseClient,
 ) : RefreshTokenRepository {
+    /**
+     * Сохранение нового refresh-токена для пользователя.
+     * Генерирует уникальный идентификатор через UUID.
+     * @param userId идентификатор пользователя
+     * @param tokenHash хеш токена
+     * @param expiresAt момент истечения токена
+     */
     override suspend fun save(
         userId: String,
         tokenHash: String,
@@ -35,6 +46,12 @@ internal class RefreshTokenRepositoryImpl(
             .awaitSingle()
     }
 
+    /**
+     * Поиск действующего refresh-токена по хешу.
+     * Учитывает только токены, срок действия которых ещё не истёк.
+     * @param tokenHash хеш токена для поиска
+     * @return пара (идентификатор пользователя, момент истечения) или null, если токен не найден или истёк
+     */
     override suspend fun findByTokenHash(tokenHash: String): Pair<String, Instant>? =
         db
             .sql(
@@ -50,6 +67,11 @@ internal class RefreshTokenRepositoryImpl(
             }.one()
             .awaitFirstOrNull()
 
+    /**
+     * Удаление всех refresh-токенов указанного пользователя.
+     * Используется при выходе из системы или отзыве всех сессий.
+     * @param userId идентификатор пользователя
+     */
     override suspend fun deleteByUserId(userId: String) {
         db
             .sql("DELETE FROM refresh_tokens WHERE user_id = :userId")

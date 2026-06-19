@@ -1,8 +1,12 @@
 package com.kanban.postgres.identity
 
+import com.kanban.common.Email
+import com.kanban.common.PasswordHash
+import com.kanban.common.UserId
 import com.kanban.identity.User
 import com.kanban.identity.UserRepository
-import kotlin.test.assertIs
+import java.time.Instant
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -35,14 +39,31 @@ internal class UserRepositoryImplTest {
         }
 
     @Test
-    fun `should save and find by id`() =
+    fun `should save new user and find by id`() =
         runTest {
-            val userId = userGenerator.createAndInsert()
+            val user =
+                User(
+                    id = UserId("new-insert-id"),
+                    email = Email("insert@kanban.test"),
+                    passwordHash = PasswordHash("hash-insert"),
+                    displayName = "Insert Test",
+                    totpSecret = null,
+                    totpEnabled = false,
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                )
 
-            val found = userRepository.findById(userId)
+            val saved = userRepository.save(user)
 
+            assertEquals("new-insert-id", saved.id.value)
+            assertEquals("insert@kanban.test", saved.email.value)
+
+            val found = userRepository.findById("new-insert-id")
             assertNotNull(found)
-            assertIs<User>(found)
+            assertEquals("new-insert-id", found.id.value)
+            assertEquals("insert@kanban.test", found.email.value)
+            assertEquals("hash-insert", found.passwordHash.value)
+            assertEquals("Insert Test", found.displayName)
         }
 
     @Test
@@ -54,12 +75,20 @@ internal class UserRepositoryImplTest {
             val found = userRepository.findByEmail(email)
 
             assertNotNull(found)
+            assertEquals(email, found.email.value)
         }
 
     @Test
     fun `should return null for unknown id`() =
         runTest {
             val found = userRepository.findById("unknown-id")
+            assertNull(found)
+        }
+
+    @Test
+    fun `should return null for unknown email`() =
+        runTest {
+            val found = userRepository.findByEmail("nonexistent@kanban.test")
             assertNull(found)
         }
 
@@ -73,6 +102,12 @@ internal class UserRepositoryImplTest {
         }
 
     @Test
+    fun `should return false for non-existent email`() =
+        runTest {
+            assertTrue(!userRepository.existsByEmail("noone@kanban.test"))
+        }
+
+    @Test
     fun `should update existing user`() =
         runTest {
             val userId = userGenerator.createAndInsert()
@@ -82,6 +117,23 @@ internal class UserRepositoryImplTest {
             val saved = userRepository.save(updated)
 
             assertNotNull(saved)
-            assert(saved.displayName == "Updated Name")
+            assertEquals("Updated Name", saved.displayName)
+
+            val reloaded = userRepository.findById(userId)
+            assertEquals("Updated Name", reloaded!!.displayName)
+        }
+
+    @Test
+    fun `should update email`() =
+        runTest {
+            val userId = userGenerator.createAndInsert()
+            val user = userRepository.findById(userId)!!
+            val updated = user.copy(email = Email("changed@kanban.test"))
+
+            userRepository.save(updated)
+
+            val byNewEmail = userRepository.findByEmail("changed@kanban.test")
+            assertNotNull(byNewEmail)
+            assertEquals(userId, byNewEmail.id.value)
         }
 }
