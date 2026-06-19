@@ -163,18 +163,18 @@
 ## Фаза 2 — Проект и доска
 
 ### 2.1 usecase: Project + Column
-- [ ] Сущности: `Project`, `Column`
-- [ ] `ProjectOperation` — create, read, update, delete
-- [ ] `ColumnOperation` — create, reorder, update, delete
-- [ ] Порты репозиториев
+- [x] Сущности: `Project`, `Column`
+- [x] `ProjectOperation` — create, read, update, delete
+- [x] `ColumnOperation` — create, reorder, update, delete
+- [x] Порты репозиториев
 
 ### 2.2 postgres: Project + Column
-- [ ] Миграции: `projects`, `columns`
-- [ ] R2DBC-репозитории
+- [x] Миграции: `projects`, `columns`
+- [x] R2DBC-репозитории
 
 ### 2.3 webapi: ProjectController
-- [ ] `GET/POST /api/v1/projects`
-- [ ] `PUT/DELETE /api/v1/projects/{id}`
+- [x] `GET/POST /api/v1/projects`
+- [x] `PUT/DELETE /api/v1/projects/{id}`
 
 ### 2.4 vue: ProjectList + Settings
 - [ ] `ProjectListPage.vue`
@@ -182,14 +182,14 @@
 - [ ] Pinia store: `projectStore`
 
 ### 2.5 usecase: Board
-- [ ] `BoardOperation` — getBoard (query), archive, backlog
-- [ ] DTO: BoardView с колонками и задачами
+- [x] `BoardOperation` — getBoard (query), archive, backlog
+- [x] DTO: BoardView с колонками и задачами
 
 ### 2.6 webapi: Board + Backlog + Archive
-- [ ] `GET /api/v1/boards/{id}`
-- [ ] `GET /api/v1/boards/{id}/backlog`
-- [ ] `GET /api/v1/boards/{id}/archive`
-- [ ] `POST /api/v1/boards/{id}/archive/{taskId}`
+- [x] `GET /api/v1/boards/{id}`
+- [ ] `GET /api/v1/boards/{id}/backlog`  (будет с Phase 3)
+- [ ] `GET /api/v1/boards/{id}/archive`  (будет с Phase 3)
+- [ ] `POST /api/v1/boards/{id}/archive/{taskId}`  (будет с Phase 3)
 
 ### 2.7 vue: BoardPage layout
 - [ ] `BoardPage.vue` — горизонтальные колонки

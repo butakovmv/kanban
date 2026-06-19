@@ -1,0 +1,68 @@
+package com.kanban.project
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+
+/**
+ * Конфигурация доменных обработчиков проектов и досок.
+ * Регистрирует [ProjectHandler] и [BoardHandler] как Spring-бины,
+ * связывая их с usecase-операциями.
+ */
+@Configuration
+internal class ProjectConfig {
+    /**
+     * Создаёт обработчик запросов проектов.
+     *
+     * @param createProjectOperation операция создания проекта
+     * @param getProjectOperation операция получения проекта
+     * @param listProjectsOperation операция получения списка проектов
+     * @param updateProjectOperation операция обновления проекта
+     * @param deleteProjectOperation операция удаления проекта
+     * @return экземпляр [ProjectHandler]
+     */
+    @Bean
+    fun projectHandler(
+        createProjectOperation: CreateProjectOperation,
+        getProjectOperation: GetProjectOperation,
+        listProjectsOperation: ListProjectsOperation,
+        updateProjectOperation: UpdateProjectOperation,
+        deleteProjectOperation: DeleteProjectOperation,
+    ): ProjectHandler =
+        ProjectHandler(
+            createProjectOperation = createProjectOperation,
+            getProjectOperation = getProjectOperation,
+            listProjectsOperation = listProjectsOperation,
+            updateProjectOperation = updateProjectOperation,
+            deleteProjectOperation = deleteProjectOperation,
+        )
+
+    /**
+     * Создаёт обработчик запросов досок.
+     *
+     * @param getBoardOperation операция получения доски
+     * @param createBoardOperation операция создания доски
+     * @param updateBoardOperation операция обновления доски
+     * @param deleteBoardOperation операция удаления доски
+     * @param archiveBoardOperation операция архивирования доски
+     * @param reorderColumnsOperation операция реордеринга колонок
+     * @return экземпляр [BoardHandler]
+     */
+    @Bean
+    @Suppress("LongParameterList")
+    fun boardHandler(
+        getBoardOperation: GetBoardOperation,
+        createBoardOperation: CreateBoardOperation,
+        updateBoardOperation: UpdateBoardOperation,
+        deleteBoardOperation: DeleteBoardOperation,
+        archiveBoardOperation: ArchiveBoardOperation,
+        reorderColumnsOperation: ReorderColumnsOperation,
+    ): BoardHandler =
+        BoardHandler(
+            getBoardOperation = getBoardOperation,
+            createBoardOperation = createBoardOperation,
+            updateBoardOperation = updateBoardOperation,
+            deleteBoardOperation = deleteBoardOperation,
+            archiveBoardOperation = archiveBoardOperation,
+            reorderColumnsOperation = reorderColumnsOperation,
+        )
+}
