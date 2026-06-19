@@ -1,0 +1,125 @@
+package com.kanban.postgres.identity
+
+import com.kanban.identity.User
+import com.kanban.identity.UserRepository
+import java.time.LocalDateTime
+import java.time.ZoneId
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
+import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.stereotype.Repository
+
+@Repository
+internal class UserRepositoryImpl(
+    private val db: DatabaseClient,
+) : UserRepository {
+    override suspend fun save(user: User): User {
+        val z = ZoneId.systemDefault()
+        val createdAt = user.createdAt.atZone(z).toLocalDateTime()
+        val updatedAt = user.updatedAt.atZone(z).toLocalDateTime()
+        if (findById(user.id.value) != null) {
+            updateUser(user, updatedAt)
+        } else {
+            insertUser(user, createdAt, updatedAt)
+        }
+        return user
+    }
+
+    private suspend fun updateUser(
+        user: User,
+        updatedAt: LocalDateTime,
+    ) {
+        db
+            .sql(
+                """
+                UPDATE users SET
+                    email = :email, password_hash = :passwordHash,
+                    display_name = :displayName, totp_secret = :totpSecret,
+                    totp_enabled = :totpEnabled, updated_at = :updatedAt
+                WHERE id = :id
+                """,
+            ).bind("id", user.id.value)
+            .bind("email", user.email.value)
+            .bind("passwordHash", user.passwordHash.value)
+            .bind("displayName", user.displayName)
+            .let { spec ->
+                if (user.totpSecret != null) {
+                    spec.bind("totpSecret", user.totpSecret)
+                } else {
+                    spec.bindNull("totpSecret", String::class.java)
+                }
+            }.bind("totpEnabled", user.totpEnabled)
+            .bind("updatedAt", updatedAt)
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+    }
+
+    private suspend fun insertUser(
+        user: User,
+        createdAt: LocalDateTime,
+        updatedAt: LocalDateTime,
+    ) {
+        db
+            .sql(
+                """
+                INSERT INTO users (id, email, password_hash, display_name, totp_secret, totp_enabled, created_at, updated_at)
+                VALUES (:id, :email, :passwordHash, :displayName, :totpSecret, :totpEnabled, :createdAt, :updatedAt)
+                """,
+            ).bind("id", user.id.value)
+            .bind("email", user.email.value)
+            .bind("passwordHash", user.passwordHash.value)
+            .bind("displayName", user.displayName)
+            .let { spec ->
+                if (user.totpSecret != null) {
+                    spec.bind("totpSecret", user.totpSecret)
+                } else {
+                    spec.bindNull("totpSecret", String::class.java)
+                }
+            }.bind("totpEnabled", user.totpEnabled)
+            .bind("createdAt", createdAt)
+            .bind("updatedAt", updatedAt)
+            .fetch()
+            .rowsUpdated()
+            .awaitSingle()
+    }
+
+    override suspend fun findById(userId: String): User? =
+        db
+            .sql("SELECT * FROM users WHERE id = :id")
+            .bind("id", userId)
+            .map { row, _ -> row.toUser() }
+            .one()
+            .awaitFirstOrNull()
+
+    override suspend fun findByEmail(email: String): User? =
+        db
+            .sql("SELECT * FROM users WHERE email = :email")
+            .bind("email", email)
+            .map { row, _ -> row.toUser() }
+            .one()
+            .awaitFirstOrNull()
+
+    override suspend fun existsByEmail(email: String): Boolean =
+        db
+            .sql("SELECT COUNT(*) as cnt FROM users WHERE email = :email")
+            .bind("email", email)
+            .map { row, _ -> (row.get("cnt", java.lang.Long::class.java) ?: 0L) as Long }
+            .one()
+            .awaitSingle() > 0L
+
+    private fun io.r2dbc.spi.Row.toUser(): User {
+        val table =
+            UserTable(
+                id = get("id", String::class.java)!!,
+                email = get("email", String::class.java)!!,
+                passwordHash = get("password_hash", String::class.java)!!,
+                displayName = get("display_name", String::class.java)!!,
+                totpSecret = get("totp_secret", String::class.java),
+                totpEnabled = get("totp_enabled", java.lang.Boolean::class.java)!!.booleanValue(),
+                createdAt = get("created_at", java.time.LocalDateTime::class.java)!!,
+                updatedAt = get("updated_at", java.time.LocalDateTime::class.java)!!,
+            )
+        return table.toDomain()
+    }
+}
