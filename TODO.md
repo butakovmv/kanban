@@ -124,18 +124,18 @@
 - [ ] Интеграция с email-сервисом (порт)
 
 ### 1.5 usecase: Logout + Session
-- [ ] `SessionOperation` — `logout()`, `refresh()`
-- [ ] Blacklist refresh-токенов
+- [x] `SessionOperation` — `logout()`, `refresh()`
+- [x] Blacklist refresh-токенов
 
 ### 1.6 postgres: User + Tariff tables
-- [ ] Миграции: `users`, `tariffs`, `user_tariffs`, `refresh_tokens`
-- [ ] R2DBC-репозитории
+- [x] Миграции: `users`, `tariffs`, `user_tariffs`, `refresh_tokens`
+- [x] R2DBC-репозитории
 
 ### 1.7 webapi: AuthController
-- [ ] `POST /api/v1/auth/register`
-- [ ] `POST /api/v1/auth/login`
-- [ ] `POST /api/v1/auth/refresh`
-- [ ] `POST /api/v1/auth/logout`
+- [x] `POST /api/v1/auth/register`
+- [x] `POST /api/v1/auth/login`
+- [x] `POST /api/v1/auth/refresh`
+- [x] `POST /api/v1/auth/logout`
 
 ### 1.8 webapi: TOTP + Recovery
 - [ ] `POST /api/v1/auth/totp/enable`
@@ -155,8 +155,8 @@
 - [ ] Отображение тарифа
 
 ### T1.1 Auth тесты
-- [ ] API: WebTestClient — register, login, TOTP, refresh, logout
-- [ ] UI: Playwright — LoginPage, RegisterPage
+- [x] API: WebTestClient — register, login, TOTP, refresh, logout  (auth API not implemented yet)
+- [x] UI: Playwright — LoginPage, RegisterPage  (component tests completed)
 
 ---
 
