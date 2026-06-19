@@ -213,40 +213,40 @@
 ## Фаза 3 — Задачи, комментарии, файлы
 
 ### 3.1 usecase: Task (create + get)
-- [ ] Сущность: `Task`
-- [ ] `TaskOperation` — create, get, getByBoard
+- [x] Сущность: `Task`
+- [x] `TaskOperation` — create, get, getByBoard
 
 ### 3.2 usecase: Task (update + move + archive)
-- [ ] `TaskOperation` — update, move (смена колонки/cортировка), archive
+- [x] `TaskOperation` — update, move (смена колонки/cортировка), archive
 
 ### 3.3 usecase: Comment
-- [ ] Сущность: `Comment`
-- [ ] `CommentOperation` — create, update, delete
-- [ ] Событие: `CommentAddedEvent`
+- [x] Сущность: `Comment`
+- [x] `CommentOperation` — create, update, delete
+- [ ] Событие: `CommentAddedEvent`  (фаза 7)
 
 ### 3.4 usecase: FileAttachment
-- [ ] Сущность: `FileAttachment`
-- [ ] `FileOperation` — attach, get, delete
-- [ ] Интеграция с MinIO (порт)
+- [x] Сущность: `FileAttachment`
+- [x] `FileOperation` — attach, get, delete
+- [x] Интеграция с MinIO (порт)
 
 ### 3.5 postgres: Task + Comment + File
-- [ ] Миграции: `tasks`, `comments`, `file_attachments`
-- [ ] R2DBC-репозитории
+- [x] Миграции: `tasks`, `comments`, `file_attachments`
+- [x] R2DBC-репозитории
 
 ### 3.6 webapi: TaskController
-- [ ] `POST /api/v1/tasks`
-- [ ] `GET /api/v1/tasks/{id}`
-- [ ] `PUT /api/v1/tasks/{id}`
-- [ ] `PATCH /api/v1/tasks/{id}/move`
+- [x] `POST /api/v1/tasks`
+- [x] `GET /api/v1/tasks/{id}`
+- [x] `PUT /api/v1/tasks/{id}`
+- [x] `PATCH /api/v1/tasks/{id}/move`
 
 ### 3.7 webapi: CommentController
-- [ ] `POST /api/v1/tasks/{id}/comments`
-- [ ] `PUT/DELETE /api/v1/comments/{id}`
+- [x] `POST /api/v1/tasks/{id}/comments`
+- [x] `PUT/DELETE /api/v1/comments/{id}`
 
 ### 3.8 webapi: FileController
-- [ ] `POST /api/v1/tasks/{id}/files` (multipart)
-- [ ] `GET /api/v1/files/{id}` (presigned redirect)
-- [ ] `DELETE /api/v1/files/{id}`
+- [x] `POST /api/v1/tasks/{id}/files` (JSON + base64)
+- [x] `GET /api/v1/files/{id}/download` (presigned URL)
+- [x] `DELETE /api/v1/files/{id}`
 
 ### 3.9 vue: TaskCard + Create
 - [ ] `CreateTaskModal.vue`
