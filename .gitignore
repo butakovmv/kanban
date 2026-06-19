@@ -28,11 +28,19 @@ dist/
 *.log
 logs/
 
+# Playwright
+e2etest/report/
+e2etest/test-results/
+
 # Agent generated
 docs/ai/scratch/
 
 # Java
 *.class
+
+# Coverage
+**/reports/jacoco/
+**/coverage/
 
 # Gradle wrapper (keep)
 !gradlew

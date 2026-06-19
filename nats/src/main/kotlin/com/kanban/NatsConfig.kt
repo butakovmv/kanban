@@ -5,5 +5,4 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @ConditionalOnProperty(name = ["kanban.nats.enabled"], havingValue = "false", matchIfMissing = true)
-class NatsConfig {
-}
+class NatsConfig

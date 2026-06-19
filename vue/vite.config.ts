@@ -13,4 +13,15 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    passWithNoTests: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcov', 'text'],
+      include: ['src/**/*.ts', 'src/**/*.vue'],
+      exclude: ['src/main.ts'],
+    },
+  },
 })

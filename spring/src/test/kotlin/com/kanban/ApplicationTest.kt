@@ -6,6 +6,5 @@ import org.springframework.boot.test.context.SpringBootTest
 @SpringBootTest
 class ApplicationTest {
     @Test
-    fun contextLoads() {
-    }
+    fun contextLoads() = Unit
 }

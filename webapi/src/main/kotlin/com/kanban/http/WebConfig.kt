@@ -15,12 +15,12 @@ import org.springframework.web.reactive.config.WebFluxConfigurer
 @Configuration
 @EnableWebFlux
 class WebConfig : WebFluxConfigurer {
-
     @Bean
-    fun objectMapper(): ObjectMapper = jsonMapper {
-        addModule(kotlinModule())
-        propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-    }
+    fun objectMapper(): ObjectMapper =
+        jsonMapper {
+            addModule(kotlinModule())
+            propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+        }
 
     override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
         val mapper = objectMapper()
