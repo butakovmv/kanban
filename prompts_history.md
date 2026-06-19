@@ -382,3 +382,7 @@ Continue if you have next steps, or stop and ask for clarification if you are un
 
 коммить. затем приступай к Phase 1.9. шаг Phase 1.3 (TOTP) пока пропусти, позже к нему вернемся отдельно
 
+## Prompt 95
+
+коммить, затем 1.8
+
