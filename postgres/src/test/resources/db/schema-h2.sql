@@ -98,6 +98,35 @@ CREATE TABLE IF NOT EXISTS file_attachments (
     uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS groups (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    group_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS permissions (
+    id VARCHAR(36) PRIMARY KEY,
+    resource VARCHAR(100) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    target_id VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS group_permissions (
+    group_id VARCHAR(36) NOT NULL,
+    permission_id VARCHAR(36) NOT NULL,
+    granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, permission_id)
+);
+
 CREATE TABLE IF NOT EXISTS documents (
     id VARCHAR(36) PRIMARY KEY,
     project_id VARCHAR(36) NOT NULL,

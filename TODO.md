@@ -300,33 +300,49 @@
 
 ## Фаза 5 — Управление доступом
 
-### 5.1+5.2 usecase+pg: Group + Permission
-- [ ] Сущности: `Group`, `Permission`
-- [ ] `GroupOperation` — CRUD
-- [ ] `PermissionOperation` — assign, revoke, check
-- [ ] Миграции: `groups`, `group_members`, `permissions`, `group_permissions`
+### 5.1+5.2 usecase: Group + Permission
+- [x] Сущности: `Group`, `Permission`, `GroupMember`, `GroupPermission`
+- [x] Value objects: `GroupId`, `PermissionId`
+- [x] `CreateGroupOperation`, `GetGroupOperation`, `ListGroupsOperation`, `UpdateGroupOperation`, `DeleteGroupOperation`
+- [x] `AddMemberOperation`, `RemoveMemberOperation`, `ListMembersOperation`, `ListUserGroupsOperation`
+- [x] `CreatePermissionOperation`, `FindPermissionsOperation`, `DeletePermissionOperation`
+- [x] `GrantPermissionOperation`, `RevokePermissionOperation`, `ListGroupPermissionsOperation`
+- [x] `CheckPermissionOperation` — проверка прав пользователя через группы
+- [x] Unit-тесты: 52 теста, покрытие usecase 94%+
 
-### 5.2 usecase+pg: Members
-- [ ] `MemberOperation` — add, remove, list
+### 5.1+5.2 postgres: Group + Permission + Members
+- [x] Миграция `V005__create_access_control.sql`: `groups`, `group_members`, `permissions`, `group_permissions`
+- [x] H2-совместимая схема в `schema-h2.sql`
+- [x] `GroupTable`, `GroupMemberTable`, `PermissionTable`, `GroupPermissionTable`
+- [x] `GroupMapper`, `GroupMemberMapper`, `PermissionMapper`, `GroupPermissionMapper`
+- [x] `GroupRepositoryImpl`, `GroupMemberRepositoryImpl`, `PermissionRepositoryImpl`, `GroupPermissionRepositoryImpl`
+- [x] Тесты: 48 тестов (репозитории + мапперы), все проходят
 
-### 5.3 webapi: AccessController
-- [ ] `POST/GET /api/v1/groups`
-- [ ] `POST/DELETE /api/v1/groups/{id}/members`
+### 5.3+5.4 webapi: AccessController + PermissionCheck
+- [x] `AccessHandler` — 16 методов для групп, членов, прав, проверки
+- [x] `AccessConfig` — bean-конфигурация
+- [x] 16 контроллеров (по одному на запрос):
+  - `POST/GET /api/v1/groups`, `PUT/DELETE /api/v1/groups/{id}`
+  - `POST/DELETE /api/v1/groups/{id}/members`, `GET /api/v1/groups/{id}/members`
+  - `GET /api/v1/users/{id}/groups`
+  - `POST/DELETE /api/v1/permissions`, `GET /api/v1/permissions`
+  - `POST/DELETE /api/v1/groups/{id}/permissions`
+  - `GET /api/v1/permissions/check`
+- [x] Тесты: 16 контроллеров × 2+ сценария = 34+ теста
 
-### 5.4 webapi: PermissionCheck
-- [ ] Middleware/Filter проверки прав
-- [ ] `GET /api/v1/permissions/check`
-
-### 5.5 vue: AccessControlPage
-- [ ] `AccessControlPage.vue` — список групп
-- [ ] Управление участниками
-
-### 5.6 vue: PermissionEditor
-- [ ] `PermissionEditor.vue` — визуальный редактор прав
+### 5.5+5.6 vue: Access + Permission
+- [x] `api.ts` — 17 функций для групп, членов, прав, проверки
+- [x] `store.ts` — Pinia store: группы, участники, права
+- [x] `AccessControlPage.vue` — список групп, управление участниками
+- [x] `PermissionEditor.vue` — визуальный редактор прав (grant/revoke)
+- [x] `router.ts` — `/access`
 
 ### T5.1 Access тесты
-- [ ] API: group CRUD, member management, permission check
-- [ ] UI: AccessControlPage, PermissionEditor
+- [x] API: 22 теста api.spec.ts
+- [x] Store: 20 тестов store.spec.ts
+- [x] Page: 9 тестов AccessControlPage.spec.ts
+- [x] PermissionEditor: 7 тестов PermissionEditor.spec.ts
+- [x] Vue tests: 257 total, all pass
 
 ---
 

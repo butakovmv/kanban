@@ -11,6 +11,7 @@ import { createRouter, createWebHistory } from 'vue-router'
  * - `/projects/:id` — настройки проекта
  * - `/boards/:id` — доска с колонками
  * - `/tasks/:id` — детали задачи
+ * - `/access` — управление доступом
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -53,6 +54,11 @@ const router = createRouter({
       path: '/tasks/:id',
       name: 'task-detail',
       component: () => import('./module/task/TaskDetailPage.vue'),
+    },
+    {
+      path: '/access',
+      name: 'access-control',
+      component: () => import('./module/access/AccessControlPage.vue'),
     },
   ],
 })
