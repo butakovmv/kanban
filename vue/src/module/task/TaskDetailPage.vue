@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from './store'
 import { useAuthStore } from '../auth/store'
+import { useRealtime } from '../realtime/useRealtime'
 import CommentSystem from './CommentSystem.vue'
 import FileUpload from './FileUpload.vue'
 
@@ -47,6 +48,9 @@ async function load() {
 
 onMounted(load)
 watch(taskId, load)
+
+const taskBoardId = computed(() => currentTask.value?.boardId)
+useRealtime(taskBoardId)
 
 function backToBoard() {
   if (currentTask.value !== null) {

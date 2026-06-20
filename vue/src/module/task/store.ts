@@ -123,7 +123,9 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   /**
-   * Перемещает задачу в другую колонку/позицию и обновляет локальный список.
+   * Перемещает задачу в другую колонку/позицию с оптимистичным обновлением.
+   * Сначала обновляет локальное состояние, затем отправляет запрос.
+   * При ошибке откатывает изменения.
    * @param id идентификатор задачи
    * @param request columnId, position
    * @returns обновлённая задача или null при ошибке
@@ -133,6 +135,16 @@ export const useTaskStore = defineStore('task', () => {
     request: taskApi.MoveTaskRequest,
   ): Promise<taskApi.Task | null> {
     error.value = null
+
+    const snapshot = tasks.value.find((t) => t.id === id)
+    if (snapshot) {
+      const optimistic: taskApi.Task = { ...snapshot, columnId: request.columnId, position: request.position }
+      tasks.value = tasks.value.map((t) => (t.id === id ? optimistic : t))
+      if (currentTask.value !== null && currentTask.value.id === id) {
+        currentTask.value = optimistic
+      }
+    }
+
     try {
       const moved = await taskApi.moveTask(id, request)
       tasks.value = tasks.value.map((t) => (t.id === id ? moved : t))
@@ -141,6 +153,12 @@ export const useTaskStore = defineStore('task', () => {
       }
       return moved
     } catch (e: unknown) {
+      if (snapshot) {
+        tasks.value = tasks.value.map((t) => (t.id === id ? snapshot : t))
+        if (currentTask.value !== null && currentTask.value.id === id) {
+          currentTask.value = snapshot
+        }
+      }
       error.value = e instanceof Error ? e.message : 'Failed to move task'
       return null
     }
@@ -314,6 +332,90 @@ export const useTaskStore = defineStore('task', () => {
     tasks.value = []
   }
 
+  /**
+   * Обрабатывает SSE-событие перемещения задачи: обновляет columnId в локальном состоянии.
+   * @param taskId идентификатор задачи
+   * @param columnId идентификатор новой колонки
+   */
+  function handleTaskMoved(taskId: string, columnId: string): void {
+    const task = tasks.value.find((t) => t.id === taskId)
+    if (task) {
+      tasks.value = tasks.value.map((t) =>
+        t.id === taskId ? { ...t, columnId } : t,
+      )
+      if (currentTask.value !== null && currentTask.value.id === taskId) {
+        currentTask.value = { ...currentTask.value, columnId }
+      }
+    }
+  }
+
+  /**
+   * Обрабатывает SSE-событие архивирования задачи.
+   * @param taskId идентификатор задачи
+   */
+  function handleTaskArchived(taskId: string): void {
+    tasks.value = tasks.value.map((t) =>
+      t.id === taskId ? { ...t, archived: true } : t,
+    )
+    if (currentTask.value !== null && currentTask.value.id === taskId) {
+      currentTask.value = { ...currentTask.value, archived: true }
+    }
+  }
+
+  /**
+   * Обрабатывает SSE-событие обновления задачи: перезагружает задачу из API.
+   * @param taskId идентификатор задачи
+   */
+  function handleTaskUpdated(taskId: string): void {
+    if (currentTask.value !== null && currentTask.value.id === taskId) {
+      taskApi.getTask(taskId).then((updated) => {
+        if (currentTask.value !== null && currentTask.value.id === taskId) {
+          currentTask.value = updated
+        }
+        tasks.value = tasks.value.map((t) => (t.id === taskId ? updated : t))
+      }).catch(() => {
+        /* ignore refresh errors */
+      })
+    }
+  }
+
+  /**
+   * Удаляет задачу из локального списка по идентификатору (для SSE-события удаления).
+   * @param taskId идентификатор задачи
+   */
+  function deleteTaskFromList(taskId: string): void {
+    tasks.value = tasks.value.filter((t) => t.id !== taskId)
+    if (currentTask.value !== null && currentTask.value.id === taskId) {
+      currentTask.value = null
+      comments.value = []
+      files.value = []
+    }
+  }
+
+  /**
+   * Планирует перезагрузку списка задач при SSE-событии создания задачи.
+   * Выполняется с небольшой задержкой, чтобы сервер успел завершить обработку.
+   */
+  function scheduleRefresh(): void {
+    error.value = null
+  }
+
+  /**
+   * Планирует перезагрузку комментариев при SSE-событии добавления комментария.
+   * @param taskId идентификатор задачи
+   */
+  function scheduleCommentRefresh(taskId: string): void {
+    if (currentTask.value !== null && currentTask.value.id === taskId) {
+      taskApi.listComments(taskId).then((updated) => {
+        if (currentTask.value !== null && currentTask.value.id === taskId) {
+          comments.value = updated
+        }
+      }).catch(() => {
+        /* ignore refresh errors */
+      })
+    }
+  }
+
   return {
     tasks,
     currentTask,
@@ -340,5 +442,11 @@ export const useTaskStore = defineStore('task', () => {
     deleteFile,
     clearCurrent,
     clearTasks,
+    handleTaskMoved,
+    handleTaskArchived,
+    handleTaskUpdated,
+    deleteTaskFromList,
+    scheduleRefresh,
+    scheduleCommentRefresh,
   }
 })

@@ -1,6 +1,8 @@
 package com.kanban.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kanban.sse.SinkService
+import com.kanban.sse.SseEvent
 import java.time.Instant
 
 /**
@@ -25,6 +27,7 @@ internal class TaskHandler(
     private val moveTaskOperation: MoveTaskOperation,
     private val archiveTaskOperation: ArchiveTaskOperation,
     private val deleteTaskOperation: DeleteTaskOperation,
+    private val sinkService: SinkService? = null,
 ) {
     /**
      * Создаёт новую задачу в колонке доски.
@@ -45,10 +48,20 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is CreateTaskOperation.Result.Success ->
+            is CreateTaskOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "task_created",
+                        data = """{"task_id":"${result.task.id.value}","board_id":"${result.task.boardId.value}"}""",
+                        boardId = result.task.boardId.value,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 CreateTaskResult.Success(
                     task = result.task.toResponse(),
                 )
+            }
             is CreateTaskOperation.Result.Failure ->
                 CreateTaskResult.Failure(reason = result.reason)
         }
@@ -114,10 +127,20 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is UpdateTaskOperation.Result.Success ->
+            is UpdateTaskOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "task_updated",
+                        data = """{"task_id":"${result.task.id.value}","board_id":"${result.task.boardId.value}"}""",
+                        boardId = result.task.boardId.value,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 UpdateTaskResult.Success(
                     task = result.task.toResponse(),
                 )
+            }
             UpdateTaskOperation.Result.NotFound -> UpdateTaskResult.NotFound
             is UpdateTaskOperation.Result.Failure ->
                 UpdateTaskResult.Failure(reason = result.reason)
@@ -140,10 +163,26 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is MoveTaskOperation.Result.Success ->
+            is MoveTaskOperation.Result.Success -> {
+                val eventData =
+                    buildString {
+                        append("""{"task_id":"${result.task.id.value}",""")
+                        append(""""board_id":"${result.task.boardId.value}",""")
+                        append(""""column_id":"${result.task.columnId.value}"}""")
+                    }
+                sinkService?.emit(
+                    SseEvent(
+                        type = "task_moved",
+                        data = eventData,
+                        boardId = result.task.boardId.value,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 MoveTaskResult.Success(
                     task = result.task.toResponse(),
                 )
+            }
             MoveTaskOperation.Result.NotFound -> MoveTaskResult.NotFound
         }
     }
@@ -160,7 +199,18 @@ internal class TaskHandler(
                 ArchiveTaskOperation.Arg(taskId = request.taskId),
             )
         return when (result) {
-            ArchiveTaskOperation.Result.Success -> ArchiveTaskResult.Success
+            ArchiveTaskOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "task_archived",
+                        data = """{"task_id":"${request.taskId}"}""",
+                        boardId = null,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
+                ArchiveTaskResult.Success
+            }
             ArchiveTaskOperation.Result.NotFound -> ArchiveTaskResult.NotFound
         }
     }
@@ -177,7 +227,18 @@ internal class TaskHandler(
                 DeleteTaskOperation.Arg(taskId = request.taskId),
             )
         return when (result) {
-            DeleteTaskOperation.Result.Success -> DeleteTaskResult.Success
+            DeleteTaskOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "task_deleted",
+                        data = """{"task_id":"${request.taskId}"}""",
+                        boardId = null,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
+                DeleteTaskResult.Success
+            }
             DeleteTaskOperation.Result.NotFound -> DeleteTaskResult.NotFound
         }
     }

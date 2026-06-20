@@ -10,6 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBoardStore } from './store'
 import { useTaskStore } from '../task/store'
+import { useRealtime } from '../realtime/useRealtime'
 import Column from './Column.vue'
 import CreateTaskModal from '../task/CreateTaskModal.vue'
 import type { CreateTaskRequest } from '../task/api'
@@ -48,6 +49,8 @@ async function load() {
 onMounted(load)
 watch(boardId, load)
 
+useRealtime(boardId)
+
 function toggleSwimlanes() {
   swimlanesEnabled.value = !swimlanesEnabled.value
 }
@@ -72,11 +75,7 @@ function openTask(taskId: string) {
 }
 
 async function moveTask(payload: { taskId: string; columnId: string }) {
-  const targetTasks = taskStore.tasksForColumn(payload.columnId)
-  await taskStore.moveTask(payload.taskId, {
-    columnId: payload.columnId,
-    position: targetTasks.length,
-  })
+  await boardStore.optimisticMoveTask(payload.taskId, payload.columnId)
   dragOverColumnId.value = null
 }
 

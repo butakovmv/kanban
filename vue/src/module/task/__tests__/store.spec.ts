@@ -177,6 +177,7 @@ describe('task store', () => {
       vi.mocked(api.moveTask).mockRejectedValue(new Error('conflict'))
 
       const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1' })]
       const result = await store.moveTask('t-1', { columnId: 'c-2', position: 0 })
 
       expect(result).toBeNull()
@@ -332,6 +333,196 @@ describe('task store', () => {
       store.tasks = [taskGenerator.task({ columnId: 'c-1' })]
 
       expect(store.tasksForColumn('c-2')).toEqual([])
+    })
+  })
+
+  describe('moveTask optimistic update', () => {
+    it('applies optimistic update immediately before API resolves', async () => {
+      const original = taskGenerator.task({ id: 't-1', columnId: 'c-1', position: 0 })
+      const moved = taskGenerator.task({ id: 't-1', columnId: 'c-2', position: 2 })
+      vi.mocked(api.moveTask).mockResolvedValue(moved)
+
+      const store = useTaskStore()
+      store.tasks = [original]
+      store.currentTask = original
+
+      const promise = store.moveTask('t-1', { columnId: 'c-2', position: 2 })
+
+      expect(store.tasks[0].columnId).toBe('c-2')
+      expect(store.tasks[0].position).toBe(2)
+      expect(store.currentTask?.columnId).toBe('c-2')
+
+      await promise
+      expect(store.tasks[0]).toEqual(moved)
+    })
+
+    it('rolls back optimistic update on API failure', async () => {
+      const original = taskGenerator.task({ id: 't-1', columnId: 'c-1', position: 0 })
+      vi.mocked(api.moveTask).mockRejectedValue(new Error('conflict'))
+
+      const store = useTaskStore()
+      store.tasks = [original]
+      store.currentTask = original
+
+      const result = await store.moveTask('t-1', { columnId: 'c-2', position: 2 })
+
+      expect(result).toBeNull()
+      expect(store.error).toBe('conflict')
+      expect(store.tasks[0].columnId).toBe('c-1')
+      expect(store.tasks[0].position).toBe(0)
+      expect(store.currentTask?.columnId).toBe('c-1')
+    })
+
+    it('still moves task when not in local state (no optimistic update)', async () => {
+      const moved = taskGenerator.task({ id: 't-new', columnId: 'c-2' })
+      vi.mocked(api.moveTask).mockResolvedValue(moved)
+
+      const store = useTaskStore()
+      const result = await store.moveTask('t-new', { columnId: 'c-2', position: 0 })
+
+      expect(result).toEqual(moved)
+    })
+  })
+
+  describe('handleTaskMoved', () => {
+    it('updates columnId for the given task in tasks list', () => {
+      const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1' })]
+
+      store.handleTaskMoved('t-1', 'c-2')
+
+      expect(store.tasks[0].columnId).toBe('c-2')
+    })
+
+    it('updates currentTask if it matches', () => {
+      const store = useTaskStore()
+      const task = taskGenerator.task({ id: 't-1', columnId: 'c-1' })
+      store.tasks = [task]
+      store.currentTask = task
+
+      store.handleTaskMoved('t-1', 'c-3')
+
+      expect(store.currentTask?.columnId).toBe('c-3')
+    })
+
+    it('does nothing for unknown task', () => {
+      const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1' })]
+
+      store.handleTaskMoved('t-unknown', 'c-2')
+
+      expect(store.tasks[0].columnId).toBe('c-1')
+    })
+  })
+
+  describe('handleTaskArchived', () => {
+    it('marks task as archived in tasks list', () => {
+      const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1', archived: false })]
+
+      store.handleTaskArchived('t-1')
+
+      expect(store.tasks[0].archived).toBe(true)
+    })
+
+    it('updates currentTask if it matches', () => {
+      const store = useTaskStore()
+      const task = taskGenerator.task({ id: 't-1', archived: false })
+      store.tasks = [task]
+      store.currentTask = task
+
+      store.handleTaskArchived('t-1')
+
+      expect(store.currentTask?.archived).toBe(true)
+    })
+  })
+
+  describe('deleteTaskFromList', () => {
+    it('removes task from list', () => {
+      const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1' }), taskGenerator.task({ id: 't-2' })]
+
+      store.deleteTaskFromList('t-1')
+
+      expect(store.tasks).toHaveLength(1)
+      expect(store.tasks[0].id).toBe('t-2')
+    })
+
+    it('clears currentTask and comments/files when deleted task is current', () => {
+      const store = useTaskStore()
+      const task = taskGenerator.task({ id: 't-1' })
+      store.tasks = [task]
+      store.currentTask = task
+      store.comments = [taskGenerator.comment({ taskId: 't-1' })]
+      store.files = [taskGenerator.file({ taskId: 't-1' })]
+
+      store.deleteTaskFromList('t-1')
+
+      expect(store.tasks).toEqual([])
+      expect(store.currentTask).toBeNull()
+      expect(store.comments).toEqual([])
+      expect(store.files).toEqual([])
+    })
+
+    it('does nothing for unknown task', () => {
+      const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1' })]
+
+      store.deleteTaskFromList('t-unknown')
+
+      expect(store.tasks).toHaveLength(1)
+    })
+  })
+
+  describe('handleTaskUpdated', () => {
+    it('re-fetches task and updates currentTask when taskId matches', async () => {
+      const original = taskGenerator.task({ id: 't-1', title: 'Old' })
+      const updated = taskGenerator.task({ id: 't-1', title: 'New' })
+      vi.mocked(api.getTask).mockResolvedValue(updated)
+
+      const store = useTaskStore()
+      store.currentTask = original
+      store.tasks = [original]
+
+      store.handleTaskUpdated('t-1')
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(store.currentTask?.title).toBe('New')
+      expect(store.tasks[0].title).toBe('New')
+    })
+
+    it('does not refetch when taskId does not match currentTask', async () => {
+      vi.mocked(api.getTask).mockResolvedValue(taskGenerator.task({ id: 't-1' }))
+      const store = useTaskStore()
+      store.currentTask = taskGenerator.task({ id: 't-2' })
+
+      store.handleTaskUpdated('t-1')
+
+      expect(api.getTask).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('scheduleCommentRefresh', () => {
+    it('re-fetches comments when taskId matches currentTask', async () => {
+      const comments = taskGenerator.comments(2, 't-1')
+      vi.mocked(api.listComments).mockResolvedValue(comments)
+
+      const store = useTaskStore()
+      store.currentTask = taskGenerator.task({ id: 't-1' })
+
+      store.scheduleCommentRefresh('t-1')
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(store.comments).toHaveLength(2)
+    })
+
+    it('does nothing when taskId does not match currentTask', () => {
+      const store = useTaskStore()
+      store.currentTask = taskGenerator.task({ id: 't-2' })
+
+      store.scheduleCommentRefresh('t-1')
+
+      expect(api.listComments).not.toHaveBeenCalled()
     })
   })
 

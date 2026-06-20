@@ -78,6 +78,10 @@ CREATE TABLE IF NOT EXISTS tasks (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- search_vector is stored as VARCHAR in H2 (tsvector is not supported);
+-- full-text matching uses LIKE-based queries in tests
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS search_vector VARCHAR(1024);
+
 CREATE TABLE IF NOT EXISTS comments (
     id VARCHAR(36) PRIMARY KEY,
     task_id VARCHAR(36) NOT NULL,

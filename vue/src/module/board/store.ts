@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as boardApi from './api'
+import { useTaskStore } from '../task/store'
 
 /**
  * Pinia-хранилище состояния доски и её колонок.
@@ -136,6 +137,49 @@ export const useBoardStore = defineStore('board', () => {
     columns.value = []
   }
 
+  /**
+   * Оптимистично перемещает задачу между колонками: сразу обновляет UI,
+   * затем отправляет запрос на сервер.
+   * @param taskId идентификатор задачи
+   * @param toColumnId идентификатор целевой колонки
+   * @returns true при успехе, false при ошибке (с откатом)
+   */
+  async function optimisticMoveTask(
+    taskId: string,
+    toColumnId: string,
+  ): Promise<boolean> {
+    const taskStore = useTaskStore()
+    const targetTasks = taskStore.tasksForColumn(toColumnId)
+    const result = await taskStore.moveTask(taskId, {
+      columnId: toColumnId,
+      position: targetTasks.length,
+    })
+    return result !== null
+  }
+
+  /**
+   * Обрабатывает SSE-событие перемещения задачи.
+   * Обновляет локальное состояние если задача принадлежит текущей доске.
+   * @param data данные события (task_id, column_id)
+   */
+  function handleTaskMoved(data: Record<string, unknown>): void {
+    const taskId = data['task_id'] as string | undefined
+    const columnId = data['column_id'] as string | undefined
+    if (taskId && columnId) {
+      const taskStore = useTaskStore()
+      taskStore.handleTaskMoved(taskId, columnId)
+    }
+  }
+
+  /**
+   * Обрабатывает SSE-событие удаления задачи.
+   * @param taskId идентификатор удалённой задачи
+   */
+  function handleTaskDeleted(taskId: string): void {
+    const taskStore = useTaskStore()
+    taskStore.deleteTaskFromList(taskId)
+  }
+
   return {
     currentBoard,
     columns,
@@ -149,5 +193,8 @@ export const useBoardStore = defineStore('board', () => {
     deleteBoard,
     reorderColumns,
     clearCurrent,
+    optimisticMoveTask,
+    handleTaskMoved,
+    handleTaskDeleted,
   }
 })

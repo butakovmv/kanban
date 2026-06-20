@@ -11,7 +11,8 @@ import { createRouter, createWebHistory } from 'vue-router'
  * - `/projects/:id` — настройки проекта
  * - `/boards/:id` — доска с колонками
  * - `/tasks/:id` — детали задачи
- * - `/access` — управление доступом
+ * - `/search` — поиск задач
+ * - `/reports` — отчёты
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -59,6 +60,16 @@ const router = createRouter({
       path: '/access',
       name: 'access-control',
       component: () => import('./module/access/AccessControlPage.vue'),
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: () => import('./module/search/SearchPage.vue'),
+    },
+    {
+      path: '/reports',
+      name: 'reports',
+      component: () => import('./module/report/ReportsPage.vue'),
     },
   ],
 })

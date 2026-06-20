@@ -1,5 +1,6 @@
 package com.kanban.task
 
+import com.kanban.sse.SinkService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -32,6 +33,7 @@ internal class TaskConfig {
         moveTaskOperation: MoveTaskOperation,
         archiveTaskOperation: ArchiveTaskOperation,
         deleteTaskOperation: DeleteTaskOperation,
+        sinkService: SinkService,
     ): TaskHandler =
         TaskHandler(
             createTaskOperation = createTaskOperation,
@@ -41,6 +43,7 @@ internal class TaskConfig {
             moveTaskOperation = moveTaskOperation,
             archiveTaskOperation = archiveTaskOperation,
             deleteTaskOperation = deleteTaskOperation,
+            sinkService = sinkService,
         )
 
     /**
@@ -58,12 +61,14 @@ internal class TaskConfig {
         updateCommentOperation: UpdateCommentOperation,
         deleteCommentOperation: DeleteCommentOperation,
         listCommentsOperation: ListCommentsOperation,
+        sinkService: SinkService,
     ): CommentHandler =
         CommentHandler(
             createCommentOperation = createCommentOperation,
             updateCommentOperation = updateCommentOperation,
             deleteCommentOperation = deleteCommentOperation,
             listCommentsOperation = listCommentsOperation,
+            sinkService = sinkService,
         )
 
     /**

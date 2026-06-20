@@ -1,6 +1,8 @@
 package com.kanban.task
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kanban.sse.SinkService
+import com.kanban.sse.SseEvent
 import java.time.Instant
 
 /**
@@ -18,6 +20,7 @@ internal class CommentHandler(
     private val updateCommentOperation: UpdateCommentOperation,
     private val deleteCommentOperation: DeleteCommentOperation,
     private val listCommentsOperation: ListCommentsOperation,
+    private val sinkService: SinkService? = null,
 ) {
     /**
      * Создаёт комментарий к задаче.
@@ -35,10 +38,25 @@ internal class CommentHandler(
                 ),
             )
         return when (result) {
-            is CreateCommentOperation.Result.Success ->
+            is CreateCommentOperation.Result.Success -> {
+                val eventData =
+                    buildString {
+                        append("""{"comment_id":"${result.comment.id.value}",""")
+                        append(""""task_id":"${result.comment.taskId.value}"}""")
+                    }
+                sinkService?.emit(
+                    SseEvent(
+                        type = "comment_added",
+                        data = eventData,
+                        boardId = null,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 CreateCommentResult.Success(
                     comment = result.comment.toResponse(),
                 )
+            }
             is CreateCommentOperation.Result.Failure ->
                 CreateCommentResult.Failure(reason = result.reason)
         }
@@ -59,10 +77,25 @@ internal class CommentHandler(
                 ),
             )
         return when (result) {
-            is UpdateCommentOperation.Result.Success ->
+            is UpdateCommentOperation.Result.Success -> {
+                val eventData =
+                    buildString {
+                        append("""{"comment_id":"${result.comment.id.value}",""")
+                        append(""""task_id":"${result.comment.taskId.value}"}""")
+                    }
+                sinkService?.emit(
+                    SseEvent(
+                        type = "comment_updated",
+                        data = eventData,
+                        boardId = null,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 UpdateCommentResult.Success(
                     comment = result.comment.toResponse(),
                 )
+            }
             UpdateCommentOperation.Result.NotFound -> UpdateCommentResult.NotFound
             is UpdateCommentOperation.Result.Failure ->
                 UpdateCommentResult.Failure(reason = result.reason)
@@ -81,7 +114,18 @@ internal class CommentHandler(
                 DeleteCommentOperation.Arg(commentId = request.commentId),
             )
         return when (result) {
-            DeleteCommentOperation.Result.Success -> DeleteCommentResult.Success
+            DeleteCommentOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "comment_deleted",
+                        data = """{"comment_id":"${request.commentId}"}""",
+                        boardId = null,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
+                DeleteCommentResult.Success
+            }
             DeleteCommentOperation.Result.NotFound -> DeleteCommentResult.NotFound
         }
     }

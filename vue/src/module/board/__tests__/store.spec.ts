@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useBoardStore } from '../store'
+import { useTaskStore } from '../../task/store'
 import * as api from '../api'
+import * as taskApi from '../../task/api'
 import { boardGenerator } from './boardGenerator'
+import { taskGenerator } from '../../task/__tests__/taskGenerator'
 
 vi.mock('../api', async () => {
   const actual = await vi.importActual<typeof api>('../api')
@@ -13,6 +16,26 @@ vi.mock('../api', async () => {
     updateBoard: vi.fn(),
     deleteBoard: vi.fn(),
     reorderColumns: vi.fn(),
+  }
+})
+
+vi.mock('../../task/api', async () => {
+  const actual = await vi.importActual<typeof taskApi>('../../task/api')
+  return {
+    ...actual,
+    listTasks: vi.fn(),
+    getTask: vi.fn(),
+    createTask: vi.fn(),
+    updateTask: vi.fn(),
+    moveTask: vi.fn(),
+    archiveTask: vi.fn(),
+    deleteTask: vi.fn(),
+    listComments: vi.fn(),
+    createComment: vi.fn(),
+    updateComment: vi.fn(),
+    deleteComment: vi.fn(),
+    listFiles: vi.fn(),
+    deleteFile: vi.fn(),
   }
 })
 
@@ -233,6 +256,65 @@ describe('board store', () => {
 
       expect(store.currentBoard).toBeNull()
       expect(store.columns).toEqual([])
+    })
+  })
+
+  describe('optimisticMoveTask', () => {
+    it('calls taskStore.moveTask and returns true on success', async () => {
+      const taskStore = useTaskStore()
+      const moved = taskGenerator.task({ id: 't-1', columnId: 'c-2' })
+      taskStore.tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1' })]
+      vi.mocked(taskApi.moveTask).mockResolvedValue(moved)
+
+      const store = useBoardStore()
+      const result = await store.optimisticMoveTask('t-1', 'c-2')
+
+      expect(result).toBe(true)
+    })
+
+    it('returns false when moveTask fails', async () => {
+      const taskStore = useTaskStore()
+      taskStore.tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1' })]
+      vi.mocked(taskApi.moveTask).mockRejectedValue(new Error('fail'))
+
+      const store = useBoardStore()
+      const result = await store.optimisticMoveTask('t-1', 'c-2')
+
+      expect(result).toBe(false)
+    })
+  })
+
+  describe('handleTaskMoved', () => {
+    it('delegates to taskStore.handleTaskMoved with correct args', () => {
+      const taskStore = useTaskStore()
+      const spy = vi.spyOn(taskStore, 'handleTaskMoved')
+
+      const store = useBoardStore()
+      store.handleTaskMoved({ task_id: 't-1', column_id: 'c-2' })
+
+      expect(spy).toHaveBeenCalledWith('t-1', 'c-2')
+    })
+
+    it('skips when data is missing task_id', () => {
+      const taskStore = useTaskStore()
+      const spy = vi.spyOn(taskStore, 'handleTaskMoved')
+
+      const store = useBoardStore()
+      store.handleTaskMoved({ column_id: 'c-2' })
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('handleTaskDeleted', () => {
+    it('delegates to taskStore.deleteTaskFromList with correct taskId', () => {
+      const taskStore = useTaskStore()
+      const spy = vi.spyOn(taskStore, 'deleteTaskFromList')
+
+      const store = useBoardStore()
+      store.handleTaskDeleted('t-1')
+
+      expect(spy).toHaveBeenCalledWith('t-1')
     })
   })
 })

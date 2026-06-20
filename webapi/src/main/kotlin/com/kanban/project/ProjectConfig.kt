@@ -1,5 +1,6 @@
 package com.kanban.project
 
+import com.kanban.sse.SinkService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -56,6 +57,7 @@ internal class ProjectConfig {
         deleteBoardOperation: DeleteBoardOperation,
         archiveBoardOperation: ArchiveBoardOperation,
         reorderColumnsOperation: ReorderColumnsOperation,
+        sinkService: SinkService,
     ): BoardHandler =
         BoardHandler(
             getBoardOperation = getBoardOperation,
@@ -64,5 +66,6 @@ internal class ProjectConfig {
             deleteBoardOperation = deleteBoardOperation,
             archiveBoardOperation = archiveBoardOperation,
             reorderColumnsOperation = reorderColumnsOperation,
+            sinkService = sinkService,
         )
 }

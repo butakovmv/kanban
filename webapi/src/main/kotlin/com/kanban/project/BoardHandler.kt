@@ -1,6 +1,8 @@
 package com.kanban.project
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kanban.sse.SinkService
+import com.kanban.sse.SseEvent
 import java.time.Instant
 
 /**
@@ -15,6 +17,7 @@ import java.time.Instant
  * @property archiveBoardOperation операция архивирования доски
  * @property reorderColumnsOperation операция реордеринга колонок
  */
+@Suppress("LongParameterList")
 internal class BoardHandler(
     private val getBoardOperation: GetBoardOperation,
     private val createBoardOperation: CreateBoardOperation,
@@ -22,6 +25,7 @@ internal class BoardHandler(
     private val deleteBoardOperation: DeleteBoardOperation,
     private val archiveBoardOperation: ArchiveBoardOperation,
     private val reorderColumnsOperation: ReorderColumnsOperation,
+    private val sinkService: SinkService? = null,
 ) {
     /**
      * Получает доску вместе с её колонками.
@@ -82,10 +86,20 @@ internal class BoardHandler(
                 ),
             )
         return when (result) {
-            is UpdateBoardOperation.Result.Success ->
+            is UpdateBoardOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "board_updated",
+                        data = """{"board_id":"${result.board.id.value}"}""",
+                        boardId = result.board.id.value,
+                        projectId = result.board.projectId.value,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 UpdateBoardResult.Success(
                     board = result.board.toResponse(),
                 )
+            }
             UpdateBoardOperation.Result.NotFound -> UpdateBoardResult.NotFound
         }
     }
@@ -119,7 +133,18 @@ internal class BoardHandler(
                 ArchiveBoardOperation.Arg(boardId = request.boardId),
             )
         return when (result) {
-            ArchiveBoardOperation.Result.Success -> ArchiveBoardResult.Success
+            ArchiveBoardOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "board_archived",
+                        data = """{"board_id":"${request.boardId}"}""",
+                        boardId = request.boardId,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
+                ArchiveBoardResult.Success
+            }
             ArchiveBoardOperation.Result.NotFound -> ArchiveBoardResult.NotFound
         }
     }
@@ -139,10 +164,20 @@ internal class BoardHandler(
                 ),
             )
         return when (result) {
-            is ReorderColumnsOperation.Result.Success ->
+            is ReorderColumnsOperation.Result.Success -> {
+                sinkService?.emit(
+                    SseEvent(
+                        type = "columns_reordered",
+                        data = """{"board_id":"${request.boardId}"}""",
+                        boardId = request.boardId,
+                        projectId = null,
+                        timestamp = Instant.now(),
+                    ),
+                )
                 ReorderColumnsResult.Success(
                     columns = result.columns.map { it.toResponse() },
                 )
+            }
             ReorderColumnsOperation.Result.BoardNotFound -> ReorderColumnsResult.BoardNotFound
             ReorderColumnsOperation.Result.InvalidColumns -> ReorderColumnsResult.InvalidColumns
         }
