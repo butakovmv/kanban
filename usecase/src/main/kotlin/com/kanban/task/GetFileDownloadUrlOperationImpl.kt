@@ -7,7 +7,8 @@ import kotlin.time.Duration.Companion.minutes
  * Реализация операции получения presigned-URL для скачивания прикреплённого файла.
  * Находит прикрепление по ID и запрашивает у [FileStorage] URL с ограниченным сроком действия.
  */
-internal class GetFileDownloadUrlOperationImpl(
+internal class GetFileDownloadUrlOperationImpl
+@JvmOverloads constructor(
     private val fileAttachmentRepository: FileAttachmentRepository,
     private val fileStorage: FileStorage,
     private val expiresIn: Duration = DEFAULT_EXPIRES_IN,

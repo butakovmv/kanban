@@ -131,6 +131,14 @@ CREATE TABLE IF NOT EXISTS group_permissions (
     PRIMARY KEY (group_id, permission_id)
 );
 
+CREATE TABLE IF NOT EXISTS recovery_tokens (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS documents (
     id VARCHAR(36) PRIMARY KEY,
     project_id VARCHAR(36) NOT NULL,
