@@ -17,6 +17,8 @@ internal class TaskConfig {
      * @param createTaskOperation операция создания задачи
      * @param getTaskOperation операция получения задачи
      * @param listTasksOperation операция получения списка задач
+     * @param listBoardBacklogOperation операция получения бэклога доски
+     * @param listArchivedTasksOperation операция получения архивированных задач доски
      * @param updateTaskOperation операция обновления задачи
      * @param moveTaskOperation операция перемещения задачи
      * @param archiveTaskOperation операция архивирования задачи
@@ -29,6 +31,8 @@ internal class TaskConfig {
         createTaskOperation: CreateTaskOperation,
         getTaskOperation: GetTaskOperation,
         listTasksOperation: ListTasksOperation,
+        listBoardBacklogOperation: ListBoardBacklogOperation,
+        listArchivedTasksOperation: ListArchivedTasksOperation,
         updateTaskOperation: UpdateTaskOperation,
         moveTaskOperation: MoveTaskOperation,
         archiveTaskOperation: ArchiveTaskOperation,
@@ -39,6 +43,8 @@ internal class TaskConfig {
             createTaskOperation = createTaskOperation,
             getTaskOperation = getTaskOperation,
             listTasksOperation = listTasksOperation,
+            listBoardBacklogOperation = listBoardBacklogOperation,
+            listArchivedTasksOperation = listArchivedTasksOperation,
             updateTaskOperation = updateTaskOperation,
             moveTaskOperation = moveTaskOperation,
             archiveTaskOperation = archiveTaskOperation,

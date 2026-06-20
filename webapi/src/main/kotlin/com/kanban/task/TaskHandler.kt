@@ -15,6 +15,8 @@ import java.time.Instant
  * @property listTasksOperation операция получения списка задач
  * @property updateTaskOperation операция обновления задачи
  * @property moveTaskOperation операция перемещения задачи
+ * @property listBoardBacklogOperation операция получения бэклога доски
+ * @property listArchivedTasksOperation операция получения архивированных задач доски
  * @property archiveTaskOperation операция архивирования задачи
  * @property deleteTaskOperation операция удаления задачи
  */
@@ -23,6 +25,8 @@ internal class TaskHandler(
     private val createTaskOperation: CreateTaskOperation,
     private val getTaskOperation: GetTaskOperation,
     private val listTasksOperation: ListTasksOperation,
+    private val listBoardBacklogOperation: ListBoardBacklogOperation,
+    private val listArchivedTasksOperation: ListArchivedTasksOperation,
     private val updateTaskOperation: UpdateTaskOperation,
     private val moveTaskOperation: MoveTaskOperation,
     private val archiveTaskOperation: ArchiveTaskOperation,
@@ -104,6 +108,48 @@ internal class TaskHandler(
         return when (result) {
             is ListTasksOperation.Result.Success ->
                 ListTasksResult.Success(
+                    tasks = result.tasks.map { it.toResponse() },
+                )
+        }
+    }
+
+    /**
+     * Получает список задач бэклога доски (неархивные задачи).
+     *
+     * @param request параметры запроса бэклога
+     * @return результат со списком задач
+     */
+    suspend fun listBoardBacklog(request: ListBoardBacklogRequest): ListBoardBacklogResult {
+        val result =
+            listBoardBacklogOperation.execute(
+                ListBoardBacklogOperation.Arg(
+                    boardId = request.boardId,
+                ),
+            )
+        return when (result) {
+            is ListBoardBacklogOperation.Result.Success ->
+                ListBoardBacklogResult.Success(
+                    tasks = result.tasks.map { it.toResponse() },
+                )
+        }
+    }
+
+    /**
+     * Получает список архивированных задач доски.
+     *
+     * @param request параметры запроса архива
+     * @return результат со списком задач
+     */
+    suspend fun listArchivedTasks(request: ListArchivedTasksRequest): ListArchivedTasksResult {
+        val result =
+            listArchivedTasksOperation.execute(
+                ListArchivedTasksOperation.Arg(
+                    boardId = request.boardId,
+                ),
+            )
+        return when (result) {
+            is ListArchivedTasksOperation.Result.Success ->
+                ListArchivedTasksResult.Success(
                     tasks = result.tasks.map { it.toResponse() },
                 )
         }
@@ -308,6 +354,26 @@ internal class TaskHandler(
     )
 
     /**
+     * DTO запроса бэклога доски.
+     *
+     * @property boardId идентификатор доски
+     */
+    data class ListBoardBacklogRequest(
+        @JsonProperty("board_id")
+        val boardId: String,
+    )
+
+    /**
+     * DTO запроса архивированных задач доски.
+     *
+     * @property boardId идентификатор доски
+     */
+    data class ListArchivedTasksRequest(
+        @JsonProperty("board_id")
+        val boardId: String,
+    )
+
+    /**
      * DTO тела запроса обновления задачи.
      *
      * @property title новый заголовок (null — не изменять)
@@ -462,6 +528,26 @@ internal class TaskHandler(
         data class Success(
             val tasks: List<TaskResponse>,
         ) : ListTasksResult
+    }
+
+    /**
+     * Результат операции получения бэклога доски.
+     */
+    sealed interface ListBoardBacklogResult {
+        /** Список задач успешно получен. */
+        data class Success(
+            val tasks: List<TaskResponse>,
+        ) : ListBoardBacklogResult
+    }
+
+    /**
+     * Результат операции получения архивированных задач доски.
+     */
+    sealed interface ListArchivedTasksResult {
+        /** Список задач успешно получен. */
+        data class Success(
+            val tasks: List<TaskResponse>,
+        ) : ListArchivedTasksResult
     }
 
     /**

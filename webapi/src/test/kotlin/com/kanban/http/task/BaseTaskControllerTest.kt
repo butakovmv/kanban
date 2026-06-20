@@ -11,6 +11,8 @@ import com.kanban.task.DeleteTaskOperation
 import com.kanban.task.FileHandler
 import com.kanban.task.GetFileDownloadUrlOperation
 import com.kanban.task.GetTaskOperation
+import com.kanban.task.ListArchivedTasksOperation
+import com.kanban.task.ListBoardBacklogOperation
 import com.kanban.task.ListCommentsOperation
 import com.kanban.task.ListFilesOperation
 import com.kanban.task.ListTasksOperation
@@ -33,6 +35,8 @@ internal abstract class BaseTaskControllerTest {
     protected lateinit var createTaskOperation: CreateTaskOperation
     protected lateinit var getTaskOperation: GetTaskOperation
     protected lateinit var listTasksOperation: ListTasksOperation
+    protected lateinit var listBoardBacklogOperation: ListBoardBacklogOperation
+    protected lateinit var listArchivedTasksOperation: ListArchivedTasksOperation
     protected lateinit var updateTaskOperation: UpdateTaskOperation
     protected lateinit var moveTaskOperation: MoveTaskOperation
     protected lateinit var archiveTaskOperation: ArchiveTaskOperation
@@ -58,6 +62,8 @@ internal abstract class BaseTaskControllerTest {
         createTaskOperation = mockk()
         getTaskOperation = mockk()
         listTasksOperation = mockk()
+        listBoardBacklogOperation = mockk()
+        listArchivedTasksOperation = mockk()
         updateTaskOperation = mockk()
         moveTaskOperation = mockk()
         archiveTaskOperation = mockk()
@@ -76,6 +82,8 @@ internal abstract class BaseTaskControllerTest {
                 createTaskOperation = createTaskOperation,
                 getTaskOperation = getTaskOperation,
                 listTasksOperation = listTasksOperation,
+                listBoardBacklogOperation = listBoardBacklogOperation,
+                listArchivedTasksOperation = listArchivedTasksOperation,
                 updateTaskOperation = updateTaskOperation,
                 moveTaskOperation = moveTaskOperation,
                 archiveTaskOperation = archiveTaskOperation,
@@ -103,6 +111,8 @@ internal abstract class BaseTaskControllerTest {
                 CreateTaskController::class.java -> CreateTaskController(taskHandler)
                 GetTaskController::class.java -> GetTaskController(taskHandler)
                 ListTasksController::class.java -> ListTasksController(taskHandler)
+                ListBoardBacklogController::class.java -> ListBoardBacklogController(taskHandler)
+                ListArchivedTasksController::class.java -> ListArchivedTasksController(taskHandler)
                 UpdateTaskController::class.java -> UpdateTaskController(taskHandler)
                 MoveTaskController::class.java -> MoveTaskController(taskHandler)
                 ArchiveTaskController::class.java -> ArchiveTaskController(taskHandler)
