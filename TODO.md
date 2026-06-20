@@ -349,51 +349,69 @@
 ## Фаза 6 — Поиск и отчёты
 
 ### 6.1+6.2 usecase+pg+webapi: Search
-- [ ] Полнотекстовый поиск по задачам (PostgreSQL full-text)
-- [ ] `SearchOperation` — поиск с фильтрами
-- [ ] Миграция: `tsvector` индекс
-- [ ] `GET /api/v1/search?q=...&project=...`
+- [x] `SearchCriteria`, `SearchResult` value objects
+- [x] `SearchRepository` port
+- [x] `SearchOperation` + `SearchOperationImpl` — поиск с фильтрами (query, project, board, status, priority, assignee, date range)
+- [x] Миграция `V006__create_search_index.sql` — tsvector + GIN индекс + триггер
+- [x] `SearchRepositoryImpl` — PostgreSQL full-text search (`to_tsvector`/`plainto_tsquery`)
+- [x] H2-совместимый `TestSearchRepositoryImpl` (LIKE-based) для тестов
+- [x] `SearchHandler`, `SearchConfig`, `SearchController` — `GET /api/v1/search?q=...&project_id=...`
+- [x] Тесты: usecase (3), postgres (9), webapi (6)
 
 ### 6.3 vue: SearchPage
-- [ ] `SearchPage.vue` — строка поиска, результаты
+- [x] `SearchPage.vue` — строка поиска с debounce, фильтры (project, board, status, priority, assignee, даты), результаты с подсветкой, пагинация
+- [x] `api.ts` — searchTasks()
 
 ### 6.4+6.5 usecase+pg+webapi: Reports
-- [ ] CFD (Cumulative Flow Diagram)
-- [ ] Lead Time, Cycle Time
-- [ ] `GET /api/v1/reports/cfd`
-- [ ] `GET /api/v1/reports/lead-time`
+- [x] `ReportCriteria`, `CfdDataPoint`, `LeadTimeDataPoint` value objects
+- [x] `ReportRepository` port
+- [x] `GetCfdReportOperation` + `GetLeadTimeReportOperation` — CFD и Lead Time
+- [x] `ReportRepositoryImpl` — SQL для CFD (группировка по колонкам) и Lead Time (разница created_at/updated_at)
+- [x] `ReportHandler`, `ReportConfig`, controllers — `GET /api/v1/reports/cfd`, `GET /api/v1/reports/lead-time`
+- [x] Тесты: usecase (4), postgres, webapi (4)
 
 ### 6.6 vue: ReportsPage
-- [ ] `ReportsPage.vue` — диаграммы (Chart.js)
-- [ ] Выбор диапазона дат
+- [x] `ReportsPage.vue` — SVG-диаграммы (CFD multi-line chart + Lead Time bar chart со средней линией)
+- [x] `api.ts` — getCfd(), getLeadTime()
+- [x] `store.ts` — Pinia store для отчётов
+- [x] Выбор дат и интервала
+- [x] Тесты: 15 тестов
 
 ### T6.1 Search/Reports тесты
-- [ ] API: search, reports endpoints
-- [ ] UI: SearchPage, ReportsPage
+- [x] API: search + reports endpoints протестированы
+- [x] UI: SearchPage + ReportsPage протестированы
 
 ---
 
 ## Фаза 7 — Real-time синхронизация (SSE)
 
 ### 7.1 webapi: SSE endpoint
-- [ ] `GET /api/v1/events` — SSE endpoint
-- [ ] `SinkService` — управление подписками
-- [ ] Sticky-session / fallback
+- [x] `GET /api/v1/events` — SSE endpoint (SseController)
+- [x] `SinkService` — управление подписками (global/board/project)
+- [x] Поддержка фильтрации по board_id/project_id
+- [x] Auto-reconnect на клиенте
 
 ### 7.2 webapi: Publish events
-- [ ] Публикация событий при CRUD задачах, колонках, комментариях
-- [ ] Типы событий: `TaskMoved`, `TaskUpdated`, `CommentAdded`
+- [x] TaskHandler: `task_created`, `task_updated`, `task_moved`, `task_deleted`, `task_archived`
+- [x] CommentHandler: `comment_added`, `comment_updated`, `comment_deleted`
+- [x] BoardHandler: `board_updated`, `board_archived`, `columns_reordered`
+- [x] Всего 11 типов событий при CRUD операциях
 
 ### 7.3 vue: EventSource integration
-- [ ] `EventSource` API в сервисе
-- [ ] Pinia store: обновление состояния по событиям
+- [x] `sseService.ts` — EventSource с подключением/отключением, wildcard `*`, авто-переподключение
+- [x] `useRealtime.ts` — Pinia composable, маршрутизация событий в store
+- [x] BoardPage + TaskDetailPage подключены к realtime
+- [x] Обработка: `task_moved`, `task_updated`, `task_archived`, `task_deleted`, `comment_added`
 
 ### 7.4 vue: Optimistic updates
-- [ ] Оптимистичное обновление UI при DnD
-- [ ] Откат при ошибке / конфликте (Last-Event-ID)
+- [x] `boardStore.optimisticMoveTask` — мгновенное перемещение при DnD
+- [x] Откат при ошибке API (snapshot-based rollback)
+- [x] `taskStore.handleTaskMoved/Archived/Updated` — обработка SSE-событий
 
 ### T7.1 Realtime тесты
-- [ ] SSE-события, синхронизация между вкладками
+- [x] Backend: SinkServiceTest (6 тестов), SseControllerTest (1 тест)
+- [x] Vue: sseService.spec.ts (12 тестов), useRealtime.spec.ts (8 тестов)
+- [x] Store: optimistic moveTask + rollback (18 новых тестов в taskStore, 4 в boardStore)
 
 ---
 
