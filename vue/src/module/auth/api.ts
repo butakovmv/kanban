@@ -1,3 +1,4 @@
+import { get } from '../../fetch'
 import { post } from '../../fetch'
 
 /**
@@ -22,6 +23,18 @@ export interface AuthTokens {
  */
 export interface AuthResponse extends AuthTokens {
   user: AuthUser
+}
+
+/**
+ * Информация о тарифе пользователя.
+ */
+export interface TariffInfo {
+  name: string
+  maxProjects: number
+  maxBoardsPerProject: number
+  maxTasksPerBoard: number
+  maxFileSizeMb: number
+  maxStorageMb: number
 }
 
 /**
@@ -99,4 +112,8 @@ export function logout(request: LogoutRequest): Promise<void> {
   return post<void>('/auth/logout', {
     refresh_token: request.refreshToken,
   })
+}
+
+export function getTariff(): Promise<TariffInfo> {
+  return get<TariffInfo>('/profile/tariff')
 }

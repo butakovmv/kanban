@@ -1,11 +1,25 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './store'
 import { storeToRefs } from 'pinia'
+import { getTariff } from './api'
+import type { TariffInfo } from './api'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
+
+const tariff = ref<TariffInfo | null>(null)
+const tariffError = ref(false)
+
+onMounted(async () => {
+  try {
+    tariff.value = await getTariff()
+  } catch {
+    tariffError.value = true
+  }
+})
 
 async function handleLogout() {
   await authStore.logout()
@@ -34,6 +48,38 @@ async function handleLogout() {
       </div>
 
       <p v-else class="profile__empty">Not logged in</p>
+
+      <div v-if="tariff" class="profile__tariff">
+        <h2>Tariff</h2>
+        <div class="profile__field">
+          <span class="profile__label">Plan</span>
+          <span class="profile__value">{{ tariff.name }}</span>
+        </div>
+        <div class="profile__tariff-limits">
+          <div class="profile__field">
+            <span class="profile__label">Max Projects</span>
+            <span class="profile__value">{{ tariff.maxProjects }}</span>
+          </div>
+          <div class="profile__field">
+            <span class="profile__label">Boards / Project</span>
+            <span class="profile__value">{{ tariff.maxBoardsPerProject }}</span>
+          </div>
+          <div class="profile__field">
+            <span class="profile__label">Tasks / Board</span>
+            <span class="profile__value">{{ tariff.maxTasksPerBoard }}</span>
+          </div>
+          <div class="profile__field">
+            <span class="profile__label">Max File Size</span>
+            <span class="profile__value">{{ tariff.maxFileSizeMb }} MB</span>
+          </div>
+          <div class="profile__field">
+            <span class="profile__label">Storage Limit</span>
+            <span class="profile__value">{{ tariff.maxStorageMb }} MB</span>
+          </div>
+        </div>
+      </div>
+
+      <p v-else-if="tariffError" class="profile__empty">Tariff info unavailable</p>
 
       <button class="profile__logout-btn" @click="handleLogout">Logout</button>
     </div>

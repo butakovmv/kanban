@@ -43,4 +43,10 @@ internal class IdentityConfig {
         RecoveryHandler(
             recoveryOperation = recoveryOperation,
         )
+
+    @Bean
+    fun profileHandler(getCurrentUserTariffOperation: GetCurrentUserTariffOperation): ProfileHandler =
+        ProfileHandler(
+            getCurrentUserTariffOperation = getCurrentUserTariffOperation,
+        )
 }

@@ -116,8 +116,8 @@
 - [x] Реализации + unit-тесты (90% покрытие usecase)
 
 ### 1.3 usecase: TOTP
-- [ ] `TotpOperation` — `enable()`, `verify()`, `disable()`
-- [ ] Генерация секрета, QR-код
+- [ ] `TotpOperation` — `enable()`, `verify()`, `disable()`  (TOTP отложен)
+- [ ] Генерация секрета, QR-код  (TOTP отложен)
 
 ### 1.4 usecase: Recovery
 - [x] `RecoveryOperation` — `request()`, `reset()`
@@ -138,8 +138,7 @@
 - [x] `POST /api/v1/auth/logout`
 
 ### 1.8 webapi: TOTP + Recovery
-- [ ] `POST /api/v1/auth/totp/enable`  (TOTP отложен)
-- [ ] `POST /api/v1/auth/totp/verify`  (TOTP отложен)
+- [➜] TOTP endpoints — отложено (не реализовано)
 - [x] `POST /api/v1/auth/recovery/request`
 - [x] `POST /api/v1/auth/recovery/reset`
 
@@ -150,13 +149,14 @@
 - [x] api.ts: auth-методы
 
 ### 1.10 vue: Profile + TOTP
-- [ ] `ProfilePage.vue`
-- [ ] TOTP-привязка (QR, ввод кода)
+- [x] `ProfilePage.vue`
+- [➜] TOTP-привязка (QR, ввод кода) — отложено
 - [ ] Отображение тарифа
 
 ### T1.1 Auth тесты
-- [x] API: WebTestClient — register, login, TOTP, refresh, logout  (auth API not implemented yet)
-- [x] UI: Playwright — LoginPage, RegisterPage  (component tests completed)
+- [x] API: WebTestClient — register, login, refresh, logout, recovery
+- [x] Vue: authStore, LoginPage, RegisterPage — тесты
+- [x] Playwright: auth.spec.ts — E2E регистрация + вход
 
 ---
 
@@ -187,9 +187,9 @@
 
 ### 2.6 webapi: Board + Backlog + Archive
 - [x] `GET /api/v1/boards/{id}`
-- [ ] `GET /api/v1/boards/{id}/backlog`  (будет с Phase 3)
-- [ ] `GET /api/v1/boards/{id}/archive`  (будет с Phase 3)
-- [ ] `POST /api/v1/boards/{id}/archive/{taskId}`  (будет с Phase 3)
+- [x] `GET /api/v1/boards/{id}/backlog`
+- [x] `GET /api/v1/boards/{id}/archive`
+- [x] `POST /api/v1/tasks/{id}/archive`
 
 ### 2.7 vue: BoardPage layout
 - [x] `BoardPage.vue` — горизонтальные колонки
@@ -205,8 +205,9 @@
 - [x] Переключение swimlane on/off
 
 ### T2.1 Project/Board тесты
-- [ ] API: CRUD project, board view, backlog, archive
-- [ ] UI: BoardPage, DnD колонок
+- [x] WebAPI: 13 тестов — project (CRUD), board (view, archive, reorder columns)
+- [x] Vue: 4 spec файла — ProjectListPage, ProjectSettingsPage, BoardPage, stores
+- [x] Playwright: project.spec.ts + board.spec.ts
 
 ---
 
@@ -222,7 +223,7 @@
 ### 3.3 usecase: Comment
 - [x] Сущность: `Comment`
 - [x] `CommentOperation` — create, update, delete
-- [ ] Событие: `CommentAddedEvent`  (фаза 7)
+- [x] Событие: `comment_added` (SSE, реализовано в Phase 7 CommentHandler)
 
 ### 3.4 usecase: FileAttachment
 - [x] Сущность: `FileAttachment`
@@ -265,8 +266,9 @@
 - [x] `FileUpload.vue` — drag & drop файлов
 
 ### T3.1 Task тесты
-- [ ] API: CRUD task, move, comment, file upload
-- [ ] UI: TaskCard DnD, TaskDetail, Comments
+- [x] WebAPI: 19 тестов — task (CRUD, move, archive, backlog, archived list), comment (CRUD), file (attach, download, delete)
+- [x] Vue: 5 spec файлов — TaskCard, TaskDetailPage, CreateTaskModal, stores
+- [x] Playwright: task.spec.ts + comment.spec.ts + file.spec.ts
 
 ---
 
@@ -293,8 +295,9 @@
 - [x] Дополнение к FileController (загрузка в существующем FileHandler)
 
 ### T4.1 Document тесты
-- [ ] API: CRUD document, presigned URL
-- [ ] UI: DocumentList, upload
+- [x] WebAPI: 9 тестов — document CRUD, download, replace
+- [x] Vue: 4 spec файла — DocumentListPage, DocumentUpload, stores
+- [x] Playwright: document.spec.ts
 
 ---
 
