@@ -15,23 +15,25 @@ vi.mock('../../task/api', async () => {
 })
 
 interface MockEventSource {
-  url: string
+  url: string | URL
   close: ReturnType<typeof vi.fn>
   addEventListener: ReturnType<typeof vi.fn>
   removeEventListener: ReturnType<typeof vi.fn>
   onerror: ((event: Event) => void) | null
+  onopen: ((event: Event) => void) | null
   readyState: number
 }
 
 let mockEventSource: MockEventSource | null = null
 
-function createMockEventSource(this: void, url: string): MockEventSource {
-  const instance = {
+function createMockEventSource(this: void, url: string | URL): MockEventSource {
+  const instance: MockEventSource = {
     url,
     close: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    onerror: null as ((event: Event) => void) | null,
+    onerror: null,
+    onopen: null,
     readyState: 1,
   }
   mockEventSource = instance
@@ -70,8 +72,7 @@ describe('useRealtime', () => {
     mockEventSource = null
     onMountedCb = null
     onUnmountedCb = null
-    globalThis.EventSource = vi.fn() as unknown as typeof EventSource
-    vi.mocked(globalThis.EventSource).mockImplementation(createMockEventSource as unknown as new (url: string) => EventSource)
+    globalThis.EventSource = vi.fn().mockImplementation(createMockEventSource as any) as unknown as typeof EventSource
   })
 
   afterEach(() => {

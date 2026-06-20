@@ -3,7 +3,7 @@ import { sseService } from '../sseService'
 import type { SseEvent } from '../sseService'
 
 interface MockEventSource {
-  url: string
+  url: string | URL
   close: ReturnType<typeof vi.fn>
   addEventListener: ReturnType<typeof vi.fn>
   removeEventListener: ReturnType<typeof vi.fn>
@@ -13,7 +13,7 @@ interface MockEventSource {
 
 let mockEventSource: MockEventSource | null = null
 
-function createMockEventSource(this: void, url: string): MockEventSource {
+function createMockEventSource(this: void, url: string | URL): MockEventSource {
   const instance = {
     url,
     close: vi.fn(),
@@ -29,8 +29,7 @@ function createMockEventSource(this: void, url: string): MockEventSource {
 beforeEach(() => {
   mockEventSource = null
   vi.useFakeTimers()
-  globalThis.EventSource = vi.fn() as unknown as typeof EventSource
-  vi.mocked(globalThis.EventSource).mockImplementation(createMockEventSource as unknown as new (url: string) => EventSource)
+  globalThis.EventSource = vi.fn().mockImplementation(createMockEventSource as any) as unknown as typeof EventSource
 })
 
 afterEach(() => {
