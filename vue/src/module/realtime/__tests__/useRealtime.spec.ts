@@ -72,7 +72,7 @@ describe('useRealtime', () => {
     mockEventSource = null
     onMountedCb = null
     onUnmountedCb = null
-    globalThis.EventSource = vi.fn().mockImplementation(createMockEventSource as any) as unknown as typeof EventSource
+    globalThis.EventSource = vi.fn().mockImplementation(createMockEventSource as unknown as (...args: unknown[]) => unknown) as unknown as typeof EventSource
   })
 
   afterEach(() => {

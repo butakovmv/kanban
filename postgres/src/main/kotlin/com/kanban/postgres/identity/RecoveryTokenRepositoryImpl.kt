@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository
 internal class RecoveryTokenRepositoryImpl(
     private val db: DatabaseClient,
 ) : RecoveryTokenRepository {
-
     override suspend fun save(
         userId: String,
         tokenHash: String,
