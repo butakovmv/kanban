@@ -4,6 +4,7 @@ import com.kanban.access.Group
 import com.kanban.access.GroupMember
 import com.kanban.access.GroupMemberRepository
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
@@ -22,8 +23,8 @@ internal class GroupMemberRepositoryImpl(
                 INSERT INTO group_members (group_id, user_id, added_at)
                 VALUES (:groupId, :userId, :addedAt)
                 """,
-            ).bind("groupId", groupId)
-            .bind("userId", userId)
+            ).bind("groupId", UUID.fromString(groupId))
+            .bind("userId", UUID.fromString(userId))
             .bind("addedAt", LocalDateTime.now())
             .fetch()
             .rowsUpdated()
@@ -36,8 +37,8 @@ internal class GroupMemberRepositoryImpl(
     ) {
         db
             .sql("DELETE FROM group_members WHERE group_id = :groupId AND user_id = :userId")
-            .bind("groupId", groupId)
-            .bind("userId", userId)
+            .bind("groupId", UUID.fromString(groupId))
+            .bind("userId", UUID.fromString(userId))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -46,7 +47,7 @@ internal class GroupMemberRepositoryImpl(
     override suspend fun listMembers(groupId: String): List<GroupMember> =
         db
             .sql("SELECT * FROM group_members WHERE group_id = :groupId")
-            .bind("groupId", groupId)
+            .bind("groupId", UUID.fromString(groupId))
             .map { row, _ -> row.toGroupMember() }
             .all()
             .collectList()
@@ -61,7 +62,7 @@ internal class GroupMemberRepositoryImpl(
                 WHERE gm.user_id = :userId
                 ORDER BY g.name
                 """,
-            ).bind("userId", userId)
+            ).bind("userId", UUID.fromString(userId))
             .map { row, _ -> row.toGroup() }
             .all()
             .collectList()
@@ -78,8 +79,8 @@ internal class GroupMemberRepositoryImpl(
                     SELECT COUNT(*) AS cnt FROM group_members
                     WHERE group_id = :groupId AND user_id = :userId
                     """,
-                ).bind("groupId", groupId)
-                .bind("userId", userId)
+                ).bind("groupId", UUID.fromString(groupId))
+                .bind("userId", UUID.fromString(userId))
                 .map { row, _ -> (row.get("cnt", java.lang.Long::class.java) ?: 0L) as Long }
                 .one()
                 .awaitSingle()
@@ -89,7 +90,7 @@ internal class GroupMemberRepositoryImpl(
     override suspend fun deleteAllByGroup(groupId: String) {
         db
             .sql("DELETE FROM group_members WHERE group_id = :groupId")
-            .bind("groupId", groupId)
+            .bind("groupId", UUID.fromString(groupId))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

@@ -2,6 +2,7 @@ package com.kanban.postgres.identity
 
 import com.kanban.identity.Tariff
 import com.kanban.identity.TariffRepository
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -23,7 +24,7 @@ internal class TariffRepositoryImpl(
     override suspend fun findById(tariffId: String): Tariff? =
         db
             .sql("SELECT * FROM tariffs WHERE id = :id")
-            .bind("id", tariffId)
+            .bind("id", UUID.fromString(tariffId))
             .map { row, _ -> row.toTariff() }
             .one()
             .awaitFirstOrNull()

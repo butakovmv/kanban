@@ -4,6 +4,7 @@ import com.kanban.document.Document
 import com.kanban.document.DocumentRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -55,8 +56,8 @@ internal class DocumentRepositoryImpl(
                     uploaded_by = :uploadedBy, updated_at = :updatedAt
                 WHERE id = :id
                 """,
-            ).bind("id", document.id.value)
-            .bind("projectId", document.projectId.value)
+            ).bind("id", UUID.fromString(document.id.value))
+            .bind("projectId", UUID.fromString(document.projectId.value))
             .bind("title", document.title)
             .let { spec ->
                 val description = document.description
@@ -98,8 +99,8 @@ internal class DocumentRepositoryImpl(
                     :contentType, :sizeBytes, :storageKey, :version, :uploadedBy,
                     :createdAt, :updatedAt)
                 """,
-            ).bind("id", document.id.value)
-            .bind("projectId", document.projectId.value)
+            ).bind("id", UUID.fromString(document.id.value))
+            .bind("projectId", UUID.fromString(document.projectId.value))
             .bind("title", document.title)
             .let { spec ->
                 val description = document.description
@@ -129,7 +130,7 @@ internal class DocumentRepositoryImpl(
     override suspend fun findById(id: String): Document? =
         db
             .sql("SELECT * FROM documents WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toDocument() }
             .one()
             .awaitFirstOrNull()
@@ -142,7 +143,7 @@ internal class DocumentRepositoryImpl(
     override suspend fun listByProjectId(projectId: String): List<Document> =
         db
             .sql("SELECT * FROM documents WHERE project_id = :projectId ORDER BY updated_at DESC")
-            .bind("projectId", projectId)
+            .bind("projectId", UUID.fromString(projectId))
             .map { row, _ -> row.toDocument() }
             .all()
             .collectList()
@@ -155,7 +156,7 @@ internal class DocumentRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM documents WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

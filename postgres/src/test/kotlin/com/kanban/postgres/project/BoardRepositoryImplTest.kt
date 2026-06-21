@@ -48,7 +48,7 @@ internal class BoardRepositoryImplTest {
             val now = Instant.now()
             val board =
                 Board(
-                    id = BoardId("new-board-id"),
+                    id = BoardId("00000000-0000-0000-0000-000000000110"),
                     projectId = ProjectId(projectId),
                     name = "Main Board",
                     position = 0,
@@ -57,11 +57,11 @@ internal class BoardRepositoryImplTest {
 
             val saved = boardRepository.save(board)
 
-            assertEquals("new-board-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000110", saved.id.value)
 
-            val found = boardRepository.findById("new-board-id")
+            val found = boardRepository.findById("00000000-0000-0000-0000-000000000110")
             assertNotNull(found)
-            assertEquals("new-board-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000110", found.id.value)
             assertEquals(projectId, found.projectId.value)
             assertEquals("Main Board", found.name)
             assertEquals(0, found.position)
@@ -70,7 +70,7 @@ internal class BoardRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = boardRepository.findById("unknown-board-id")
+            val found = boardRepository.findById("00000000-0000-0000-0000-000000000103")
             assertNull(found)
         }
 

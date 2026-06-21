@@ -4,6 +4,7 @@ import com.kanban.identity.User
 import com.kanban.identity.UserRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -43,23 +44,23 @@ internal class UserRepositoryImpl(
             .sql(
                 """
                 UPDATE users SET
-                    email = :email, password_hash = :passwordHash,
-                    display_name = :displayName, totp_secret = :totpSecret,
-                    totp_enabled = :totpEnabled, updated_at = :updatedAt
+                    email = :email, password_hash = :password_hash,
+                    display_name = :display_name, totp_secret = :totp_secret,
+                    totp_enabled = :totp_enabled, updated_at = :updated_at
                 WHERE id = :id
                 """,
-            ).bind("id", user.id.value)
-            .bind("email", user.email.value)
-            .bind("passwordHash", user.passwordHash.value)
-            .bind("displayName", user.displayName)
+            ).bind("email", user.email.value)
+            .bind("password_hash", user.passwordHash.value)
+            .bind("display_name", user.displayName)
             .let { spec ->
                 if (user.totpSecret != null) {
-                    spec.bind("totpSecret", user.totpSecret)
+                    spec.bind("totp_secret", user.totpSecret)
                 } else {
-                    spec.bindNull("totpSecret", String::class.java)
+                    spec.bindNull("totp_secret", String::class.java)
                 }
-            }.bind("totpEnabled", user.totpEnabled)
-            .bind("updatedAt", updatedAt)
+            }.bind("totp_enabled", user.totpEnabled)
+            .bind("updated_at", updatedAt)
+            .bind("id", UUID.fromString(user.id.value))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -80,21 +81,21 @@ internal class UserRepositoryImpl(
             .sql(
                 """
                 INSERT INTO users (id, email, password_hash, display_name, totp_secret, totp_enabled, created_at, updated_at)
-                VALUES (:id, :email, :passwordHash, :displayName, :totpSecret, :totpEnabled, :createdAt, :updatedAt)
+                VALUES (:id, :email, :password_hash, :display_name, :totp_secret, :totp_enabled, :created_at, :updated_at)
                 """,
-            ).bind("id", user.id.value)
+            ).bind("id", UUID.fromString(user.id.value))
             .bind("email", user.email.value)
-            .bind("passwordHash", user.passwordHash.value)
-            .bind("displayName", user.displayName)
+            .bind("password_hash", user.passwordHash.value)
+            .bind("display_name", user.displayName)
             .let { spec ->
                 if (user.totpSecret != null) {
-                    spec.bind("totpSecret", user.totpSecret)
+                    spec.bind("totp_secret", user.totpSecret)
                 } else {
-                    spec.bindNull("totpSecret", String::class.java)
+                    spec.bindNull("totp_secret", String::class.java)
                 }
-            }.bind("totpEnabled", user.totpEnabled)
-            .bind("createdAt", createdAt)
-            .bind("updatedAt", updatedAt)
+            }.bind("totp_enabled", user.totpEnabled)
+            .bind("created_at", createdAt)
+            .bind("updated_at", updatedAt)
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -108,7 +109,7 @@ internal class UserRepositoryImpl(
     override suspend fun findById(userId: String): User? =
         db
             .sql("SELECT * FROM users WHERE id = :id")
-            .bind("id", userId)
+            .bind("id", UUID.fromString(userId))
             .map { row, _ -> row.toUser() }
             .one()
             .awaitFirstOrNull()

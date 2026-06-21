@@ -1,44 +1,38 @@
 package com.kanban.http.auth
 
-import com.kanban.identity.AuthHandler
-import com.kanban.identity.RecoveryHandler
 import java.util.UUID
 
-/**
- * Генератор тестовых DTO для auth-запросов.
- * Создаёт случайные данные, которые используются в тестах контроллеров.
- */
 internal object RequestGenerator {
-    fun registerRequest(): AuthHandler.RegisterRequest =
-        AuthHandler.RegisterRequest(
+    fun registerBody(): RegisterBody =
+        RegisterBody(
             email = "user-${UUID.randomUUID().toString().take(8)}@kanban.test",
             password = "secure-pwd-${UUID.randomUUID().toString().take(6)}",
             displayName = "Test User ${UUID.randomUUID().toString().take(6)}",
         )
 
-    fun loginRequest(): AuthHandler.LoginRequest =
-        AuthHandler.LoginRequest(
+    fun loginBody(): LoginBody =
+        LoginBody(
             email = "user-${UUID.randomUUID().toString().take(8)}@kanban.test",
             password = "secure-pwd-${UUID.randomUUID().toString().take(6)}",
         )
 
-    fun refreshRequest(): AuthHandler.RefreshRequest =
-        AuthHandler.RefreshRequest(
+    fun refreshBody(): RefreshBody =
+        RefreshBody(
             refreshToken = "refresh-token-${UUID.randomUUID()}",
         )
 
-    fun logoutRequest(): AuthHandler.LogoutRequest =
-        AuthHandler.LogoutRequest(
+    fun logoutBody(): LogoutBody =
+        LogoutBody(
             refreshToken = "refresh-token-${UUID.randomUUID()}",
         )
 
-    fun recoveryRequestRequest(): RecoveryHandler.RecoveryRequestRequest =
-        RecoveryHandler.RecoveryRequestRequest(
+    fun recoveryRequestBody(): RecoveryRequestBody =
+        RecoveryRequestBody(
             email = "user-${UUID.randomUUID().toString().take(8)}@kanban.test",
         )
 
-    fun resetPasswordRequest(): RecoveryHandler.ResetPasswordRequest =
-        RecoveryHandler.ResetPasswordRequest(
+    fun resetPasswordBody(): ResetPasswordBody =
+        ResetPasswordBody(
             token = "recovery-token-${UUID.randomUUID()}",
             newPassword = "new-pwd-${UUID.randomUUID().toString().take(6)}",
         )

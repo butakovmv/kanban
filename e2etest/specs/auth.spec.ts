@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 
 test.describe('Auth flow', () => {
   test('should navigate from login to register page', async ({ page }) => {
@@ -33,12 +33,12 @@ test.describe('Auth flow', () => {
   })
 
   test.describe('login', () => {
-    test('should login and redirect to board', async ({ page }) => {
+    test('should login and redirect to projects', async ({ page }) => {
       await page.goto('/login')
       await page.getByRole('textbox', { name: /email/i }).fill('user@kanban.test')
       await page.getByRole('textbox', { name: /password/i }).fill('password')
       await page.getByRole('button', { name: 'Login' }).click()
-      await expect(page).toHaveURL(/\/board/)
+      await expect(page).toHaveURL(/\/projects/)
     })
   })
 })

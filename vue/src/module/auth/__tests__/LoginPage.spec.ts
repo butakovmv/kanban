@@ -11,7 +11,7 @@ function createTestRouter() {
     history: createWebHistory(),
     routes: [
       { path: '/login', name: 'login', component: LoginPage },
-      { path: '/board', component: { template: '<div>Board</div>' } },
+      { path: '/projects', component: { template: '<div>Projects</div>' } },
       { path: '/register', component: { template: '<div>Register</div>' } },
     ],
   })
@@ -37,7 +37,7 @@ describe('LoginPage', () => {
     expect(wrapper.find('button[type="submit"]').text()).toBe('Login')
   })
 
-  it('navigates to board on successful login', async () => {
+  it('navigates to projects on successful login', async () => {
     const router = createTestRouter()
     await router.push('/login')
     await router.isReady()
@@ -60,7 +60,7 @@ describe('LoginPage', () => {
       email: 'test@kanban.test',
       password: 'correct',
     })
-    expect(router.push).toHaveBeenCalledWith('/board')
+    expect(router.push).toHaveBeenCalledWith('/projects')
   })
 
   it('shows error message when login fails', async () => {

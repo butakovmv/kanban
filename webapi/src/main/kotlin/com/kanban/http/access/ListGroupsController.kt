@@ -16,7 +16,13 @@ internal class ListGroupsController(
         val result = handler.listGroups()
         return when (result) {
             is AccessHandler.ListGroupsResult.Success ->
-                ResponseEntity.ok(mapOf("groups" to result.groups))
+                ResponseEntity.ok(
+                    mapOf(
+                        "groups" to result.groups.map {
+                            GroupResponse(id = it.id, name = it.name, description = it.description, createdAt = it.createdAt)
+                        },
+                    ),
+                )
         }
     }
 }

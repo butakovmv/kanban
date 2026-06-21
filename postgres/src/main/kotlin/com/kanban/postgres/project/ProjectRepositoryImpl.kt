@@ -4,6 +4,7 @@ import com.kanban.project.Project
 import com.kanban.project.ProjectRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -52,8 +53,8 @@ internal class ProjectRepositoryImpl(
                     description = :description, updated_at = :updatedAt
                 WHERE id = :id
                 """,
-            ).bind("id", project.id.value)
-            .bind("ownerId", project.ownerId.value)
+            ).bind("id", UUID.fromString(project.id.value))
+            .bind("ownerId", UUID.fromString(project.ownerId.value))
             .bind("name", project.name)
             .let { spec ->
                 val description = project.description
@@ -85,8 +86,8 @@ internal class ProjectRepositoryImpl(
                 INSERT INTO projects (id, owner_id, name, description, created_at, updated_at)
                 VALUES (:id, :ownerId, :name, :description, :createdAt, :updatedAt)
                 """,
-            ).bind("id", project.id.value)
-            .bind("ownerId", project.ownerId.value)
+            ).bind("id", UUID.fromString(project.id.value))
+            .bind("ownerId", UUID.fromString(project.ownerId.value))
             .bind("name", project.name)
             .let { spec ->
                 val description = project.description
@@ -110,7 +111,7 @@ internal class ProjectRepositoryImpl(
     override suspend fun findById(id: String): Project? =
         db
             .sql("SELECT * FROM projects WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toProject() }
             .one()
             .awaitFirstOrNull()
@@ -123,7 +124,7 @@ internal class ProjectRepositoryImpl(
     override suspend fun listByOwnerId(ownerId: String): List<Project> =
         db
             .sql("SELECT * FROM projects WHERE owner_id = :ownerId ORDER BY created_at")
-            .bind("ownerId", ownerId)
+            .bind("ownerId", UUID.fromString(ownerId))
             .map { row, _ -> row.toProject() }
             .all()
             .collectList()
@@ -136,7 +137,7 @@ internal class ProjectRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM projects WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

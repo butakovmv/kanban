@@ -1,44 +1,67 @@
 package com.kanban.report
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
 internal class ReportHandler(
     private val getCfdReportOperation: GetCfdReportOperation,
     private val getLeadTimeReportOperation: GetLeadTimeReportOperation,
 ) {
-    suspend fun getCfd(request: CfdRequest): CfdResult {
+    data class CfdPointData(
+        val date: Instant,
+        val columnId: String,
+        val columnName: String,
+        val count: Long,
+    )
+
+    data class LeadTimePointData(
+        val date: Instant,
+        val taskId: String,
+        val taskTitle: String,
+        val leadTimeHours: Double,
+    )
+
+    suspend fun getCfd(
+        projectId: String?,
+        boardId: String?,
+        from: Instant,
+        to: Instant,
+        interval: Interval,
+    ): CfdResult {
         val result =
             getCfdReportOperation.execute(
                 GetCfdReportOperation.Arg(
                     criteria =
                         ReportCriteria(
-                            projectId = request.projectId,
-                            boardId = request.boardId,
-                            fromDate = request.from,
-                            toDate = request.to,
-                            interval = request.interval,
+                            projectId = projectId,
+                            boardId = boardId,
+                            fromDate = from,
+                            toDate = to,
+                            interval = interval,
                         ),
                 ),
             )
         return when (result) {
             is GetCfdReportOperation.Result.Success ->
                 CfdResult.Success(
-                    points = result.points.map { it.toResponse() },
+                    points = result.points.map { it.toData() },
                 )
         }
     }
 
-    suspend fun getLeadTime(request: LeadTimeRequest): LeadTimeResult {
+    suspend fun getLeadTime(
+        projectId: String?,
+        from: Instant,
+        to: Instant,
+    ): LeadTimeResult {
         val result =
             getLeadTimeReportOperation.execute(
                 GetLeadTimeReportOperation.Arg(
                     criteria =
                         ReportCriteria(
-                            projectId = request.projectId,
+                            projectId = projectId,
                             boardId = null,
-                            fromDate = request.from,
-                            toDate = request.to,
+                            fromDate = from,
+                            toDate = to,
                             interval = Interval.DAY,
                         ),
                 ),
@@ -46,69 +69,33 @@ internal class ReportHandler(
         return when (result) {
             is GetLeadTimeReportOperation.Result.Success ->
                 LeadTimeResult.Success(
-                    points = result.points.map { it.toResponse() },
+                    points = result.points.map { it.toData() },
                 )
         }
     }
 
-    data class CfdRequest(
-        @JsonProperty("project_id")
-        val projectId: String?,
-        @JsonProperty("board_id")
-        val boardId: String?,
-        val from: Instant,
-        val to: Instant,
-        val interval: Interval,
-    )
-
-    data class LeadTimeRequest(
-        @JsonProperty("project_id")
-        val projectId: String?,
-        val from: Instant,
-        val to: Instant,
-    )
-
     sealed interface CfdResult {
         data class Success(
-            val points: List<CfdPointResponse>,
+            val points: List<CfdPointData>,
         ) : CfdResult
     }
 
     sealed interface LeadTimeResult {
         data class Success(
-            val points: List<LeadTimePointResponse>,
+            val points: List<LeadTimePointData>,
         ) : LeadTimeResult
     }
 
-    data class CfdPointResponse(
-        val date: Instant,
-        @JsonProperty("column_id")
-        val columnId: String,
-        @JsonProperty("column_name")
-        val columnName: String,
-        val count: Long,
-    )
-
-    data class LeadTimePointResponse(
-        val date: Instant,
-        @JsonProperty("task_id")
-        val taskId: String,
-        @JsonProperty("task_title")
-        val taskTitle: String,
-        @JsonProperty("lead_time_hours")
-        val leadTimeHours: Double,
-    )
-
-    private fun CfdDataPoint.toResponse(): CfdPointResponse =
-        CfdPointResponse(
+    private fun CfdDataPoint.toData(): CfdPointData =
+        CfdPointData(
             date = date,
             columnId = columnId,
             columnName = columnName,
             count = count,
         )
 
-    private fun LeadTimeDataPoint.toResponse(): LeadTimePointResponse =
-        LeadTimePointResponse(
+    private fun LeadTimeDataPoint.toData(): LeadTimePointData =
+        LeadTimePointData(
             date = date,
             taskId = taskId,
             taskTitle = taskTitle,

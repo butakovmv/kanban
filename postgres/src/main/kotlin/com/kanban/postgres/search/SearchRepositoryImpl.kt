@@ -5,6 +5,7 @@ import com.kanban.search.SearchRepository
 import com.kanban.search.SearchResult
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
@@ -108,9 +109,9 @@ internal class SearchRepositoryImpl(
     ): DatabaseClient.GenericExecuteSpec {
         var s = spec
         criteria.query?.let { s = s.bind("query", it) }
-        criteria.projectId?.let { s = s.bind("projectId", it) }
-        criteria.boardId?.let { s = s.bind("boardId", it) }
-        criteria.assigneeId?.let { s = s.bind("assigneeId", it) }
+        criteria.projectId?.let { s = s.bind("projectId", UUID.fromString(it)) }
+        criteria.boardId?.let { s = s.bind("boardId", UUID.fromString(it)) }
+        criteria.assigneeId?.let { s = s.bind("assigneeId", UUID.fromString(it)) }
         criteria.dueDateFrom?.let { s = s.bind("dueDateFrom", it.atZone(z).toLocalDateTime()) }
         criteria.dueDateTo?.let { s = s.bind("dueDateTo", it.atZone(z).toLocalDateTime()) }
         return s

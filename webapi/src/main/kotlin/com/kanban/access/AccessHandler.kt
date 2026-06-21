@@ -1,6 +1,5 @@
 package com.kanban.access
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
 @Suppress("LongParameterList", "TooManyFunctions")
@@ -22,30 +21,54 @@ internal class AccessHandler(
     private val listGroupPermissionsOperation: ListGroupPermissionsOperation,
     private val checkPermissionOperation: CheckPermissionOperation,
 ) {
-    suspend fun createGroup(request: CreateGroupRequest): CreateGroupResult {
+    data class GroupData(
+        val id: String,
+        val name: String,
+        val description: String?,
+        val createdAt: Instant,
+    )
+
+    data class MemberData(
+        val groupId: String,
+        val userId: String,
+        val addedAt: Instant,
+    )
+
+    data class PermissionData(
+        val id: String,
+        val resource: String,
+        val action: String,
+        val targetId: String?,
+        val createdAt: Instant,
+    )
+
+    suspend fun createGroup(
+        name: String,
+        description: String?,
+    ): CreateGroupResult {
         val result =
             createGroupOperation.execute(
                 CreateGroupOperation.Arg(
-                    name = request.name,
-                    description = request.description,
+                    name = name,
+                    description = description,
                 ),
             )
         return when (result) {
             is CreateGroupOperation.Result.Success ->
-                CreateGroupResult.Success(group = result.group.toResponse())
+                CreateGroupResult.Success(group = result.group.toData())
             is CreateGroupOperation.Result.Failure ->
                 CreateGroupResult.Failure(reason = result.reason)
         }
     }
 
-    suspend fun getGroup(request: GetGroupRequest): GetGroupResult {
+    suspend fun getGroup(groupId: String): GetGroupResult {
         val result =
             getGroupOperation.execute(
-                GetGroupOperation.Arg(groupId = request.groupId),
+                GetGroupOperation.Arg(groupId = groupId),
             )
         return when (result) {
             is GetGroupOperation.Result.Success ->
-                GetGroupResult.Success(group = result.group.toResponse())
+                GetGroupResult.Success(group = result.group.toData())
             GetGroupOperation.Result.NotFound -> GetGroupResult.NotFound
         }
     }
@@ -56,33 +79,37 @@ internal class AccessHandler(
         return when (result) {
             is ListGroupsOperation.Result.Success ->
                 ListGroupsResult.Success(
-                    groups = result.groups.map { it.toResponse() },
+                    groups = result.groups.map { it.toData() },
                 )
         }
     }
 
-    suspend fun updateGroup(request: UpdateGroupRequest): UpdateGroupResult {
+    suspend fun updateGroup(
+        groupId: String,
+        name: String?,
+        description: String?,
+    ): UpdateGroupResult {
         val result =
             updateGroupOperation.execute(
                 UpdateGroupOperation.Arg(
-                    groupId = request.groupId,
-                    name = request.name,
-                    description = request.description,
+                    groupId = groupId,
+                    name = name,
+                    description = description,
                 ),
             )
         return when (result) {
             is UpdateGroupOperation.Result.Success ->
-                UpdateGroupResult.Success(group = result.group.toResponse())
+                UpdateGroupResult.Success(group = result.group.toData())
             UpdateGroupOperation.Result.NotFound -> UpdateGroupResult.NotFound
             is UpdateGroupOperation.Result.Failure ->
                 UpdateGroupResult.Failure(reason = result.reason)
         }
     }
 
-    suspend fun deleteGroup(request: DeleteGroupRequest): DeleteGroupResult {
+    suspend fun deleteGroup(groupId: String): DeleteGroupResult {
         val result =
             deleteGroupOperation.execute(
-                DeleteGroupOperation.Arg(groupId = request.groupId),
+                DeleteGroupOperation.Arg(groupId = groupId),
             )
         return when (result) {
             DeleteGroupOperation.Result.Success -> DeleteGroupResult.Success
@@ -90,12 +117,15 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun addMember(request: AddMemberRequest): AddMemberResult {
+    suspend fun addMember(
+        groupId: String,
+        userId: String,
+    ): AddMemberResult {
         val result =
             addMemberOperation.execute(
                 AddMemberOperation.Arg(
-                    groupId = request.groupId,
-                    userId = request.userId,
+                    groupId = groupId,
+                    userId = userId,
                 ),
             )
         return when (result) {
@@ -105,12 +135,15 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun removeMember(request: RemoveMemberRequest): RemoveMemberResult {
+    suspend fun removeMember(
+        groupId: String,
+        userId: String,
+    ): RemoveMemberResult {
         val result =
             removeMemberOperation.execute(
                 RemoveMemberOperation.Arg(
-                    groupId = request.groupId,
-                    userId = request.userId,
+                    groupId = groupId,
+                    userId = userId,
                 ),
             )
         return when (result) {
@@ -120,55 +153,59 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun listMembers(request: ListMembersRequest): ListMembersResult {
+    suspend fun listMembers(groupId: String): ListMembersResult {
         val result =
             listMembersOperation.execute(
-                ListMembersOperation.Arg(groupId = request.groupId),
+                ListMembersOperation.Arg(groupId = groupId),
             )
         return when (result) {
             is ListMembersOperation.Result.Success ->
                 ListMembersResult.Success(
-                    members = result.members.map { it.toResponse() },
+                    members = result.members.map { it.toData() },
                 )
         }
     }
 
-    suspend fun listUserGroups(request: ListUserGroupsRequest): ListUserGroupsResult {
+    suspend fun listUserGroups(userId: String): ListUserGroupsResult {
         val result =
             listUserGroupsOperation.execute(
-                ListUserGroupsOperation.Arg(userId = request.userId),
+                ListUserGroupsOperation.Arg(userId = userId),
             )
         return when (result) {
             is ListUserGroupsOperation.Result.Success ->
                 ListUserGroupsResult.Success(
-                    groups = result.groups.map { it.toResponse() },
+                    groups = result.groups.map { it.toData() },
                 )
         }
     }
 
-    suspend fun createPermission(request: CreatePermissionRequest): CreatePermissionResult {
+    suspend fun createPermission(
+        resource: String,
+        action: String,
+        targetId: String?,
+    ): CreatePermissionResult {
         val result =
             createPermissionOperation.execute(
                 CreatePermissionOperation.Arg(
-                    resource = request.resource,
-                    action = request.action,
-                    targetId = request.targetId,
+                    resource = resource,
+                    action = action,
+                    targetId = targetId,
                 ),
             )
         return when (result) {
             is CreatePermissionOperation.Result.Success ->
                 CreatePermissionResult.Success(
-                    permission = result.permission.toResponse(),
+                    permission = result.permission.toData(),
                 )
             is CreatePermissionOperation.Result.Failure ->
                 CreatePermissionResult.Failure(reason = result.reason)
         }
     }
 
-    suspend fun deletePermission(request: DeletePermissionRequest): DeletePermissionResult {
+    suspend fun deletePermission(permissionId: String): DeletePermissionResult {
         val result =
             deletePermissionOperation.execute(
-                DeletePermissionOperation.Arg(permissionId = request.permissionId),
+                DeletePermissionOperation.Arg(permissionId = permissionId),
             )
         return when (result) {
             DeletePermissionOperation.Result.Success -> DeletePermissionResult.Success
@@ -176,28 +213,34 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun findPermissions(request: FindPermissionsRequest): FindPermissionsResult {
+    suspend fun findPermissions(
+        resource: String,
+        targetId: String?,
+    ): FindPermissionsResult {
         val result =
             findPermissionsOperation.execute(
                 FindPermissionsOperation.Arg(
-                    resource = request.resource,
-                    targetId = request.targetId,
+                    resource = resource,
+                    targetId = targetId,
                 ),
             )
         return when (result) {
             is FindPermissionsOperation.Result.Success ->
                 FindPermissionsResult.Success(
-                    permissions = result.permissions.map { it.toResponse() },
+                    permissions = result.permissions.map { it.toData() },
                 )
         }
     }
 
-    suspend fun grantPermission(request: GrantPermissionRequest): GrantPermissionResult {
+    suspend fun grantPermission(
+        groupId: String,
+        permissionId: String,
+    ): GrantPermissionResult {
         val result =
             grantPermissionOperation.execute(
                 GrantPermissionOperation.Arg(
-                    groupId = request.groupId,
-                    permissionId = request.permissionId,
+                    groupId = groupId,
+                    permissionId = permissionId,
                 ),
             )
         return when (result) {
@@ -207,12 +250,15 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun revokePermission(request: RevokePermissionRequest): RevokePermissionResult {
+    suspend fun revokePermission(
+        groupId: String,
+        permissionId: String,
+    ): RevokePermissionResult {
         val result =
             revokePermissionOperation.execute(
                 RevokePermissionOperation.Arg(
-                    groupId = request.groupId,
-                    permissionId = request.permissionId,
+                    groupId = groupId,
+                    permissionId = permissionId,
                 ),
             )
         return when (result) {
@@ -222,173 +268,45 @@ internal class AccessHandler(
         }
     }
 
-    suspend fun listGroupPermissions(request: ListGroupPermissionsRequest): ListGroupPermissionsResult {
+    suspend fun listGroupPermissions(groupId: String): ListGroupPermissionsResult {
         val result =
             listGroupPermissionsOperation.execute(
-                ListGroupPermissionsOperation.Arg(groupId = request.groupId),
+                ListGroupPermissionsOperation.Arg(groupId = groupId),
             )
         return when (result) {
             is ListGroupPermissionsOperation.Result.Success ->
                 ListGroupPermissionsResult.Success(
-                    permissions = result.permissions.map { it.toResponse() },
+                    permissions = result.permissions.map { it.toData() },
                 )
         }
     }
 
-    suspend fun checkPermission(request: CheckPermissionRequest): CheckPermissionResult {
+    suspend fun checkPermission(
+        userId: String,
+        resource: String,
+        action: String,
+        targetId: String?,
+    ): CheckPermissionResult {
         val result =
             checkPermissionOperation.execute(
                 CheckPermissionOperation.Arg(
-                    userId = request.userId,
-                    resource = request.resource,
-                    action = request.action,
-                    targetId = request.targetId,
+                    userId = userId,
+                    resource = resource,
+                    action = action,
+                    targetId = targetId,
                 ),
             )
         return when (result) {
             CheckPermissionOperation.Result.Allowed ->
-                CheckPermissionResult.Success(
-                    CheckPermissionResponse(allowed = true, reason = null),
-                )
+                CheckPermissionResult.Success(allowed = true, reason = null)
             is CheckPermissionOperation.Result.Denied ->
-                CheckPermissionResult.Success(
-                    CheckPermissionResponse(allowed = false, reason = result.reason),
-                )
+                CheckPermissionResult.Success(allowed = false, reason = result.reason)
         }
     }
 
-    data class CreateGroupRequest(
-        val name: String,
-        val description: String?,
-    )
-
-    data class GetGroupRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-    )
-
-    data class UpdateGroupBody(
-        val name: String?,
-        val description: String?,
-    )
-
-    data class UpdateGroupRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-        val name: String?,
-        val description: String?,
-    )
-
-    data class DeleteGroupRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-    )
-
-    data class AddMemberRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-        @JsonProperty("user_id")
-        val userId: String,
-    )
-
-    data class RemoveMemberRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-        @JsonProperty("user_id")
-        val userId: String,
-    )
-
-    data class ListMembersRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-    )
-
-    data class ListUserGroupsRequest(
-        @JsonProperty("user_id")
-        val userId: String,
-    )
-
-    data class CreatePermissionRequest(
-        val resource: String,
-        val action: String,
-        @JsonProperty("target_id")
-        val targetId: String?,
-    )
-
-    data class DeletePermissionRequest(
-        @JsonProperty("permission_id")
-        val permissionId: String,
-    )
-
-    data class FindPermissionsRequest(
-        val resource: String,
-        @JsonProperty("target_id")
-        val targetId: String?,
-    )
-
-    data class GrantPermissionRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-        @JsonProperty("permission_id")
-        val permissionId: String,
-    )
-
-    data class RevokePermissionRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-        @JsonProperty("permission_id")
-        val permissionId: String,
-    )
-
-    data class ListGroupPermissionsRequest(
-        @JsonProperty("group_id")
-        val groupId: String,
-    )
-
-    data class CheckPermissionRequest(
-        @JsonProperty("user_id")
-        val userId: String,
-        val resource: String,
-        val action: String,
-        @JsonProperty("target_id")
-        val targetId: String?,
-    )
-
-    data class GroupResponse(
-        val id: String,
-        val name: String,
-        val description: String?,
-        @JsonProperty("created_at")
-        val createdAt: Instant,
-    )
-
-    data class MemberResponse(
-        @JsonProperty("group_id")
-        val groupId: String,
-        @JsonProperty("user_id")
-        val userId: String,
-        @JsonProperty("added_at")
-        val addedAt: Instant,
-    )
-
-    data class PermissionResponse(
-        val id: String,
-        val resource: String,
-        val action: String,
-        @JsonProperty("target_id")
-        val targetId: String?,
-        @JsonProperty("created_at")
-        val createdAt: Instant,
-    )
-
-    data class CheckPermissionResponse(
-        val allowed: Boolean,
-        val reason: String?,
-    )
-
     sealed interface CreateGroupResult {
         data class Success(
-            val group: GroupResponse,
+            val group: GroupData,
         ) : CreateGroupResult
 
         data class Failure(
@@ -398,7 +316,7 @@ internal class AccessHandler(
 
     sealed interface GetGroupResult {
         data class Success(
-            val group: GroupResponse,
+            val group: GroupData,
         ) : GetGroupResult
 
         data object NotFound : GetGroupResult
@@ -406,13 +324,13 @@ internal class AccessHandler(
 
     sealed interface ListGroupsResult {
         data class Success(
-            val groups: List<GroupResponse>,
+            val groups: List<GroupData>,
         ) : ListGroupsResult
     }
 
     sealed interface UpdateGroupResult {
         data class Success(
-            val group: GroupResponse,
+            val group: GroupData,
         ) : UpdateGroupResult
 
         data object NotFound : UpdateGroupResult
@@ -446,19 +364,19 @@ internal class AccessHandler(
 
     sealed interface ListMembersResult {
         data class Success(
-            val members: List<MemberResponse>,
+            val members: List<MemberData>,
         ) : ListMembersResult
     }
 
     sealed interface ListUserGroupsResult {
         data class Success(
-            val groups: List<GroupResponse>,
+            val groups: List<GroupData>,
         ) : ListUserGroupsResult
     }
 
     sealed interface CreatePermissionResult {
         data class Success(
-            val permission: PermissionResponse,
+            val permission: PermissionData,
         ) : CreatePermissionResult
 
         data class Failure(
@@ -474,7 +392,7 @@ internal class AccessHandler(
 
     sealed interface FindPermissionsResult {
         data class Success(
-            val permissions: List<PermissionResponse>,
+            val permissions: List<PermissionData>,
         ) : FindPermissionsResult
     }
 
@@ -496,33 +414,34 @@ internal class AccessHandler(
 
     sealed interface ListGroupPermissionsResult {
         data class Success(
-            val permissions: List<PermissionResponse>,
+            val permissions: List<PermissionData>,
         ) : ListGroupPermissionsResult
     }
 
     sealed interface CheckPermissionResult {
         data class Success(
-            val response: CheckPermissionResponse,
+            val allowed: Boolean,
+            val reason: String?,
         ) : CheckPermissionResult
     }
 
-    private fun Group.toResponse(): GroupResponse =
-        GroupResponse(
+    private fun Group.toData(): GroupData =
+        GroupData(
             id = id.value,
             name = name,
             description = description,
             createdAt = createdAt,
         )
 
-    private fun GroupMember.toResponse(): MemberResponse =
-        MemberResponse(
+    private fun GroupMember.toData(): MemberData =
+        MemberData(
             groupId = groupId.value,
             userId = userId,
             addedAt = addedAt,
         )
 
-    private fun Permission.toResponse(): PermissionResponse =
-        PermissionResponse(
+    private fun Permission.toData(): PermissionData =
+        PermissionData(
             id = id.value,
             resource = resource,
             action = action,

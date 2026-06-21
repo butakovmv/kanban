@@ -3,6 +3,7 @@ package com.kanban.postgres.access
 import com.kanban.access.GroupPermissionRepository
 import com.kanban.access.Permission
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
@@ -21,8 +22,8 @@ internal class GroupPermissionRepositoryImpl(
                 INSERT INTO group_permissions (group_id, permission_id, granted_at)
                 VALUES (:groupId, :permissionId, :grantedAt)
                 """,
-            ).bind("groupId", groupId)
-            .bind("permissionId", permissionId)
+            ).bind("groupId", UUID.fromString(groupId))
+            .bind("permissionId", UUID.fromString(permissionId))
             .bind("grantedAt", LocalDateTime.now())
             .fetch()
             .rowsUpdated()
@@ -39,8 +40,8 @@ internal class GroupPermissionRepositoryImpl(
                 DELETE FROM group_permissions
                 WHERE group_id = :groupId AND permission_id = :permissionId
                 """,
-            ).bind("groupId", groupId)
-            .bind("permissionId", permissionId)
+            ).bind("groupId", UUID.fromString(groupId))
+            .bind("permissionId", UUID.fromString(permissionId))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -55,7 +56,7 @@ internal class GroupPermissionRepositoryImpl(
                 WHERE gp.group_id = :groupId
                 ORDER BY p.resource, p.action
                 """,
-            ).bind("groupId", groupId)
+            ).bind("groupId", UUID.fromString(groupId))
             .map { row, _ -> row.toPermission() }
             .all()
             .collectList()
@@ -71,7 +72,7 @@ internal class GroupPermissionRepositoryImpl(
                 WHERE gm.user_id = :userId
                 ORDER BY p.resource, p.action
                 """,
-            ).bind("userId", userId)
+            ).bind("userId", UUID.fromString(userId))
             .map { row, _ -> row.toPermission() }
             .all()
             .collectList()
@@ -80,7 +81,7 @@ internal class GroupPermissionRepositoryImpl(
     override suspend fun deleteAllByGroup(groupId: String) {
         db
             .sql("DELETE FROM group_permissions WHERE group_id = :groupId")
-            .bind("groupId", groupId)
+            .bind("groupId", UUID.fromString(groupId))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

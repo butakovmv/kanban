@@ -10,57 +10,47 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер создания комментария.
- * Обрабатывает только запрос `POST /api/v1/tasks/{taskId}/comments`.
- *
- * @property handler обработчик запросов комментариев
- */
 @RestController
 @RequestMapping("/api/v1/tasks/{taskId}/comments")
 internal class CreateCommentController(
     private val handler: CommentHandler,
 ) {
-    /**
-     * Создаёт комментарий к задаче.
-     *
-     * @param taskId идентификатор задачи
-     * @param body данные для создания комментария
-     * @return 201 с созданным комментарием, или 400 при ошибке
-     */
+    data class CreateCommentBody(
+        @JsonProperty("author_id")
+        val authorId: String,
+        val text: String,
+    )
+
     @PostMapping
     suspend fun create(
         @PathVariable("taskId") taskId: String,
         @RequestBody body: CreateCommentBody,
     ): ResponseEntity<*> {
-        val request =
-            CommentHandler.CreateCommentRequest(
-                taskId = taskId,
-                authorId = body.authorId,
-                text = body.text,
-            )
-        val result = handler.create(request)
+        val result = handler.create(
+            taskId = taskId,
+            authorId = body.authorId,
+            text = body.text,
+        )
         return when (result) {
-            is CommentHandler.CreateCommentResult.Success ->
+            is CommentHandler.CreateCommentResult.Success -> {
+                val comment = result.comment
                 ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(result.comment)
+                    .body(
+                        CommentResponse(
+                            id = comment.id,
+                            taskId = comment.taskId,
+                            authorId = comment.authorId,
+                            text = comment.text,
+                            createdAt = comment.createdAt,
+                            updatedAt = comment.updatedAt,
+                        ),
+                    )
+            }
             is CommentHandler.CreateCommentResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(mapOf("reason" to result.reason))
         }
     }
-
-    /**
-     * Тело запроса создания комментария.
-     *
-     * @property authorId идентификатор автора
-     * @property text текст комментария
-     */
-    data class CreateCommentBody(
-        @JsonProperty("author_id")
-        val authorId: String,
-        val text: String,
-    )
 }

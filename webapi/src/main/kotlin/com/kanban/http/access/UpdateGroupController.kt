@@ -16,22 +16,21 @@ internal class UpdateGroupController(
     @PutMapping
     suspend fun update(
         @PathVariable("id") id: String,
-        @RequestBody body: AccessHandler.UpdateGroupBody,
+        @RequestBody body: UpdateGroupBody,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.UpdateGroupRequest(
-                groupId = id,
-                name = body.name,
-                description = body.description,
-            )
-        val result = handler.updateGroup(request)
+        val result = handler.updateGroup(groupId = id, name = body.name, description = body.description)
         return when (result) {
             is AccessHandler.UpdateGroupResult.Success ->
-                ResponseEntity.ok(result.group)
+                ResponseEntity.ok(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
             AccessHandler.UpdateGroupResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
             is AccessHandler.UpdateGroupResult.Failure ->
                 ResponseEntity.badRequest().body(mapOf("reason" to result.reason))
         }
     }
+
+    data class UpdateGroupBody(
+        val name: String?,
+        val description: String?,
+    )
 }

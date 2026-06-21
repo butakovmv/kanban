@@ -18,7 +18,7 @@ const password = ref('')
 async function handleSubmit() {
   const success = await authStore.login({ email: email.value, password: password.value })
   if (success) {
-    await router.push('/board')
+    await router.push('/projects')
   }
 }
 </script>

@@ -19,16 +19,26 @@ internal class GetLeadTimeReportController(
         @RequestParam("from") from: String,
         @RequestParam("to") to: String,
     ): ResponseEntity<*> {
-        val request =
-            ReportHandler.LeadTimeRequest(
+        val result =
+            handler.getLeadTime(
                 projectId = projectId,
                 from = Instant.parse(from),
                 to = Instant.parse(to),
             )
-        val result = handler.getLeadTime(request)
         return when (result) {
             is ReportHandler.LeadTimeResult.Success ->
-                ResponseEntity.ok(mapOf("points" to result.points))
+                ResponseEntity.ok(
+                    mapOf(
+                        "points" to result.points.map {
+                            LeadTimePointResponse(
+                                date = it.date,
+                                taskId = it.taskId,
+                                taskTitle = it.taskTitle,
+                                leadTimeHours = it.leadTimeHours,
+                            )
+                        },
+                    ),
+                )
         }
     }
 }

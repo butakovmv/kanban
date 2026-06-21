@@ -4,6 +4,7 @@ import com.kanban.task.Task
 import com.kanban.task.TaskRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -61,9 +62,9 @@ internal class TaskRepositoryImpl(
                     updated_at = :updatedAt
                 WHERE id = :id
                 """,
-            ).bind("id", task.id.value)
-            .bind("boardId", task.boardId.value)
-            .bind("columnId", task.columnId.value)
+            ).bind("id", UUID.fromString(task.id.value))
+            .bind("boardId", UUID.fromString(task.boardId.value))
+            .bind("columnId", UUID.fromString(task.columnId.value))
             .bind("title", task.title)
             .let { spec ->
                 val description = task.description
@@ -75,9 +76,9 @@ internal class TaskRepositoryImpl(
             }.let { spec ->
                 val assignee = task.assigneeId
                 if (assignee != null) {
-                    spec.bind("assigneeId", assignee)
+                    spec.bind("assigneeId", UUID.fromString(assignee))
                 } else {
-                    spec.bindNull("assigneeId", String::class.java)
+                    spec.bindNull("assigneeId", UUID::class.java)
                 }
             }.bind("position", task.position)
             .let { spec ->
@@ -112,9 +113,9 @@ internal class TaskRepositoryImpl(
                 VALUES (:id, :boardId, :columnId, :title, :description,
                     :assigneeId, :position, :dueDate, :archived, :createdAt, :updatedAt)
                 """,
-            ).bind("id", task.id.value)
-            .bind("boardId", task.boardId.value)
-            .bind("columnId", task.columnId.value)
+            ).bind("id", UUID.fromString(task.id.value))
+            .bind("boardId", UUID.fromString(task.boardId.value))
+            .bind("columnId", UUID.fromString(task.columnId.value))
             .bind("title", task.title)
             .let { spec ->
                 val description = task.description
@@ -126,9 +127,9 @@ internal class TaskRepositoryImpl(
             }.let { spec ->
                 val assignee = task.assigneeId
                 if (assignee != null) {
-                    spec.bind("assigneeId", assignee)
+                    spec.bind("assigneeId", UUID.fromString(assignee))
                 } else {
-                    spec.bindNull("assigneeId", String::class.java)
+                    spec.bindNull("assigneeId", UUID::class.java)
                 }
             }.bind("position", task.position)
             .let { spec ->
@@ -154,7 +155,7 @@ internal class TaskRepositoryImpl(
     override suspend fun findById(id: String): Task? =
         db
             .sql("SELECT * FROM tasks WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toTask() }
             .one()
             .awaitFirstOrNull()
@@ -167,7 +168,7 @@ internal class TaskRepositoryImpl(
     private suspend fun findRawArchivedById(id: String): ArchivedRow? =
         db
             .sql("SELECT archived FROM tasks WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ ->
                 ArchivedRow(archived = row.get("archived", java.lang.Boolean::class.java)!!.booleanValue())
             }.one()
@@ -192,7 +193,7 @@ internal class TaskRepositoryImpl(
             }
         return db
             .sql(sql)
-            .bind("boardId", boardId)
+            .bind("boardId", UUID.fromString(boardId))
             .map { row, _ -> row.toTask() }
             .all()
             .collectList()
@@ -207,7 +208,7 @@ internal class TaskRepositoryImpl(
     override suspend fun listByColumnId(columnId: String): List<Task> =
         db
             .sql("SELECT * FROM tasks WHERE column_id = :columnId AND archived = FALSE ORDER BY position")
-            .bind("columnId", columnId)
+            .bind("columnId", UUID.fromString(columnId))
             .map { row, _ -> row.toTask() }
             .all()
             .collectList()
@@ -220,7 +221,7 @@ internal class TaskRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM tasks WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -245,9 +246,9 @@ internal class TaskRepositoryImpl(
                         position = :position, updated_at = :updatedAt
                     WHERE id = :id
                     """,
-                ).bind("id", task.id.value)
-                .bind("boardId", task.boardId.value)
-                .bind("columnId", task.columnId.value)
+                ).bind("id", UUID.fromString(task.id.value))
+                .bind("boardId", UUID.fromString(task.boardId.value))
+                .bind("columnId", UUID.fromString(task.columnId.value))
                 .bind("position", index)
                 .bind("updatedAt", LocalDateTime.now(z))
                 .fetch()
@@ -263,7 +264,7 @@ internal class TaskRepositoryImpl(
     override suspend fun archive(id: String) {
         db
             .sql("UPDATE tasks SET archived = TRUE, updated_at = :updatedAt WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .bind("updatedAt", LocalDateTime.now())
             .fetch()
             .rowsUpdated()

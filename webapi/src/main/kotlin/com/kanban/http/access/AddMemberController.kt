@@ -1,5 +1,6 @@
 package com.kanban.http.access
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.kanban.access.AccessHandler
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -17,14 +18,9 @@ internal class AddMemberController(
     @PostMapping
     suspend fun add(
         @PathVariable("id") id: String,
-        @RequestBody body: AccessHandler.AddMemberRequest,
+        @RequestBody body: AddMemberBody,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.AddMemberRequest(
-                groupId = id,
-                userId = body.userId,
-            )
-        val result = handler.addMember(request)
+        val result = handler.addMember(groupId = id, userId = body.userId)
         return when (result) {
             AccessHandler.AddMemberResult.Success ->
                 ResponseEntity
@@ -36,4 +32,9 @@ internal class AddMemberController(
                     .body(mapOf("reason" to result.reason))
         }
     }
+
+    data class AddMemberBody(
+        @JsonProperty("user_id")
+        val userId: String,
+    )
 }

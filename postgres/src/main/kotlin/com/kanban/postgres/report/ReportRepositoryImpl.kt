@@ -11,6 +11,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
@@ -103,8 +104,8 @@ internal class ReportRepositoryImpl(
         criteria: ReportCriteria,
     ): DatabaseClient.GenericExecuteSpec {
         var s = spec
-        criteria.projectId?.let { s = s.bind("projectId", it) }
-        criteria.boardId?.let { s = s.bind("boardId", it) }
+        criteria.projectId?.let { s = s.bind("projectId", UUID.fromString(it)) }
+        criteria.boardId?.let { s = s.bind("boardId", UUID.fromString(it)) }
         return s
     }
 

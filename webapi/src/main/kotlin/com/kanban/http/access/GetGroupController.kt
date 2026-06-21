@@ -16,11 +16,10 @@ internal class GetGroupController(
     suspend fun get(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = AccessHandler.GetGroupRequest(groupId = id)
-        val result = handler.getGroup(request)
+        val result = handler.getGroup(groupId = id)
         return when (result) {
             is AccessHandler.GetGroupResult.Success ->
-                ResponseEntity.ok(result.group)
+                ResponseEntity.ok(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
             AccessHandler.GetGroupResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

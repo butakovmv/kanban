@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 
 /** Пример E2E-теста. Группа smoke-тестов для проверки базовой загрузки страниц. */
 test.describe('App', () => {

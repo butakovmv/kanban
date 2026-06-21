@@ -72,7 +72,7 @@ internal class UserTariffRepositoryImplTest {
             val tariffId = tariffGenerator.createAndInsert()
             val userTariff =
                 UserTariff(
-                    id = "custom-ut-id",
+                    id = "00000000-0000-0000-0000-000000000107",
                     userId = userId,
                     tariffId = tariffId,
                     startsAt = Instant.now().minusSeconds(86400),
@@ -82,11 +82,11 @@ internal class UserTariffRepositoryImplTest {
 
             val saved = userTariffRepository.save(userTariff)
 
-            assertEquals("custom-ut-id", saved.id)
+            assertEquals("00000000-0000-0000-0000-000000000107", saved.id)
 
             val active = userTariffRepository.findActiveByUserId(userId)
             assertNotNull(active)
-            assertEquals("custom-ut-id", active.id)
+            assertEquals("00000000-0000-0000-0000-000000000107", active.id)
             assertEquals(tariffId, active.tariffId)
         }
 

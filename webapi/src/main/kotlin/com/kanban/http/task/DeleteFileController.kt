@@ -8,29 +8,16 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер удаления прикреплённого файла.
- * Обрабатывает только запрос `DELETE /api/v1/files/{id}`.
- *
- * @property handler обработчик запросов прикреплённых файлов
- */
 @RestController
 @RequestMapping("/api/v1/files/{id}")
 internal class DeleteFileController(
     private val handler: FileHandler,
 ) {
-    /**
-     * Удаляет прикреплённый файл по идентификатору.
-     *
-     * @param id идентификатор прикрепления
-     * @return 204 при успешном удалении, или 404 если файл не найден
-     */
     @DeleteMapping
     suspend fun delete(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = FileHandler.DeleteFileRequest(fileId = id)
-        val result = handler.delete(request)
+        val result = handler.delete(fileId = id)
         return when (result) {
             FileHandler.DeleteFileResult.Success ->
                 ResponseEntity

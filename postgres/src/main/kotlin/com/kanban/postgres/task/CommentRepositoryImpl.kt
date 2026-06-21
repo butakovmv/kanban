@@ -4,6 +4,7 @@ import com.kanban.task.Comment
 import com.kanban.task.CommentRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -52,9 +53,9 @@ internal class CommentRepositoryImpl(
                     text = :text, updated_at = :updatedAt
                 WHERE id = :id
                 """,
-            ).bind("id", comment.id.value)
-            .bind("taskId", comment.taskId.value)
-            .bind("authorId", comment.authorId)
+            ).bind("id", UUID.fromString(comment.id.value))
+            .bind("taskId", UUID.fromString(comment.taskId.value))
+            .bind("authorId", UUID.fromString(comment.authorId))
             .bind("text", comment.text)
             .bind("updatedAt", updatedAt)
             .fetch()
@@ -79,9 +80,9 @@ internal class CommentRepositoryImpl(
                 INSERT INTO comments (id, task_id, author_id, text, created_at, updated_at)
                 VALUES (:id, :taskId, :authorId, :text, :createdAt, :updatedAt)
                 """,
-            ).bind("id", comment.id.value)
-            .bind("taskId", comment.taskId.value)
-            .bind("authorId", comment.authorId)
+            ).bind("id", UUID.fromString(comment.id.value))
+            .bind("taskId", UUID.fromString(comment.taskId.value))
+            .bind("authorId", UUID.fromString(comment.authorId))
             .bind("text", comment.text)
             .bind("createdAt", createdAt)
             .bind("updatedAt", updatedAt)
@@ -98,7 +99,7 @@ internal class CommentRepositoryImpl(
     override suspend fun findById(id: String): Comment? =
         db
             .sql("SELECT * FROM comments WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toComment() }
             .one()
             .awaitFirstOrNull()
@@ -111,7 +112,7 @@ internal class CommentRepositoryImpl(
     override suspend fun listByTaskId(taskId: String): List<Comment> =
         db
             .sql("SELECT * FROM comments WHERE task_id = :taskId ORDER BY created_at")
-            .bind("taskId", taskId)
+            .bind("taskId", UUID.fromString(taskId))
             .map { row, _ -> row.toComment() }
             .all()
             .collectList()
@@ -124,7 +125,7 @@ internal class CommentRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM comments WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

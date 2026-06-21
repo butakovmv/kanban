@@ -4,6 +4,7 @@ import com.kanban.access.Permission
 import com.kanban.access.PermissionRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -32,15 +33,15 @@ internal class PermissionRepositoryImpl(
                     resource = :resource, action = :action, target_id = :targetId
                 WHERE id = :id
                 """,
-            ).bind("id", permission.id.value)
+            ).bind("id", UUID.fromString(permission.id.value))
             .bind("resource", permission.resource)
             .bind("action", permission.action)
             .let { spec ->
                 val targetId = permission.targetId
                 if (targetId != null) {
-                    spec.bind("targetId", targetId)
+                    spec.bind("targetId", UUID.fromString(targetId))
                 } else {
-                    spec.bindNull("targetId", String::class.java)
+                    spec.bindNull("targetId", UUID::class.java)
                 }
             }.fetch()
             .rowsUpdated()
@@ -57,15 +58,15 @@ internal class PermissionRepositoryImpl(
                 INSERT INTO permissions (id, resource, action, target_id, created_at)
                 VALUES (:id, :resource, :action, :targetId, :createdAt)
                 """,
-            ).bind("id", permission.id.value)
+            ).bind("id", UUID.fromString(permission.id.value))
             .bind("resource", permission.resource)
             .bind("action", permission.action)
             .let { spec ->
                 val targetId = permission.targetId
                 if (targetId != null) {
-                    spec.bind("targetId", targetId)
+                    spec.bind("targetId", UUID.fromString(targetId))
                 } else {
-                    spec.bindNull("targetId", String::class.java)
+                    spec.bindNull("targetId", UUID::class.java)
                 }
             }.bind("createdAt", createdAt)
             .fetch()
@@ -76,7 +77,7 @@ internal class PermissionRepositoryImpl(
     override suspend fun findById(id: String): Permission? =
         db
             .sql("SELECT * FROM permissions WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toPermission() }
             .one()
             .awaitFirstOrNull()
@@ -94,7 +95,7 @@ internal class PermissionRepositoryImpl(
         val spec = db.sql(sql).bind("resource", resource)
         return if (targetId != null) {
             spec
-                .bind("targetId", targetId)
+                .bind("targetId", UUID.fromString(targetId))
                 .map { row, _ -> row.toPermission() }
                 .all()
                 .collectList()
@@ -111,7 +112,7 @@ internal class PermissionRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM permissions WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

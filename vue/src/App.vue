@@ -4,7 +4,18 @@
  * Содержит верхнюю навигационную панель с логотипом и ссылками,
  * а также `<RouterView />` для отображения страниц-потомков.
  */
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from './module/auth/store'
+import { storeToRefs } from 'pinia'
+
+const router = useRouter()
+const authStore = useAuthStore()
+const { isAuthenticated, user } = storeToRefs(authStore)
+
+async function handleLogout() {
+  await authStore.logout()
+  await router.push('/login')
+}
 </script>
 
 <template>
@@ -12,8 +23,15 @@ import { RouterView, RouterLink } from 'vue-router'
     <nav class="nav">
       <RouterLink to="/" class="nav__logo">Kanban</RouterLink>
       <div class="nav__links">
-        <RouterLink to="/login">Login</RouterLink>
-        <RouterLink to="/register">Register</RouterLink>
+        <template v-if="isAuthenticated">
+          <RouterLink to="/projects">Projects</RouterLink>
+          <RouterLink to="/profile">{{ user?.displayName ?? 'Profile' }}</RouterLink>
+          <a href="#" @click.prevent="handleLogout">Logout</a>
+        </template>
+        <template v-else>
+          <RouterLink to="/login">Login</RouterLink>
+          <RouterLink to="/register">Register</RouterLink>
+        </template>
       </div>
     </nav>
     <main class="main">

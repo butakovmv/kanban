@@ -16,11 +16,28 @@ internal class ListBoardBacklogController(
     suspend fun listBacklog(
         @PathVariable("boardId") boardId: String,
     ): ResponseEntity<*> {
-        val request = TaskHandler.ListBoardBacklogRequest(boardId = boardId)
-        val result = handler.listBoardBacklog(request)
+        val result = handler.listBoardBacklog(boardId = boardId)
         return when (result) {
             is TaskHandler.ListBoardBacklogResult.Success ->
-                ResponseEntity.ok(mapOf("tasks" to result.tasks))
+                ResponseEntity.ok(
+                    mapOf(
+                        "tasks" to result.tasks.map { task ->
+                            TaskResponse(
+                                id = task.id,
+                                boardId = task.boardId,
+                                columnId = task.columnId,
+                                title = task.title,
+                                description = task.description,
+                                assigneeId = task.assigneeId,
+                                position = task.position,
+                                dueDate = task.dueDate,
+                                archived = task.archived,
+                                createdAt = task.createdAt,
+                                updatedAt = task.updatedAt,
+                            )
+                        },
+                    ),
+                )
         }
     }
 }

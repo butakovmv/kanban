@@ -30,24 +30,35 @@ export interface UpdateProjectRequest {
 }
 
 /**
- * Ответ сервера со списком проектов.
+ * Сырой проект из JSON-ответа сервера (snake_case).
  */
-interface ProjectListResponse {
-  items: Project[]
-  total: number
+interface RawProject {
+  id: string
+  owner_id: string
+  name: string
+  description: string | null
+  created_at: string
+  updated_at: string
 }
 
 /**
- * Преобразует snake_case-ответ сервера в camelCase представление проекта.
+ * Ответ сервера со списком проектов.
  */
-function toProject(raw: Project): Project {
+interface ProjectListResponse {
+  projects: RawProject[]
+}
+
+/**
+ * Преобразует snake_case-ответ сервера в Project.
+ */
+function toProject(raw: RawProject): Project {
   return {
     id: raw.id,
-    ownerId: raw.ownerId,
+    ownerId: raw.owner_id,
     name: raw.name,
     description: raw.description,
-    createdAt: raw.createdAt,
-    updatedAt: raw.updatedAt,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
   }
 }
 
@@ -58,7 +69,7 @@ function toProject(raw: Project): Project {
  */
 export function listProjects(ownerId: string): Promise<Project[]> {
   return get<ProjectListResponse>(`/projects?owner_id=${encodeURIComponent(ownerId)}`).then(
-    (response) => response.items.map(toProject),
+    (response) => response.projects.map(toProject),
   )
 }
 
@@ -67,7 +78,7 @@ export function listProjects(ownerId: string): Promise<Project[]> {
  * @param id идентификатор проекта
  */
 export function getProject(id: string): Promise<Project> {
-  return get<Project>(`/projects/${encodeURIComponent(id)}`).then(toProject)
+  return get<RawProject>(`/projects/${encodeURIComponent(id)}`).then(toProject)
 }
 
 /**
@@ -83,7 +94,7 @@ export function createProject(request: CreateProjectRequest): Promise<Project> {
   if (request.description !== undefined) {
     body['description'] = request.description
   }
-  return post<Project>('/projects', body).then(toProject)
+  return post<RawProject>('/projects', body).then(toProject)
 }
 
 /**
@@ -100,7 +111,7 @@ export function updateProject(id: string, request: UpdateProjectRequest): Promis
   if (request.description !== undefined) {
     body['description'] = request.description
   }
-  return put<Project>(`/projects/${encodeURIComponent(id)}`, body).then(toProject)
+  return put<RawProject>(`/projects/${encodeURIComponent(id)}`, body).then(toProject)
 }
 
 /**

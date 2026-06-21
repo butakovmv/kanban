@@ -67,34 +67,34 @@ internal class FileAttachmentRepositoryImplTest {
             val now = Instant.now()
             val attachment =
                 FileAttachment(
-                    id = FileAttachmentId("new-file-id"),
+                    id = FileAttachmentId("00000000-0000-0000-0000-000000000113"),
                     taskId = TaskId(taskId),
                     fileName = "doc.pdf",
                     contentType = "application/pdf",
                     sizeBytes = 4096L,
                     storageKey = "tasks/abc/doc.pdf",
-                    uploadedBy = "user-1",
+                    uploadedBy = "00000000-0000-0000-0000-000000000001",
                     uploadedAt = now,
                 )
 
             val saved = fileAttachmentRepository.save(attachment)
 
-            assertEquals("new-file-id", saved.id.value)
-            val found = fileAttachmentRepository.findById("new-file-id")
+            assertEquals("00000000-0000-0000-0000-000000000113", saved.id.value)
+            val found = fileAttachmentRepository.findById("00000000-0000-0000-0000-000000000113")
             assertNotNull(found)
-            assertEquals("new-file-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000113", found.id.value)
             assertEquals(taskId, found.taskId.value)
             assertEquals("doc.pdf", found.fileName)
             assertEquals("application/pdf", found.contentType)
             assertEquals(4096L, found.sizeBytes)
             assertEquals("tasks/abc/doc.pdf", found.storageKey)
-            assertEquals("user-1", found.uploadedBy)
+            assertEquals("00000000-0000-0000-0000-000000000001", found.uploadedBy)
         }
 
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = fileAttachmentRepository.findById("unknown-id")
+            val found = fileAttachmentRepository.findById("00000000-0000-0000-0000-000000000105")
             assertNull(found)
         }
 

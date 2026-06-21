@@ -19,17 +19,10 @@ internal class CheckPermissionController(
         @RequestParam action: String,
         @RequestParam("target_id") targetId: String?,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.CheckPermissionRequest(
-                userId = userId,
-                resource = resource,
-                action = action,
-                targetId = targetId,
-            )
-        val result = handler.checkPermission(request)
+        val result = handler.checkPermission(userId = userId, resource = resource, action = action, targetId = targetId)
         return when (result) {
             is AccessHandler.CheckPermissionResult.Success ->
-                ResponseEntity.ok(result.response)
+                ResponseEntity.ok(CheckPermissionResponse(allowed = result.allowed, reason = result.reason))
         }
     }
 }

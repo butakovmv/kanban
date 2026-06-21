@@ -42,7 +42,7 @@ internal class GroupRepositoryImplTest {
             val now = Instant.now()
             val group =
                 Group(
-                    id = GroupId("new-group-id"),
+                    id = GroupId("00000000-0000-0000-0000-000000000109"),
                     name = "Test Group",
                     description = "A test group",
                     createdAt = now,
@@ -50,12 +50,12 @@ internal class GroupRepositoryImplTest {
 
             val saved = repository.save(group)
 
-            assertEquals("new-group-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000109", saved.id.value)
             assertEquals("Test Group", saved.name)
 
-            val found = repository.findById("new-group-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000109")
             assertNotNull(found)
-            assertEquals("new-group-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000109", found.id.value)
             assertEquals("Test Group", found.name)
             assertEquals("A test group", found.description)
         }
@@ -66,7 +66,7 @@ internal class GroupRepositoryImplTest {
             val now = Instant.now()
             val group =
                 Group(
-                    id = GroupId("null-desc-id"),
+                    id = GroupId("00000000-0000-0000-0000-000000000118"),
                     name = "No description",
                     description = null,
                     createdAt = now,
@@ -74,7 +74,7 @@ internal class GroupRepositoryImplTest {
 
             repository.save(group)
 
-            val found = repository.findById("null-desc-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000118")
             assertNotNull(found)
             assertNull(found.description)
         }
@@ -82,7 +82,7 @@ internal class GroupRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = repository.findById("unknown-group-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000100")
             assertNull(found)
         }
 

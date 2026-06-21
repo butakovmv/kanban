@@ -4,6 +4,7 @@ import com.kanban.identity.UserTariff
 import com.kanban.identity.UserTariffRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -33,7 +34,7 @@ internal class UserTariffRepositoryImpl(
             ORDER BY created_at DESC
             LIMIT 1
         """,
-            ).bind("userId", userId)
+            ).bind("userId", UUID.fromString(userId))
             .bind("now", LocalDateTime.now())
             .map { row, _ -> row.toUserTariff() }
             .one()
@@ -68,8 +69,8 @@ internal class UserTariffRepositoryImpl(
                     tariff_id = :tariffId, expires_at = :expiresAt
                 WHERE id = :id
             """,
-            ).bind("id", userTariff.id)
-            .bind("tariffId", userTariff.tariffId)
+            ).bind("id", UUID.fromString(userTariff.id))
+            .bind("tariffId", UUID.fromString(userTariff.tariffId))
             .let { spec ->
                 val expiresAtLdt = userTariff.expiresAt?.atZone(z)?.toLocalDateTime()
                 if (expiresAtLdt != null) {
@@ -93,9 +94,9 @@ internal class UserTariffRepositoryImpl(
                 INSERT INTO user_tariffs (id, user_id, tariff_id, starts_at, expires_at, created_at)
                 VALUES (:id, :userId, :tariffId, :startsAt, :expiresAt, :createdAt)
             """,
-            ).bind("id", userTariff.id)
-            .bind("userId", userTariff.userId)
-            .bind("tariffId", userTariff.tariffId)
+            ).bind("id", UUID.fromString(userTariff.id))
+            .bind("userId", UUID.fromString(userTariff.userId))
+            .bind("tariffId", UUID.fromString(userTariff.tariffId))
             .bind("startsAt", userTariff.startsAt.atZone(z).toLocalDateTime())
             .let { spec ->
                 val expiresAtLdt = userTariff.expiresAt?.atZone(z)?.toLocalDateTime()

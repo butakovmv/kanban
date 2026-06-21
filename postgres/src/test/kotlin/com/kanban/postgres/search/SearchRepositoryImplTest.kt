@@ -213,10 +213,20 @@ internal class SearchRepositoryImplTest {
     fun `should filter by assignee`() =
         runTest {
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "User 1 task", assigneeId = "user-1"),
+                TaskSearchSpec(
+                    boardId = boardId,
+                    columnId = columnId,
+                    title = "User 1 task",
+                    assigneeId = "00000000-0000-0000-0000-000000000001",
+                ),
             )
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "User 2 task", assigneeId = "user-2"),
+                TaskSearchSpec(
+                    boardId = boardId,
+                    columnId = columnId,
+                    title = "User 2 task",
+                    assigneeId = "00000000-0000-0000-0000-000000000002",
+                ),
             )
 
             val criteria =
@@ -226,7 +236,7 @@ internal class SearchRepositoryImplTest {
                     boardId = null,
                     status = null,
                     priority = null,
-                    assigneeId = "user-1",
+                    assigneeId = "00000000-0000-0000-0000-000000000001",
                     dueDateFrom = null,
                     dueDateTo = null,
                     limit = 20,
@@ -235,7 +245,7 @@ internal class SearchRepositoryImplTest {
 
             val results = searchRepository.search(criteria)
             assertEquals(1, results.size)
-            assertEquals("user-1", results[0].assigneeId)
+            assertEquals("00000000-0000-0000-0000-000000000001", results[0].assigneeId)
         }
 
     @Test

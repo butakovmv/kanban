@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 
-/**
- * Тесты контроллера выхода из системы.
- * Проверяют корректность кодов ответа.
- */
 internal class LogoutControllerTest : BaseControllerTest() {
     private lateinit var webClient: WebTestClient
 
@@ -21,7 +17,7 @@ internal class LogoutControllerTest : BaseControllerTest() {
 
     @Test
     fun `should logout and return 204`() {
-        val request = RequestGenerator.logoutRequest()
+        val body = RequestGenerator.logoutBody()
 
         coEvery { logoutOperation.execute(any()) } returns LogoutOperation.Result.Success
 
@@ -29,7 +25,7 @@ internal class LogoutControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/logout")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isNoContent

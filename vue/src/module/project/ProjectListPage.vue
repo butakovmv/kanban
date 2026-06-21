@@ -17,15 +17,16 @@ const showCreateForm = ref(false)
 const newName = ref('')
 const newDescription = ref('')
 
-const MOCK_OWNER_ID = 'mock-owner-id'
-
 onMounted(async () => {
-  const ownerId = authStore.user?.id ?? MOCK_OWNER_ID
-  await projectStore.loadProjects(ownerId)
+  const ownerId = authStore.user?.id
+  if (ownerId) {
+    await projectStore.loadProjects(ownerId)
+  }
 })
 
 async function handleCreate() {
-  const ownerId = authStore.user?.id ?? MOCK_OWNER_ID
+  const ownerId = authStore.user?.id
+  if (!ownerId) return
   const created = await projectStore.createProject({
     ownerId,
     name: newName.value,

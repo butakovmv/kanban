@@ -67,9 +67,9 @@ internal class CommentRepositoryImplTest {
             val now = Instant.now()
             val comment =
                 Comment(
-                    id = CommentId("new-comment-id"),
+                    id = CommentId("00000000-0000-0000-0000-000000000111"),
                     taskId = TaskId(taskId),
-                    authorId = "user-1",
+                    authorId = "00000000-0000-0000-0000-000000000001",
                     text = "Hello world",
                     createdAt = now,
                     updatedAt = now,
@@ -77,19 +77,19 @@ internal class CommentRepositoryImplTest {
 
             val saved = commentRepository.save(comment)
 
-            assertEquals("new-comment-id", saved.id.value)
-            val found = commentRepository.findById("new-comment-id")
+            assertEquals("00000000-0000-0000-0000-000000000111", saved.id.value)
+            val found = commentRepository.findById("00000000-0000-0000-0000-000000000111")
             assertNotNull(found)
-            assertEquals("new-comment-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000111", found.id.value)
             assertEquals(taskId, found.taskId.value)
-            assertEquals("user-1", found.authorId)
+            assertEquals("00000000-0000-0000-0000-000000000001", found.authorId)
             assertEquals("Hello world", found.text)
         }
 
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = commentRepository.findById("unknown-id")
+            val found = commentRepository.findById("00000000-0000-0000-0000-000000000105")
             assertNull(found)
         }
 

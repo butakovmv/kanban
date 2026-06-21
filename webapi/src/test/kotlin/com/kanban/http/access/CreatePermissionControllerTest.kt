@@ -20,7 +20,7 @@ internal class CreatePermissionControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should create permission and return 201`() {
-        val request = AccessRequestGenerator.createPermissionRequest()
+        val request = AccessRequestGenerator.createPermissionBody()
         val permission =
             Permission(
                 id = PermissionId("new-perm-id"),
@@ -53,7 +53,7 @@ internal class CreatePermissionControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should create permission with target and return 201`() {
-        val request = AccessRequestGenerator.createPermissionRequestWithTarget()
+        val request = AccessRequestGenerator.createPermissionBodyWithTarget()
         val permission =
             Permission(
                 id = PermissionId("new-perm-id"),
@@ -84,7 +84,7 @@ internal class CreatePermissionControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should return 400 on failure`() {
-        val request = AccessRequestGenerator.createPermissionRequest()
+        val request = AccessRequestGenerator.createPermissionBody()
 
         coEvery {
             createPermissionOperation.execute(any())

@@ -22,18 +22,28 @@ internal class GetCfdReportController(
         @RequestParam("to") to: String,
         @RequestParam("interval", defaultValue = "DAY") interval: String,
     ): ResponseEntity<*> {
-        val request =
-            ReportHandler.CfdRequest(
+        val result =
+            handler.getCfd(
                 projectId = projectId,
                 boardId = boardId,
                 from = Instant.parse(from),
                 to = Instant.parse(to),
                 interval = Interval.valueOf(interval.uppercase()),
             )
-        val result = handler.getCfd(request)
         return when (result) {
             is ReportHandler.CfdResult.Success ->
-                ResponseEntity.ok(mapOf("points" to result.points))
+                ResponseEntity.ok(
+                    mapOf(
+                        "points" to result.points.map {
+                            CfdPointResponse(
+                                date = it.date,
+                                columnId = it.columnId,
+                                columnName = it.columnName,
+                                count = it.count,
+                            )
+                        },
+                    ),
+                )
         }
     }
 }

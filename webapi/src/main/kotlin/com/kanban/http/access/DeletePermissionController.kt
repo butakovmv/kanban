@@ -17,8 +17,7 @@ internal class DeletePermissionController(
     suspend fun delete(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = AccessHandler.DeletePermissionRequest(permissionId = id)
-        val result = handler.deletePermission(request)
+        val result = handler.deletePermission(permissionId = id)
         return when (result) {
             AccessHandler.DeletePermissionResult.Success ->
                 ResponseEntity

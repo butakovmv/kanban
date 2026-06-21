@@ -1,17 +1,11 @@
 package com.kanban.http.task
 
-import com.kanban.task.CommentHandler
-import com.kanban.task.TaskHandler
 import java.time.Instant
 import java.util.UUID
 
-/**
- * Генератор тестовых DTO для запросов задач, комментариев и файлов.
- * Создаёт случайные данные, которые используются в тестах контроллеров.
- */
 internal object RequestGenerator {
-    fun createTaskRequest(): TaskHandler.CreateTaskRequest =
-        TaskHandler.CreateTaskRequest(
+    fun createTaskRequest(): CreateTaskController.CreateTaskBody =
+        CreateTaskController.CreateTaskBody(
             boardId = "board-${UUID.randomUUID()}",
             columnId = "column-${UUID.randomUUID()}",
             title = "Task ${UUID.randomUUID().toString().take(6)}",
@@ -20,8 +14,8 @@ internal object RequestGenerator {
             dueDate = Instant.now().plusSeconds(86_400),
         )
 
-    fun createTaskRequestWithoutOptionals(): TaskHandler.CreateTaskRequest =
-        TaskHandler.CreateTaskRequest(
+    fun createTaskRequestWithoutOptionals(): CreateTaskController.CreateTaskBody =
+        CreateTaskController.CreateTaskBody(
             boardId = "board-${UUID.randomUUID()}",
             columnId = "column-${UUID.randomUUID()}",
             title = "Task ${UUID.randomUUID().toString().take(6)}",
@@ -30,16 +24,16 @@ internal object RequestGenerator {
             dueDate = null,
         )
 
-    fun updateTaskBody(): TaskHandler.UpdateTaskBody =
-        TaskHandler.UpdateTaskBody(
+    fun updateTaskBody(): UpdateTaskController.UpdateTaskBody =
+        UpdateTaskController.UpdateTaskBody(
             title = "Updated ${UUID.randomUUID().toString().take(6)}",
             description = "Updated ${UUID.randomUUID().toString().take(6)}",
             assigneeId = "user-${UUID.randomUUID()}",
             dueDate = Instant.now().plusSeconds(172_800),
         )
 
-    fun moveTaskBody(): TaskHandler.MoveTaskBody =
-        TaskHandler.MoveTaskBody(
+    fun moveTaskBody(): MoveTaskController.MoveTaskBody =
+        MoveTaskController.MoveTaskBody(
             columnId = "column-${UUID.randomUUID()}",
             position = (0..100).random(),
         )
@@ -50,8 +44,8 @@ internal object RequestGenerator {
             text = "Comment ${UUID.randomUUID().toString().take(6)}",
         )
 
-    fun updateCommentBody(): CommentHandler.UpdateCommentBody =
-        CommentHandler.UpdateCommentBody(
+    fun updateCommentBody(): UpdateCommentController.UpdateCommentBody =
+        UpdateCommentController.UpdateCommentBody(
             text = "Updated ${UUID.randomUUID().toString().take(6)}",
         )
 

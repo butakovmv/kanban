@@ -71,12 +71,12 @@ internal class TaskRepositoryImplTest {
             val now = Instant.now()
             val task =
                 Task(
-                    id = TaskId("new-task-id"),
+                    id = TaskId("00000000-0000-0000-0000-000000000116"),
                     boardId = BoardId(boardId),
                     columnId = ColumnId(columnId),
                     title = "My task",
                     description = "Some desc",
-                    assigneeId = "user-1",
+                    assigneeId = "00000000-0000-0000-0000-000000000001",
                     position = 0,
                     dueDate = now.plusSeconds(3600),
                     archived = false,
@@ -86,18 +86,18 @@ internal class TaskRepositoryImplTest {
 
             val saved = taskRepository.save(task)
 
-            assertEquals("new-task-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000116", saved.id.value)
             assertEquals(boardId, saved.boardId.value)
             assertEquals(columnId, saved.columnId.value)
 
-            val found = taskRepository.findById("new-task-id")
+            val found = taskRepository.findById("00000000-0000-0000-0000-000000000116")
             assertNotNull(found)
-            assertEquals("new-task-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000116", found.id.value)
             assertEquals(boardId, found.boardId.value)
             assertEquals(columnId, found.columnId.value)
             assertEquals("My task", found.title)
             assertEquals("Some desc", found.description)
-            assertEquals("user-1", found.assigneeId)
+            assertEquals("00000000-0000-0000-0000-000000000001", found.assigneeId)
             assertEquals(0, found.position)
             assertNotNull(found.dueDate)
             assertEquals(false, found.archived)
@@ -109,7 +109,7 @@ internal class TaskRepositoryImplTest {
             val now = Instant.now()
             val task =
                 Task(
-                    id = TaskId("null-task"),
+                    id = TaskId("00000000-0000-0000-0000-000000000108"),
                     boardId = BoardId(boardId),
                     columnId = ColumnId(columnId),
                     title = "No desc",
@@ -124,7 +124,7 @@ internal class TaskRepositoryImplTest {
 
             taskRepository.save(task)
 
-            val found = taskRepository.findById("null-task")
+            val found = taskRepository.findById("00000000-0000-0000-0000-000000000108")
             assertNotNull(found)
             assertNull(found.description)
             assertNull(found.assigneeId)
@@ -134,7 +134,7 @@ internal class TaskRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = taskRepository.findById("unknown-id")
+            val found = taskRepository.findById("00000000-0000-0000-0000-000000000105")
             assertNull(found)
         }
 
@@ -151,7 +151,7 @@ internal class TaskRepositoryImplTest {
                     title = "New",
                     description = "Added description",
                     position = 7,
-                    assigneeId = "user-2",
+                    assigneeId = "00000000-0000-0000-0000-000000000121",
                     dueDate = Instant.now().plusSeconds(7200),
                 )
 
@@ -163,7 +163,7 @@ internal class TaskRepositoryImplTest {
             assertEquals("New", reloaded.title)
             assertEquals("Added description", reloaded.description)
             assertEquals(7, reloaded.position)
-            assertEquals("user-2", reloaded.assigneeId)
+            assertEquals("00000000-0000-0000-0000-000000000121", reloaded.assigneeId)
             assertNotNull(reloaded.dueDate)
         }
 
@@ -176,7 +176,7 @@ internal class TaskRepositoryImplTest {
                         boardId = boardId,
                         columnId = columnId,
                         description = "Old desc",
-                        assigneeId = "user-1",
+                        assigneeId = "00000000-0000-0000-0000-000000000001",
                     ),
                 )
             val existing = taskRepository.findById(taskId)!!

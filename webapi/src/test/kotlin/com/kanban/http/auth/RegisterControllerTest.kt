@@ -15,10 +15,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 
-/**
- * Тесты контроллера регистрации.
- * Проверяют корректность кодов ответа и тел запросов/ответов.
- */
 internal class RegisterControllerTest : BaseControllerTest() {
     private lateinit var webClient: WebTestClient
 
@@ -29,13 +25,13 @@ internal class RegisterControllerTest : BaseControllerTest() {
 
     @Test
     fun `should register user and return 201`() {
-        val request = RequestGenerator.registerRequest()
+        val body = RequestGenerator.registerBody()
         val user =
             User(
                 id = UserId("new-user-id"),
-                email = Email(request.email),
+                email = Email(body.email),
                 passwordHash = PasswordHash("hashed"),
-                displayName = request.displayName,
+                displayName = body.displayName,
                 totpSecret = null,
                 totpEnabled = false,
                 createdAt = Instant.now(),
@@ -51,7 +47,7 @@ internal class RegisterControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isCreated
@@ -63,14 +59,14 @@ internal class RegisterControllerTest : BaseControllerTest() {
             .jsonPath("$.user.id")
             .isEqualTo("new-user-id")
             .jsonPath("$.user.email")
-            .isEqualTo(request.email)
+            .isEqualTo(body.email)
             .jsonPath("$.user.display_name")
-            .isEqualTo(request.displayName)
+            .isEqualTo(body.displayName)
     }
 
     @Test
     fun `should return 400 on duplicate email`() {
-        val request = RequestGenerator.registerRequest()
+        val body = RequestGenerator.registerBody()
 
         coEvery {
             registerUserOperation.execute(any())
@@ -80,7 +76,7 @@ internal class RegisterControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isBadRequest
@@ -91,22 +87,22 @@ internal class RegisterControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 400 on invalid email`() {
-        val request = RequestGenerator.registerRequest()
+        val body = RequestGenerator.registerBody()
 
         coEvery {
             registerUserOperation.execute(any())
-        } returns RegisterUserOperation.Result.Failure("Invalid email: ${request.email}")
+        } returns RegisterUserOperation.Result.Failure("Invalid email: ${body.email}")
 
         webClient
             .post()
             .uri("/api/v1/auth/register")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isBadRequest
             .expectBody()
             .jsonPath("$.reason")
-            .isEqualTo("Invalid email: ${request.email}")
+            .isEqualTo("Invalid email: ${body.email}")
     }
 }

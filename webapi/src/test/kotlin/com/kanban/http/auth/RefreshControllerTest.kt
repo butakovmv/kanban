@@ -10,10 +10,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 
-/**
- * Тесты контроллера обновления токена.
- * Проверяют корректность кодов ответа и тел запросов/ответов.
- */
 internal class RefreshControllerTest : BaseControllerTest() {
     private lateinit var webClient: WebTestClient
 
@@ -24,7 +20,7 @@ internal class RefreshControllerTest : BaseControllerTest() {
 
     @Test
     fun `should refresh tokens and return 200`() {
-        val request = RequestGenerator.refreshRequest()
+        val body = RequestGenerator.refreshBody()
         val newTokens = AuthTokens(AccessToken("new-access"), RefreshToken("new-refresh"))
 
         coEvery {
@@ -35,7 +31,7 @@ internal class RefreshControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/refresh")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isOk
@@ -48,7 +44,7 @@ internal class RefreshControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 401 on invalid refresh token`() {
-        val request = RequestGenerator.refreshRequest()
+        val body = RequestGenerator.refreshBody()
 
         coEvery {
             refreshTokenOperation.execute(any())
@@ -58,7 +54,7 @@ internal class RefreshControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/refresh")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isUnauthorized

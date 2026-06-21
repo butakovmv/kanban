@@ -108,7 +108,7 @@ export const useAuthStore = defineStore('auth', () => {
    * Выход из системы: аннулирует refresh-токен и очищает сессию.
    */
   async function logout(): Promise<void> {
-    if (refreshToken.value !== null) {
+    if (refreshToken.value != null) {
       try {
         await authApi.logout({ refreshToken: refreshToken.value })
       } catch {

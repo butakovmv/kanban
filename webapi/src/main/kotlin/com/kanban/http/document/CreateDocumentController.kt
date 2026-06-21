@@ -9,30 +9,17 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер создания документа.
- * Обрабатывает только запрос `POST /api/v1/documents`.
- *
- * @property handler обработчик запросов документов
- */
 @RestController
 @RequestMapping("/api/v1/documents")
 internal class CreateDocumentController(
     private val handler: DocumentHandler,
 ) {
-    /**
-     * Создаёт новый документ.
-     * Содержимое передаётся в теле запроса в кодировке base64.
-     *
-     * @param body данные для создания документа (содержимое в base64)
-     * @return 201 с созданным документом, или 400 при ошибке
-     */
     @PostMapping
     suspend fun create(
         @RequestBody body: CreateDocumentBody,
     ): ResponseEntity<*> {
-        val request =
-            DocumentHandler.CreateDocumentRequest(
+        val result =
+            handler.create(
                 projectId = body.projectId,
                 title = body.title,
                 description = body.description,
@@ -41,12 +28,26 @@ internal class CreateDocumentController(
                 contentBase64 = body.contentBase64,
                 uploadedBy = body.uploadedBy,
             )
-        val result = handler.create(request)
         return when (result) {
             is DocumentHandler.CreateDocumentResult.Success ->
                 ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(result.document)
+                    .body(
+                        DocumentResponse(
+                            id = result.document.id,
+                            projectId = result.document.projectId,
+                            title = result.document.title,
+                            description = result.document.description,
+                            fileName = result.document.fileName,
+                            contentType = result.document.contentType,
+                            sizeBytes = result.document.sizeBytes,
+                            storageKey = result.document.storageKey,
+                            version = result.document.version,
+                            uploadedBy = result.document.uploadedBy,
+                            createdAt = result.document.createdAt,
+                            updatedAt = result.document.updatedAt,
+                        ),
+                    )
             is DocumentHandler.CreateDocumentResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -54,17 +55,6 @@ internal class CreateDocumentController(
         }
     }
 
-    /**
-     * Тело запроса создания документа.
-     *
-     * @property projectId идентификатор проекта
-     * @property title заголовок документа
-     * @property description описание документа (опционально)
-     * @property fileName имя файла
-     * @property contentType MIME-тип содержимого
-     * @property contentBase64 содержимое файла в кодировке base64
-     * @property uploadedBy идентификатор пользователя, загрузившего документ
-     */
     data class CreateDocumentBody(
         @JsonProperty("project_id")
         val projectId: String,

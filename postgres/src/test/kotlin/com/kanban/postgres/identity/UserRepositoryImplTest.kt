@@ -41,9 +41,10 @@ internal class UserRepositoryImplTest {
     @Test
     fun `should save new user and find by id`() =
         runTest {
+            val userId = "00000000-0000-0000-0000-000000000001"
             val user =
                 User(
-                    id = UserId("new-insert-id"),
+                    id = UserId(userId),
                     email = Email("insert@kanban.test"),
                     passwordHash = PasswordHash("hash-insert"),
                     displayName = "Insert Test",
@@ -55,12 +56,12 @@ internal class UserRepositoryImplTest {
 
             val saved = userRepository.save(user)
 
-            assertEquals("new-insert-id", saved.id.value)
+            assertEquals(userId, saved.id.value)
             assertEquals("insert@kanban.test", saved.email.value)
 
-            val found = userRepository.findById("new-insert-id")
+            val found = userRepository.findById(userId)
             assertNotNull(found)
-            assertEquals("new-insert-id", found.id.value)
+            assertEquals(userId, found.id.value)
             assertEquals("insert@kanban.test", found.email.value)
             assertEquals("hash-insert", found.passwordHash.value)
             assertEquals("Insert Test", found.displayName)
@@ -81,7 +82,7 @@ internal class UserRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = userRepository.findById("unknown-id")
+            val found = userRepository.findById("00000000-0000-0000-0000-000000000099")
             assertNull(found)
         }
 

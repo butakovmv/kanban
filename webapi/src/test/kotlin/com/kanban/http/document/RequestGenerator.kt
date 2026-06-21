@@ -1,13 +1,8 @@
 package com.kanban.http.document
 
-import com.kanban.document.DocumentHandler
 import java.util.Base64
 import java.util.UUID
 
-/**
- * Генератор тестовых DTO для запросов документов.
- * Создаёт случайные данные, которые используются в тестах контроллеров.
- */
 internal object RequestGenerator {
     fun createDocumentBody(): CreateDocumentController.CreateDocumentBody =
         CreateDocumentController.CreateDocumentBody(
@@ -25,21 +20,21 @@ internal object RequestGenerator {
             description = null,
         )
 
-    fun updateDocumentBody(): DocumentHandler.UpdateDocumentBody =
-        DocumentHandler.UpdateDocumentBody(
+    fun updateDocumentBody(): UpdateDocumentController.UpdateDocumentBody =
+        UpdateDocumentController.UpdateDocumentBody(
             title = "Updated ${UUID.randomUUID().toString().take(6)}",
             description = "Updated ${UUID.randomUUID().toString().take(6)}",
         )
 
-    fun replaceDocumentBody(): DocumentHandler.ReplaceDocumentBody =
-        DocumentHandler.ReplaceDocumentBody(
+    fun replaceDocumentBody(): ReplaceDocumentController.ReplaceDocumentBody =
+        ReplaceDocumentController.ReplaceDocumentBody(
             contentBase64 = Base64.getEncoder().encodeToString("new-content".toByteArray()),
             fileName = "new-${UUID.randomUUID().toString().take(6)}.pdf",
             contentType = "application/pdf",
         )
 
-    fun replaceDocumentBodyWithoutOptionals(): DocumentHandler.ReplaceDocumentBody =
-        DocumentHandler.ReplaceDocumentBody(
+    fun replaceDocumentBodyWithoutOptionals(): ReplaceDocumentController.ReplaceDocumentBody =
+        ReplaceDocumentController.ReplaceDocumentBody(
             contentBase64 = Base64.getEncoder().encodeToString("new-content".toByteArray()),
             fileName = null,
             contentType = null,

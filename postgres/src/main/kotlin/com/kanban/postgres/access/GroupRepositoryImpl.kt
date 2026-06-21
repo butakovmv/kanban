@@ -4,6 +4,7 @@ import com.kanban.access.Group
 import com.kanban.access.GroupRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -32,7 +33,7 @@ internal class GroupRepositoryImpl(
                     name = :name, description = :description
                 WHERE id = :id
                 """,
-            ).bind("id", group.id.value)
+            ).bind("id", UUID.fromString(group.id.value))
             .bind("name", group.name)
             .let { spec ->
                 val description = group.description
@@ -56,7 +57,7 @@ internal class GroupRepositoryImpl(
                 INSERT INTO groups (id, name, description, created_at)
                 VALUES (:id, :name, :description, :createdAt)
                 """,
-            ).bind("id", group.id.value)
+            ).bind("id", UUID.fromString(group.id.value))
             .bind("name", group.name)
             .let { spec ->
                 val description = group.description
@@ -74,7 +75,7 @@ internal class GroupRepositoryImpl(
     override suspend fun findById(id: String): Group? =
         db
             .sql("SELECT * FROM groups WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toGroup() }
             .one()
             .awaitFirstOrNull()
@@ -90,7 +91,7 @@ internal class GroupRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM groups WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

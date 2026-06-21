@@ -7,32 +7,32 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер получения доски с колонками.
- * Обрабатывает только запрос `GET /api/v1/boards/{id}`.
- *
- * @property handler обработчик запросов досок
- */
 @RestController
 @RequestMapping("/api/v1/boards/{id}")
 internal class GetBoardController(
     private val handler: BoardHandler,
 ) {
-    /**
-     * Возвращает доску вместе с её колонками.
-     *
-     * @param id идентификатор доски
-     * @return 200 с представлением доски, или 404 если доска не найдена
-     */
     @GetMapping
-    suspend fun get(
-        @PathVariable("id") id: String,
-    ): ResponseEntity<*> {
-        val request = BoardHandler.GetBoardRequest(boardId = id)
-        val result = handler.get(request)
+    suspend fun get(@PathVariable("id") id: String): ResponseEntity<*> {
+        val result = handler.get(boardId = id)
         return when (result) {
-            is BoardHandler.GetBoardResult.Success ->
-                ResponseEntity.ok(result.view)
+            is BoardHandler.GetBoardResult.Success -> {
+                val v = result.view
+                ResponseEntity.ok(
+                    BoardViewResponse(
+                        board = BoardResponse(
+                            id = v.board.id, projectId = v.board.projectId, name = v.board.name,
+                            position = v.board.position, createdAt = v.board.createdAt,
+                        ),
+                        columns = v.columns.map { c ->
+                            ColumnResponse(
+                                id = c.id, boardId = c.boardId, name = c.name,
+                                position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
+                            )
+                        },
+                    ),
+                )
+            }
             BoardHandler.GetBoardResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

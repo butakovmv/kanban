@@ -7,32 +7,35 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер получения задачи.
- * Обрабатывает только запрос `GET /api/v1/tasks/{id}`.
- *
- * @property handler обработчик запросов задач
- */
 @RestController
 @RequestMapping("/api/v1/tasks/{id}")
 internal class GetTaskController(
     private val handler: TaskHandler,
 ) {
-    /**
-     * Возвращает задачу по идентификатору.
-     *
-     * @param id идентификатор задачи
-     * @return 200 с задачей, или 404 если задача не найдена
-     */
     @GetMapping
     suspend fun get(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = TaskHandler.GetTaskRequest(taskId = id)
-        val result = handler.get(request)
+        val result = handler.get(taskId = id)
         return when (result) {
-            is TaskHandler.GetTaskResult.Success ->
-                ResponseEntity.ok(result.task)
+            is TaskHandler.GetTaskResult.Success -> {
+                val task = result.task
+                ResponseEntity.ok(
+                    TaskResponse(
+                        id = task.id,
+                        boardId = task.boardId,
+                        columnId = task.columnId,
+                        title = task.title,
+                        description = task.description,
+                        assigneeId = task.assigneeId,
+                        position = task.position,
+                        dueDate = task.dueDate,
+                        archived = task.archived,
+                        createdAt = task.createdAt,
+                        updatedAt = task.updatedAt,
+                    ),
+                )
+            }
             TaskHandler.GetTaskResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

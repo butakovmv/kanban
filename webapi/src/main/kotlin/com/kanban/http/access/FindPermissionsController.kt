@@ -17,15 +17,16 @@ internal class FindPermissionsController(
         @RequestParam resource: String,
         @RequestParam("target_id") targetId: String?,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.FindPermissionsRequest(
-                resource = resource,
-                targetId = targetId,
-            )
-        val result = handler.findPermissions(request)
+        val result = handler.findPermissions(resource = resource, targetId = targetId)
         return when (result) {
             is AccessHandler.FindPermissionsResult.Success ->
-                ResponseEntity.ok(mapOf("permissions" to result.permissions))
+                ResponseEntity.ok(
+                    mapOf(
+                        "permissions" to result.permissions.map {
+                            PermissionResponse(id = it.id, resource = it.resource, action = it.action, targetId = it.targetId, createdAt = it.createdAt)
+                        },
+                    ),
+                )
         }
     }
 }

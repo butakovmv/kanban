@@ -25,8 +25,8 @@ internal class RecoveryTokenRepositoryImpl(
             INSERT INTO recovery_tokens (id, user_id, token_hash, expires_at, created_at)
             VALUES (:id, :userId, :tokenHash, :expiresAt, :createdAt)
         """,
-            ).bind("id", UUID.randomUUID().toString())
-            .bind("userId", userId)
+            ).bind("id", UUID.randomUUID())
+            .bind("userId", UUID.fromString(userId))
             .bind("tokenHash", tokenHash)
             .bind("expiresAt", expiresAt.atZone(ZoneOffset.UTC).toLocalDateTime())
             .bind("createdAt", LocalDateTime.now())

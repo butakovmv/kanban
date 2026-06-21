@@ -27,8 +27,8 @@ internal class SearchController(
         @RequestParam("page", defaultValue = "0") page: Int,
         @RequestParam("size", defaultValue = "20") size: Int,
     ): ResponseEntity<*> {
-        val request =
-            SearchHandler.SearchRequest(
+        val result =
+            handler.search(
                 query = query?.takeIf { it.isNotBlank() },
                 projectId = projectId?.takeIf { it.isNotBlank() },
                 boardId = boardId?.takeIf { it.isNotBlank() },
@@ -40,7 +40,27 @@ internal class SearchController(
                 page = page,
                 size = size,
             )
-        val result = handler.search(request)
-        return ResponseEntity.ok(result)
+        return ResponseEntity.ok(
+            SearchResultWrapper(
+                results = result.results.map {
+                    SearchItemResponse(
+                        id = it.id,
+                        title = it.title,
+                        description = it.description,
+                        status = it.status,
+                        priority = it.priority,
+                        assigneeId = it.assigneeId,
+                        boardId = it.boardId,
+                        columnId = it.columnId,
+                        projectId = it.projectId,
+                        dueDate = it.dueDate,
+                        createdAt = it.createdAt,
+                        updatedAt = it.updatedAt,
+                        rank = it.rank,
+                    )
+                },
+                total = result.total,
+            ),
+        )
     }
 }

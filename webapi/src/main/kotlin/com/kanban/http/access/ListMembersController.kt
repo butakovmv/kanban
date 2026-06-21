@@ -16,11 +16,16 @@ internal class ListMembersController(
     suspend fun list(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = AccessHandler.ListMembersRequest(groupId = id)
-        val result = handler.listMembers(request)
+        val result = handler.listMembers(groupId = id)
         return when (result) {
             is AccessHandler.ListMembersResult.Success ->
-                ResponseEntity.ok(mapOf("members" to result.members))
+                ResponseEntity.ok(
+                    mapOf(
+                        "members" to result.members.map {
+                            MemberResponse(groupId = it.groupId, userId = it.userId, addedAt = it.addedAt)
+                        },
+                    ),
+                )
         }
     }
 }

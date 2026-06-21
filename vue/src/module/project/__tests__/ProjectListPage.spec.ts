@@ -68,6 +68,13 @@ describe('ProjectListPage', () => {
     await router.push('/projects')
     await router.isReady()
 
+    const authStore = useAuthStore()
+    authStore.user = {
+      id: 'real-user',
+      email: 'u@kanban.test',
+      displayName: 'U',
+    }
+
     const created = projectGenerator.project({ name: 'Created Project' })
     vi.mocked(api.createProject).mockResolvedValue(created)
 
@@ -90,7 +97,7 @@ describe('ProjectListPage', () => {
     await nextTick()
 
     expect(api.createProject).toHaveBeenCalledWith({
-      ownerId: 'mock-owner-id',
+      ownerId: 'real-user',
       name: 'Created Project',
       description: 'My description',
     })

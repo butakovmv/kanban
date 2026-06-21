@@ -18,12 +18,7 @@ internal class RemoveMemberController(
         @PathVariable("id") id: String,
         @PathVariable("userId") userId: String,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.RemoveMemberRequest(
-                groupId = id,
-                userId = userId,
-            )
-        val result = handler.removeMember(request)
+        val result = handler.removeMember(groupId = id, userId = userId)
         return when (result) {
             AccessHandler.RemoveMemberResult.Success ->
                 ResponseEntity

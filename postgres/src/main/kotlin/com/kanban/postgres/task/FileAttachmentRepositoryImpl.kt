@@ -4,6 +4,7 @@ import com.kanban.task.FileAttachment
 import com.kanban.task.FileAttachmentRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -53,8 +54,8 @@ internal class FileAttachmentRepositoryImpl(
                     uploaded_at = :uploadedAt
                 WHERE id = :id
                 """,
-            ).bind("id", file.id.value)
-            .bind("taskId", file.taskId.value)
+            ).bind("id", UUID.fromString(file.id.value))
+            .bind("taskId", UUID.fromString(file.taskId.value))
             .bind("fileName", file.fileName)
             .bind("contentType", file.contentType)
             .bind("sizeBytes", file.sizeBytes)
@@ -81,8 +82,8 @@ internal class FileAttachmentRepositoryImpl(
                 INSERT INTO file_attachments (id, task_id, file_name, content_type, size_bytes, storage_key, uploaded_by, uploaded_at)
                 VALUES (:id, :taskId, :fileName, :contentType, :sizeBytes, :storageKey, :uploadedBy, :uploadedAt)
                 """,
-            ).bind("id", file.id.value)
-            .bind("taskId", file.taskId.value)
+            ).bind("id", UUID.fromString(file.id.value))
+            .bind("taskId", UUID.fromString(file.taskId.value))
             .bind("fileName", file.fileName)
             .bind("contentType", file.contentType)
             .bind("sizeBytes", file.sizeBytes)
@@ -102,7 +103,7 @@ internal class FileAttachmentRepositoryImpl(
     override suspend fun findById(id: String): FileAttachment? =
         db
             .sql("SELECT * FROM file_attachments WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toFileAttachment() }
             .one()
             .awaitFirstOrNull()
@@ -115,7 +116,7 @@ internal class FileAttachmentRepositoryImpl(
     override suspend fun listByTaskId(taskId: String): List<FileAttachment> =
         db
             .sql("SELECT * FROM file_attachments WHERE task_id = :taskId ORDER BY uploaded_at")
-            .bind("taskId", taskId)
+            .bind("taskId", UUID.fromString(taskId))
             .map { row, _ -> row.toFileAttachment() }
             .all()
             .collectList()
@@ -128,7 +129,7 @@ internal class FileAttachmentRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM file_attachments WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()

@@ -1,20 +1,9 @@
 package com.kanban.task
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.kanban.sse.SinkService
 import com.kanban.sse.SseEvent
 import java.time.Instant
 
-/**
- * Обработчик запросов комментариев.
- * Связывает HTTP-контроллеры с usecase-операциями: преобразует DTO в аргументы операций,
- * вызывает операции и преобразует результаты обратно в DTO.
- *
- * @property createCommentOperation операция создания комментария
- * @property updateCommentOperation операция обновления комментария
- * @property deleteCommentOperation операция удаления комментария
- * @property listCommentsOperation операция получения списка комментариев
- */
 internal class CommentHandler(
     private val createCommentOperation: CreateCommentOperation,
     private val updateCommentOperation: UpdateCommentOperation,
@@ -22,19 +11,26 @@ internal class CommentHandler(
     private val listCommentsOperation: ListCommentsOperation,
     private val sinkService: SinkService? = null,
 ) {
-    /**
-     * Создаёт комментарий к задаче.
-     *
-     * @param request данные для создания комментария
-     * @return результат с созданным комментарием или ошибка
-     */
-    suspend fun create(request: CreateCommentRequest): CreateCommentResult {
+    data class CommentData(
+        val id: String,
+        val taskId: String,
+        val authorId: String,
+        val text: String,
+        val createdAt: Instant,
+        val updatedAt: Instant,
+    )
+
+    suspend fun create(
+        taskId: String,
+        authorId: String,
+        text: String,
+    ): CreateCommentResult {
         val result =
             createCommentOperation.execute(
                 CreateCommentOperation.Arg(
-                    taskId = request.taskId,
-                    authorId = request.authorId,
-                    text = request.text,
+                    taskId = taskId,
+                    authorId = authorId,
+                    text = text,
                 ),
             )
         return when (result) {
@@ -54,7 +50,7 @@ internal class CommentHandler(
                     ),
                 )
                 CreateCommentResult.Success(
-                    comment = result.comment.toResponse(),
+                    comment = result.comment.toData(),
                 )
             }
             is CreateCommentOperation.Result.Failure ->
@@ -62,18 +58,15 @@ internal class CommentHandler(
         }
     }
 
-    /**
-     * Обновляет текст комментария.
-     *
-     * @param request данные для обновления
-     * @return результат с обновлённым комментарием, ошибка валидации или признак отсутствия
-     */
-    suspend fun update(request: UpdateCommentRequest): UpdateCommentResult {
+    suspend fun update(
+        commentId: String,
+        text: String,
+    ): UpdateCommentResult {
         val result =
             updateCommentOperation.execute(
                 UpdateCommentOperation.Arg(
-                    commentId = request.commentId,
-                    text = request.text,
+                    commentId = commentId,
+                    text = text,
                 ),
             )
         return when (result) {
@@ -93,7 +86,7 @@ internal class CommentHandler(
                     ),
                 )
                 UpdateCommentResult.Success(
-                    comment = result.comment.toResponse(),
+                    comment = result.comment.toData(),
                 )
             }
             UpdateCommentOperation.Result.NotFound -> UpdateCommentResult.NotFound
@@ -102,23 +95,17 @@ internal class CommentHandler(
         }
     }
 
-    /**
-     * Удаляет комментарий по идентификатору.
-     *
-     * @param request идентификатор комментария
-     * @return результат удаления
-     */
-    suspend fun delete(request: DeleteCommentRequest): DeleteCommentResult {
+    suspend fun delete(commentId: String): DeleteCommentResult {
         val result =
             deleteCommentOperation.execute(
-                DeleteCommentOperation.Arg(commentId = request.commentId),
+                DeleteCommentOperation.Arg(commentId = commentId),
             )
         return when (result) {
             DeleteCommentOperation.Result.Success -> {
                 sinkService?.emit(
                     SseEvent(
                         type = "comment_deleted",
-                        data = """{"comment_id":"${request.commentId}"}""",
+                        data = """{"comment_id":"${commentId}"}""",
                         boardId = null,
                         projectId = null,
                         timestamp = Instant.now(),
@@ -130,30 +117,21 @@ internal class CommentHandler(
         }
     }
 
-    /**
-     * Получает список комментариев задачи.
-     *
-     * @param request идентификатор задачи
-     * @return результат со списком комментариев
-     */
-    suspend fun list(request: ListCommentsRequest): ListCommentsResult {
+    suspend fun list(taskId: String): ListCommentsResult {
         val result =
             listCommentsOperation.execute(
-                ListCommentsOperation.Arg(taskId = request.taskId),
+                ListCommentsOperation.Arg(taskId = taskId),
             )
         return when (result) {
             is ListCommentsOperation.Result.Success ->
                 ListCommentsResult.Success(
-                    comments = result.comments.map { it.toResponse() },
+                    comments = result.comments.map { it.toData() },
                 )
         }
     }
 
-    /**
-     * Преобразование сущности комментария в DTO ответа.
-     */
-    private fun Comment.toResponse(): CommentResponse =
-        CommentResponse(
+    private fun Comment.toData(): CommentData =
+        CommentData(
             id = id.value,
             taskId = taskId.value,
             authorId = authorId,
@@ -162,136 +140,37 @@ internal class CommentHandler(
             updatedAt = updatedAt,
         )
 
-    /**
-     * DTO запроса создания комментария.
-     *
-     * @property taskId идентификатор задачи
-     * @property authorId идентификатор автора
-     * @property text текст комментария
-     */
-    data class CreateCommentRequest(
-        @JsonProperty("task_id")
-        val taskId: String,
-        @JsonProperty("author_id")
-        val authorId: String,
-        val text: String,
-    )
-
-    /**
-     * DTO тела запроса обновления комментария.
-     *
-     * @property text новый текст комментария
-     */
-    data class UpdateCommentBody(
-        val text: String,
-    )
-
-    /**
-     * DTO запроса обновления комментария (идентификатор берётся из пути).
-     *
-     * @property commentId идентификатор комментария
-     * @property text новый текст комментария
-     */
-    data class UpdateCommentRequest(
-        @JsonProperty("comment_id")
-        val commentId: String,
-        val text: String,
-    )
-
-    /**
-     * DTO запроса удаления комментария.
-     *
-     * @property commentId идентификатор комментария
-     */
-    data class DeleteCommentRequest(
-        @JsonProperty("comment_id")
-        val commentId: String,
-    )
-
-    /**
-     * DTO запроса списка комментариев.
-     *
-     * @property taskId идентификатор задачи
-     */
-    data class ListCommentsRequest(
-        @JsonProperty("task_id")
-        val taskId: String,
-    )
-
-    /**
-     * DTO ответа с комментарием.
-     *
-     * @property id идентификатор комментария
-     * @property taskId идентификатор задачи
-     * @property authorId идентификатор автора
-     * @property text текст комментария
-     * @property createdAt дата создания
-     * @property updatedAt дата последнего изменения
-     */
-    data class CommentResponse(
-        val id: String,
-        @JsonProperty("task_id")
-        val taskId: String,
-        @JsonProperty("author_id")
-        val authorId: String,
-        val text: String,
-        @JsonProperty("created_at")
-        val createdAt: Instant,
-        @JsonProperty("updated_at")
-        val updatedAt: Instant,
-    )
-
-    /**
-     * Результат операции создания комментария.
-     */
     sealed interface CreateCommentResult {
-        /** Комментарий успешно создан. */
         data class Success(
-            val comment: CommentResponse,
+            val comment: CommentData,
         ) : CreateCommentResult
 
-        /** Ошибка создания комментария. */
         data class Failure(
             val reason: String,
         ) : CreateCommentResult
     }
 
-    /**
-     * Результат операции обновления комментария.
-     */
     sealed interface UpdateCommentResult {
-        /** Комментарий успешно обновлён. */
         data class Success(
-            val comment: CommentResponse,
+            val comment: CommentData,
         ) : UpdateCommentResult
 
-        /** Комментарий не найден. */
         data object NotFound : UpdateCommentResult
 
-        /** Ошибка обновления. */
         data class Failure(
             val reason: String,
         ) : UpdateCommentResult
     }
 
-    /**
-     * Результат операции удаления комментария.
-     */
     sealed interface DeleteCommentResult {
-        /** Комментарий успешно удалён. */
         data object Success : DeleteCommentResult
 
-        /** Комментарий не найден. */
         data object NotFound : DeleteCommentResult
     }
 
-    /**
-     * Результат операции получения списка комментариев.
-     */
     sealed interface ListCommentsResult {
-        /** Список комментариев успешно получен. */
         data class Success(
-            val comments: List<CommentResponse>,
+            val comments: List<CommentData>,
         ) : ListCommentsResult
     }
 }

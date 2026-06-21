@@ -16,11 +16,28 @@ internal class ListArchivedTasksController(
     suspend fun listArchived(
         @PathVariable("boardId") boardId: String,
     ): ResponseEntity<*> {
-        val request = TaskHandler.ListArchivedTasksRequest(boardId = boardId)
-        val result = handler.listArchivedTasks(request)
+        val result = handler.listArchivedTasks(boardId = boardId)
         return when (result) {
             is TaskHandler.ListArchivedTasksResult.Success ->
-                ResponseEntity.ok(mapOf("tasks" to result.tasks))
+                ResponseEntity.ok(
+                    mapOf(
+                        "tasks" to result.tasks.map { task ->
+                            TaskResponse(
+                                id = task.id,
+                                boardId = task.boardId,
+                                columnId = task.columnId,
+                                title = task.title,
+                                description = task.description,
+                                assigneeId = task.assigneeId,
+                                position = task.position,
+                                dueDate = task.dueDate,
+                                archived = task.archived,
+                                createdAt = task.createdAt,
+                                updatedAt = task.updatedAt,
+                            )
+                        },
+                    ),
+                )
         }
     }
 }

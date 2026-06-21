@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures'
 import { loginAsNewUser } from '../helpers'
 
 test.describe('Project CRUD', () => {

@@ -21,7 +21,7 @@ internal class RecoveryRequestControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 200 on successful recovery request`() {
-        val request = RequestGenerator.recoveryRequestRequest()
+        val request = RequestGenerator.recoveryRequestBody()
 
         coEvery {
             recoveryOperation.execute(any())
@@ -42,7 +42,7 @@ internal class RecoveryRequestControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 200 with neutral message for non-existent email`() {
-        val request = RequestGenerator.recoveryRequestRequest()
+        val request = RequestGenerator.recoveryRequestBody()
 
         coEvery {
             recoveryOperation.execute(any())
@@ -63,7 +63,7 @@ internal class RecoveryRequestControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 400 on failure`() {
-        val request = RequestGenerator.recoveryRequestRequest()
+        val request = RequestGenerator.recoveryRequestBody()
 
         coEvery {
             recoveryOperation.execute(any())

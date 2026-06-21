@@ -45,7 +45,7 @@ internal class ProjectRepositoryImplTest {
             val now = Instant.now()
             val project =
                 Project(
-                    id = ProjectId("new-project-id"),
+                    id = ProjectId("00000000-0000-0000-0000-000000000115"),
                     ownerId = UserId(ownerId),
                     name = "Test Project",
                     description = "Some description",
@@ -55,11 +55,11 @@ internal class ProjectRepositoryImplTest {
 
             val saved = projectRepository.save(project)
 
-            assertEquals("new-project-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000115", saved.id.value)
 
-            val found = projectRepository.findById("new-project-id")
+            val found = projectRepository.findById("00000000-0000-0000-0000-000000000115")
             assertNotNull(found)
-            assertEquals("new-project-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000115", found.id.value)
             assertEquals(ownerId, found.ownerId.value)
             assertEquals("Test Project", found.name)
             assertEquals("Some description", found.description)
@@ -72,7 +72,7 @@ internal class ProjectRepositoryImplTest {
             val now = Instant.now()
             val project =
                 Project(
-                    id = ProjectId("null-desc-id"),
+                    id = ProjectId("00000000-0000-0000-0000-000000000118"),
                     ownerId = UserId(ownerId),
                     name = "No description",
                     description = null,
@@ -82,7 +82,7 @@ internal class ProjectRepositoryImplTest {
 
             projectRepository.save(project)
 
-            val found = projectRepository.findById("null-desc-id")
+            val found = projectRepository.findById("00000000-0000-0000-0000-000000000118")
             assertNotNull(found)
             assertNull(found.description)
         }
@@ -90,7 +90,7 @@ internal class ProjectRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = projectRepository.findById("unknown-project-id")
+            val found = projectRepository.findById("00000000-0000-0000-0000-000000000104")
             assertNull(found)
         }
 

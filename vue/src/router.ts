@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from './module/auth/store'
 
 /**
  * Маршрутизатор приложения с history-режимом.
@@ -24,59 +25,80 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
+      meta: { guest: true },
       component: () => import('./module/auth/LoginPage.vue'),
     },
     {
       path: '/register',
       name: 'register',
+      meta: { guest: true },
       component: () => import('./module/auth/RegisterPage.vue'),
     },
     {
       path: '/projects',
       name: 'projects',
+      meta: { requiresAuth: true },
       component: () => import('./module/project/ProjectListPage.vue'),
     },
     {
       path: '/projects/:id',
       name: 'project-settings',
+      meta: { requiresAuth: true },
       component: () => import('./module/project/ProjectSettingsPage.vue'),
     },
     {
       path: '/projects/:id/documents',
       name: 'project-documents',
+      meta: { requiresAuth: true },
       component: () => import('./module/document/DocumentListPage.vue'),
     },
     {
       path: '/boards/:id',
       name: 'board',
+      meta: { requiresAuth: true },
       component: () => import('./module/board/BoardPage.vue'),
     },
     {
       path: '/tasks/:id',
       name: 'task-detail',
+      meta: { requiresAuth: true },
       component: () => import('./module/task/TaskDetailPage.vue'),
     },
     {
       path: '/access',
       name: 'access-control',
+      meta: { requiresAuth: true },
       component: () => import('./module/access/AccessControlPage.vue'),
     },
     {
       path: '/search',
       name: 'search',
+      meta: { requiresAuth: true },
       component: () => import('./module/search/SearchPage.vue'),
     },
     {
       path: '/profile',
       name: 'profile',
+      meta: { requiresAuth: true },
       component: () => import('./module/auth/ProfilePage.vue'),
     },
     {
       path: '/reports',
       name: 'reports',
+      meta: { requiresAuth: true },
       component: () => import('./module/report/ReportsPage.vue'),
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return '/login'
+  }
+  if (to.meta.guest && authStore.isAuthenticated) {
+    return '/projects'
+  }
 })
 
 export default router

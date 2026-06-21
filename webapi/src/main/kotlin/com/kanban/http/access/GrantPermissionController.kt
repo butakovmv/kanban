@@ -1,5 +1,6 @@
 package com.kanban.http.access
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.kanban.access.AccessHandler
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -17,14 +18,9 @@ internal class GrantPermissionController(
     @PostMapping
     suspend fun grant(
         @PathVariable("id") id: String,
-        @RequestBody body: AccessHandler.GrantPermissionRequest,
+        @RequestBody body: GrantPermissionBody,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.GrantPermissionRequest(
-                groupId = id,
-                permissionId = body.permissionId,
-            )
-        val result = handler.grantPermission(request)
+        val result = handler.grantPermission(groupId = id, permissionId = body.permissionId)
         return when (result) {
             AccessHandler.GrantPermissionResult.Success ->
                 ResponseEntity
@@ -36,4 +32,9 @@ internal class GrantPermissionController(
                     .body(mapOf("reason" to result.reason))
         }
     }
+
+    data class GrantPermissionBody(
+        @JsonProperty("permission_id")
+        val permissionId: String,
+    )
 }

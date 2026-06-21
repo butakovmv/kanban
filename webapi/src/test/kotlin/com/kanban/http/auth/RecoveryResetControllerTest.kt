@@ -21,7 +21,7 @@ internal class RecoveryResetControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 200 on successful password reset`() {
-        val request = RequestGenerator.resetPasswordRequest()
+        val request = RequestGenerator.resetPasswordBody()
 
         coEvery {
             recoveryOperation.execute(any())
@@ -42,7 +42,7 @@ internal class RecoveryResetControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 400 on invalid token`() {
-        val request = RequestGenerator.resetPasswordRequest()
+        val request = RequestGenerator.resetPasswordBody()
 
         coEvery {
             recoveryOperation.execute(any())
@@ -63,7 +63,7 @@ internal class RecoveryResetControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 400 on empty new password`() {
-        val request = RequestGenerator.resetPasswordRequest()
+        val request = RequestGenerator.resetPasswordBody()
 
         coEvery {
             recoveryOperation.execute(any())

@@ -408,3 +408,91 @@ Continue if you have next steps, or stop and ask for clarification if you are un
 
 Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
 
+## Prompt 101
+
+проверь в todo.md невыполненные задания в фазах 1-7. доделай эти задания.
+проверь все ли usecase покрыты сквозными e2e тестами на playwright. если есть непокрытые usecase - покрой их.
+выполни все e2e тесты и предоставь ссылку на файл с отчетом об их выполнении.
+
+## Prompt 102
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 103
+
+закоммить.
+затем проверь в todo.md невыполненные задания в фазах 1-7 и доделай эти задания.
+
+## Prompt 104
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 105
+
+закоммить.
+затем перейди к выполнению заданий 8.1, 8.2, 8.3
+
+## Prompt 106
+
+закоммить.
+затем проверь в todo.md любые невыполненные задания доделай эти задания.
+
+## Prompt 107
+
+POST curl 'http://localhost/api/v1/auth/register' с телом {"email":"test2@example.com","password":"test2","display_name":"test2"} приводит к 500 ошибке в логах kanban-front, логи kanban-api не появились.
+добавь в webapi LoggingWebFilter с заполнением MDC и логированием "Запрос <method> <path>" перед обработкой и "Ответ <код> за <время>мс" после обработки.
+выясни причину исходной ошибки и исправь ее. пересобери приложение и обнови его в запущенном докере
+
+## Prompt 108
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 109
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 110
+
+да, исправь остальные
+
+## Prompt 111
+
+после ввода логина и пароля (пользователь test2) на странице /login переводит на страницу /board, но на ней нет создания проектов, но сверху справа ссылки Login и Register. Этих ссылок для авторизованных пользователей не должно быть.
+Как фронт узнает, что пользователь авторизован?
+На какой странице должно быть создание проектов?
+
+## Prompt 112
+
+1 - да
+2 - не нужно перенаправление на /board, сразу на  /projects
+3 - да
+
+## Prompt 113
+
+добавь в тесты playwright анализ кодов ответов фоновых xhr/ajax запросов и сообщений в консоль. каждый тест должен также контролировать, что среди кодов ответа нет 5xx ответов, и что в консоли нет сообщений с уровнем error
+
+## Prompt 114
+
+при логине существующим юзером без проектов на /projects выдает ошибку "can't access property "map", t.items is undefined"
+найди причину и исправь
+
+## Prompt 115
+
+на /projects пускает анонимного пользователя
+
+## Prompt 116
+
+разлогин вызывает POST /api/v1/auth/logout, который возвращает 500 ошибку
+
+## Prompt 117
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 118
+
+в модуле webapi размести тела запросов и ответов в *Controller рядом с объявлением http-операции, а не в *Handler
+
+## Prompt 119
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+

@@ -15,10 +15,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 
-/**
- * Тесты контроллера входа по паролю.
- * Проверяют корректность кодов ответа и тел запросов/ответов.
- */
 internal class LoginControllerTest : BaseControllerTest() {
     private lateinit var webClient: WebTestClient
 
@@ -29,11 +25,11 @@ internal class LoginControllerTest : BaseControllerTest() {
 
     @Test
     fun `should login and return 200`() {
-        val request = RequestGenerator.loginRequest()
+        val body = RequestGenerator.loginBody()
         val user =
             User(
                 id = UserId("user-1"),
-                email = Email(request.email),
+                email = Email(body.email),
                 passwordHash = PasswordHash("hashed"),
                 displayName = "Test User",
                 totpSecret = null,
@@ -51,7 +47,7 @@ internal class LoginControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isOk
@@ -66,7 +62,7 @@ internal class LoginControllerTest : BaseControllerTest() {
 
     @Test
     fun `should return 401 on wrong password`() {
-        val request = RequestGenerator.loginRequest()
+        val body = RequestGenerator.loginBody()
 
         coEvery {
             loginWithPasswordOperation.execute(any())
@@ -76,7 +72,7 @@ internal class LoginControllerTest : BaseControllerTest() {
             .post()
             .uri("/api/v1/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
+            .bodyValue(body)
             .exchange()
             .expectStatus()
             .isUnauthorized

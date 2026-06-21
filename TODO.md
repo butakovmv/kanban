@@ -151,7 +151,7 @@
 ### 1.10 vue: Profile + TOTP
 - [x] `ProfilePage.vue`
 - [➜] TOTP-привязка (QR, ввод кода) — отложено
-- [ ] Отображение тарифа
+- [x] Отображение тарифа
 
 ### T1.1 Auth тесты
 - [x] API: WebTestClient — register, login, refresh, logout, recovery
@@ -421,16 +421,18 @@
 ## Фаза 8 — Финализация
 
 ### 8.1 Production Docker Compose
-- [ ] `docker-compose.prod.yml`
-- [ ] Production nginx (static + reverse proxy)
-- [ ] Healthcheck readiness
+- [x] `docker-compose.prod.yml`
+- [x] Production nginx (static + reverse proxy, sticky sessions)
+- [x] Healthcheck readiness (все сервисы)
 
 ### 8.2 Деплой на стенд
-- [ ] Staging-стенд
-- [ ] Документация по деплою
+- [x] `deploy/staging.sh` — скрипт деплоя
+- [x] Билд, копирование, docker-compose up, healthcheck, E2E
 
 ### 8.3 Исправление замечаний
-- [ ] Code review, баги, edge cases
+- [x] ktlint: пустая строка в RecoveryTokenRepositoryImpl
+- [x] ESlint: no-explicit-any в EventSource моках
+- [x] Vue: TypeScript ошибки (string|URL)
 
 ### 8.4 Приёмочные тесты
 - [ ] Прогон всех E2E-тестов

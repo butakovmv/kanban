@@ -56,7 +56,7 @@ internal class DocumentRepositoryImplTest {
             val now = Instant.now()
             val document =
                 Document(
-                    id = DocumentId("new-doc-id"),
+                    id = DocumentId("00000000-0000-0000-0000-000000000112"),
                     projectId = ProjectId(projectId),
                     title = "Specification",
                     description = "Project spec",
@@ -65,17 +65,17 @@ internal class DocumentRepositoryImplTest {
                     sizeBytes = 4096L,
                     storageKey = "projects/$projectId/new-doc-id/spec.pdf",
                     version = 1,
-                    uploadedBy = "user-1",
+                    uploadedBy = "00000000-0000-0000-0000-000000000001",
                     createdAt = now,
                     updatedAt = now,
                 )
 
             val saved = documentRepository.save(document)
 
-            assertEquals("new-doc-id", saved.id.value)
-            val found = documentRepository.findById("new-doc-id")
+            assertEquals("00000000-0000-0000-0000-000000000112", saved.id.value)
+            val found = documentRepository.findById("00000000-0000-0000-0000-000000000112")
             assertNotNull(found)
-            assertEquals("new-doc-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000112", found.id.value)
             assertEquals(projectId, found.projectId.value)
             assertEquals("Specification", found.title)
             assertEquals("Project spec", found.description)
@@ -83,7 +83,7 @@ internal class DocumentRepositoryImplTest {
             assertEquals("application/pdf", found.contentType)
             assertEquals(4096L, found.sizeBytes)
             assertEquals(1, found.version)
-            assertEquals("user-1", found.uploadedBy)
+            assertEquals("00000000-0000-0000-0000-000000000001", found.uploadedBy)
         }
 
     @Test
@@ -92,7 +92,7 @@ internal class DocumentRepositoryImplTest {
             val now = Instant.now()
             val document =
                 Document(
-                    id = DocumentId("null-desc-id"),
+                    id = DocumentId("00000000-0000-0000-0000-000000000118"),
                     projectId = ProjectId(projectId),
                     title = "No description",
                     description = null,
@@ -101,14 +101,14 @@ internal class DocumentRepositoryImplTest {
                     sizeBytes = 1024L,
                     storageKey = "projects/$projectId/null-desc-id/file.txt",
                     version = 1,
-                    uploadedBy = "user-1",
+                    uploadedBy = "00000000-0000-0000-0000-000000000001",
                     createdAt = now,
                     updatedAt = now,
                 )
 
             documentRepository.save(document)
 
-            val found = documentRepository.findById("null-desc-id")
+            val found = documentRepository.findById("00000000-0000-0000-0000-000000000118")
             assertNotNull(found)
             assertNull(found.description)
         }
@@ -116,7 +116,7 @@ internal class DocumentRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = documentRepository.findById("unknown-doc-id")
+            val found = documentRepository.findById("00000000-0000-0000-0000-000000000102")
             assertNull(found)
         }
 

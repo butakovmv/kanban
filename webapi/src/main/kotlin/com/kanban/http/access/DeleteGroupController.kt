@@ -17,8 +17,7 @@ internal class DeleteGroupController(
     suspend fun delete(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = AccessHandler.DeleteGroupRequest(groupId = id)
-        val result = handler.deleteGroup(request)
+        val result = handler.deleteGroup(groupId = id)
         return when (result) {
             AccessHandler.DeleteGroupResult.Success ->
                 ResponseEntity

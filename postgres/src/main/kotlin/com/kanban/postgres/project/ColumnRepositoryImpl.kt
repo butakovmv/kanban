@@ -4,6 +4,7 @@ import com.kanban.project.Column
 import com.kanban.project.ColumnRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -47,8 +48,8 @@ internal class ColumnRepositoryImpl(
                     position = :position, wip_limit = :wipLimit
                 WHERE id = :id
                 """,
-            ).bind("id", column.id.value)
-            .bind("boardId", column.boardId.value)
+            ).bind("id", UUID.fromString(column.id.value))
+            .bind("boardId", UUID.fromString(column.boardId.value))
             .bind("name", column.name)
             .bind("position", column.position)
             .let { spec ->
@@ -78,8 +79,8 @@ internal class ColumnRepositoryImpl(
                 INSERT INTO columns (id, board_id, name, position, wip_limit, created_at)
                 VALUES (:id, :boardId, :name, :position, :wipLimit, :createdAt)
                 """,
-            ).bind("id", column.id.value)
-            .bind("boardId", column.boardId.value)
+            ).bind("id", UUID.fromString(column.id.value))
+            .bind("boardId", UUID.fromString(column.boardId.value))
             .bind("name", column.name)
             .bind("position", column.position)
             .let { spec ->
@@ -103,7 +104,7 @@ internal class ColumnRepositoryImpl(
     override suspend fun findById(id: String): Column? =
         db
             .sql("SELECT * FROM columns WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toColumn() }
             .one()
             .awaitFirstOrNull()
@@ -116,7 +117,7 @@ internal class ColumnRepositoryImpl(
     override suspend fun listByBoardId(boardId: String): List<Column> =
         db
             .sql("SELECT * FROM columns WHERE board_id = :boardId ORDER BY position")
-            .bind("boardId", boardId)
+            .bind("boardId", UUID.fromString(boardId))
             .map { row, _ -> row.toColumn() }
             .all()
             .collectList()
@@ -129,7 +130,7 @@ internal class ColumnRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM columns WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -153,8 +154,8 @@ internal class ColumnRepositoryImpl(
                         position = :position, wip_limit = :wipLimit
                     WHERE id = :id
                     """,
-                ).bind("id", column.id.value)
-                .bind("boardId", column.boardId.value)
+                ).bind("id", UUID.fromString(column.id.value))
+                .bind("boardId", UUID.fromString(column.boardId.value))
                 .bind("name", column.name)
                 .bind("position", index)
                 .let { spec ->

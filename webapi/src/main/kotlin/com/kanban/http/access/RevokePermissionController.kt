@@ -18,12 +18,7 @@ internal class RevokePermissionController(
         @PathVariable("id") id: String,
         @PathVariable("permId") permId: String,
     ): ResponseEntity<*> {
-        val request =
-            AccessHandler.RevokePermissionRequest(
-                groupId = id,
-                permissionId = permId,
-            )
-        val result = handler.revokePermission(request)
+        val result = handler.revokePermission(groupId = id, permissionId = permId)
         return when (result) {
             AccessHandler.RevokePermissionResult.Success ->
                 ResponseEntity

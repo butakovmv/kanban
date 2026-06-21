@@ -7,32 +7,34 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер получения документа.
- * Обрабатывает только запрос `GET /api/v1/documents/{id}`.
- *
- * @property handler обработчик запросов документов
- */
 @RestController
 @RequestMapping("/api/v1/documents/{id}")
 internal class GetDocumentController(
     private val handler: DocumentHandler,
 ) {
-    /**
-     * Возвращает документ по идентификатору.
-     *
-     * @param id идентификатор документа
-     * @return 200 с документом, или 404 если документ не найден
-     */
     @GetMapping
     suspend fun get(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = DocumentHandler.GetDocumentRequest(documentId = id)
-        val result = handler.get(request)
+        val result = handler.get(documentId = id)
         return when (result) {
             is DocumentHandler.GetDocumentResult.Success ->
-                ResponseEntity.ok(result.document)
+                ResponseEntity.ok(
+                    DocumentResponse(
+                        id = result.document.id,
+                        projectId = result.document.projectId,
+                        title = result.document.title,
+                        description = result.document.description,
+                        fileName = result.document.fileName,
+                        contentType = result.document.contentType,
+                        sizeBytes = result.document.sizeBytes,
+                        storageKey = result.document.storageKey,
+                        version = result.document.version,
+                        uploadedBy = result.document.uploadedBy,
+                        createdAt = result.document.createdAt,
+                        updatedAt = result.document.updatedAt,
+                    ),
+                )
             DocumentHandler.GetDocumentResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: kanban
       POSTGRES_PASSWORD: ${DB_PASSWORD:?}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -57,6 +57,14 @@ services:
       minio:
         condition: service_healthy
     restart: unless-stopped
+    develop:
+      watch:
+        - path: ./spring/build/libs/spring-0.0.1-SNAPSHOT.jar
+          target: /app/app.jar
+          action: sync+restart
+        - path: ./spring/build/libs/lib/
+          target: /app/lib/
+          action: sync
 
   front:
     build:
@@ -68,6 +76,14 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+    develop:
+      watch:
+        - path: ./vue/dist
+          target: /usr/share/nginx/html
+          action: sync
+        - path: ./vue/nginx.conf
+          target: /etc/nginx/conf.d/default.conf
+          action: sync+restart
 
 volumes:
   pgdata:

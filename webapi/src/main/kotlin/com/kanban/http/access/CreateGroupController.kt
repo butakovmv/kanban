@@ -15,18 +15,23 @@ internal class CreateGroupController(
 ) {
     @PostMapping
     suspend fun create(
-        @RequestBody request: AccessHandler.CreateGroupRequest,
+        @RequestBody body: CreateGroupBody,
     ): ResponseEntity<*> {
-        val result = handler.createGroup(request)
+        val result = handler.createGroup(name = body.name, description = body.description)
         return when (result) {
             is AccessHandler.CreateGroupResult.Success ->
                 ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(result.group)
+                    .body(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
             is AccessHandler.CreateGroupResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(mapOf("reason" to result.reason))
         }
     }
+
+    data class CreateGroupBody(
+        val name: String,
+        val description: String?,
+    )
 }

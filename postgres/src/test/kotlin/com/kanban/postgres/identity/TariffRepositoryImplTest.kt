@@ -60,7 +60,7 @@ internal class TariffRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = tariffRepository.findById("unknown-id")
+            val found = tariffRepository.findById("00000000-0000-0000-0000-000000000105")
             assertNull(found)
         }
 

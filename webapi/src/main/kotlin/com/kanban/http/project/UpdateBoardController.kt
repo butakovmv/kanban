@@ -8,38 +8,34 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер обновления доски.
- * Обрабатывает только запрос `PUT /api/v1/boards/{id}`.
- *
- * @property handler обработчик запросов досок
- */
 @RestController
 @RequestMapping("/api/v1/boards/{id}")
 internal class UpdateBoardController(
     private val handler: BoardHandler,
 ) {
-    /**
-     * Обновляет название доски.
-     *
-     * @param id идентификатор доски
-     * @param body данные для обновления
-     * @return 200 с обновлённой доской, или 404 если доска не найдена
-     */
+    data class UpdateBoardBody(
+        val name: String?,
+    )
+
     @PutMapping
     suspend fun update(
         @PathVariable("id") id: String,
-        @RequestBody body: BoardHandler.UpdateBoardBody,
+        @RequestBody body: UpdateBoardBody,
     ): ResponseEntity<*> {
-        val request =
-            BoardHandler.UpdateBoardRequest(
-                boardId = id,
-                name = body.name,
-            )
-        val result = handler.update(request)
+        val result = handler.update(
+            boardId = id,
+            name = body.name,
+        )
         return when (result) {
-            is BoardHandler.UpdateBoardResult.Success ->
-                ResponseEntity.ok(result.board)
+            is BoardHandler.UpdateBoardResult.Success -> {
+                val b = result.board
+                ResponseEntity.ok(
+                    BoardResponse(
+                        id = b.id, projectId = b.projectId, name = b.name,
+                        position = b.position, createdAt = b.createdAt,
+                    ),
+                )
+            }
             BoardHandler.UpdateBoardResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

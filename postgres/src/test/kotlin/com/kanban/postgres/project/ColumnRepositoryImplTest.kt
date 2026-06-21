@@ -51,7 +51,7 @@ internal class ColumnRepositoryImplTest {
             val now = Instant.now()
             val column =
                 Column(
-                    id = ColumnId("new-column-id"),
+                    id = ColumnId("00000000-0000-0000-0000-000000000106"),
                     boardId = BoardId(boardId),
                     name = "To Do",
                     position = 0,
@@ -61,11 +61,11 @@ internal class ColumnRepositoryImplTest {
 
             val saved = columnRepository.save(column)
 
-            assertEquals("new-column-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000106", saved.id.value)
 
-            val found = columnRepository.findById("new-column-id")
+            val found = columnRepository.findById("00000000-0000-0000-0000-000000000106")
             assertNotNull(found)
-            assertEquals("new-column-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000106", found.id.value)
             assertEquals(boardId, found.boardId.value)
             assertEquals("To Do", found.name)
             assertEquals(0, found.position)
@@ -80,7 +80,7 @@ internal class ColumnRepositoryImplTest {
             val now = Instant.now()
             val column =
                 Column(
-                    id = ColumnId("no-wip-id"),
+                    id = ColumnId("00000000-0000-0000-0000-000000000117"),
                     boardId = BoardId(boardId),
                     name = "Backlog",
                     position = 0,
@@ -90,7 +90,7 @@ internal class ColumnRepositoryImplTest {
 
             columnRepository.save(column)
 
-            val found = columnRepository.findById("no-wip-id")
+            val found = columnRepository.findById("00000000-0000-0000-0000-000000000117")
             assertNotNull(found)
             assertNull(found.wipLimit)
         }
@@ -98,7 +98,7 @@ internal class ColumnRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = columnRepository.findById("unknown-column-id")
+            val found = columnRepository.findById("00000000-0000-0000-0000-000000000094")
             assertNull(found)
         }
 

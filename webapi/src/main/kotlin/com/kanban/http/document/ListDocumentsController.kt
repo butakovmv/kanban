@@ -7,32 +7,38 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер получения списка документов проекта.
- * Обрабатывает только запрос `GET /api/v1/projects/{projectId}/documents`.
- *
- * @property handler обработчик запросов документов
- */
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/documents")
 internal class ListDocumentsController(
     private val handler: DocumentHandler,
 ) {
-    /**
-     * Возвращает список документов проекта, упорядоченный по дате последнего изменения (DESC).
-     *
-     * @param projectId идентификатор проекта
-     * @return 200 со списком документов
-     */
     @GetMapping
     suspend fun list(
         @PathVariable("projectId") projectId: String,
     ): ResponseEntity<*> {
-        val request = DocumentHandler.ListDocumentsRequest(projectId = projectId)
-        val result = handler.list(request)
+        val result = handler.list(projectId = projectId)
         return when (result) {
             is DocumentHandler.ListDocumentsResult.Success ->
-                ResponseEntity.ok(mapOf("documents" to result.documents))
+                ResponseEntity.ok(
+                    mapOf(
+                        "documents" to result.documents.map {
+                            DocumentResponse(
+                                id = it.id,
+                                projectId = it.projectId,
+                                title = it.title,
+                                description = it.description,
+                                fileName = it.fileName,
+                                contentType = it.contentType,
+                                sizeBytes = it.sizeBytes,
+                                storageKey = it.storageKey,
+                                version = it.version,
+                                uploadedBy = it.uploadedBy,
+                                createdAt = it.createdAt,
+                                updatedAt = it.updatedAt,
+                            )
+                        },
+                    ),
+                )
         }
     }
 }

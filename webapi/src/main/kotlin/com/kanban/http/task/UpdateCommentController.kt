@@ -9,38 +9,38 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер обновления комментария.
- * Обрабатывает только запрос `PUT /api/v1/comments/{id}`.
- *
- * @property handler обработчик запросов комментариев
- */
 @RestController
 @RequestMapping("/api/v1/comments/{id}")
 internal class UpdateCommentController(
     private val handler: CommentHandler,
 ) {
-    /**
-     * Обновляет текст комментария.
-     *
-     * @param id идентификатор комментария
-     * @param body новый текст
-     * @return 200 с обновлённым комментарием, 400 при ошибке валидации, или 404 если комментарий не найден
-     */
+    data class UpdateCommentBody(
+        val text: String,
+    )
+
     @PutMapping
     suspend fun update(
         @PathVariable("id") id: String,
-        @RequestBody body: CommentHandler.UpdateCommentBody,
+        @RequestBody body: UpdateCommentBody,
     ): ResponseEntity<*> {
-        val request =
-            CommentHandler.UpdateCommentRequest(
-                commentId = id,
-                text = body.text,
-            )
-        val result = handler.update(request)
+        val result = handler.update(
+            commentId = id,
+            text = body.text,
+        )
         return when (result) {
-            is CommentHandler.UpdateCommentResult.Success ->
-                ResponseEntity.ok(result.comment)
+            is CommentHandler.UpdateCommentResult.Success -> {
+                val comment = result.comment
+                ResponseEntity.ok(
+                    CommentResponse(
+                        id = comment.id,
+                        taskId = comment.taskId,
+                        authorId = comment.authorId,
+                        text = comment.text,
+                        createdAt = comment.createdAt,
+                        updatedAt = comment.updatedAt,
+                    ),
+                )
+            }
             CommentHandler.UpdateCommentResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
             is CommentHandler.UpdateCommentResult.Failure ->

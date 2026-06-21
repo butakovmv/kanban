@@ -16,11 +16,16 @@ internal class ListGroupPermissionsController(
     suspend fun list(
         @PathVariable("id") id: String,
     ): ResponseEntity<*> {
-        val request = AccessHandler.ListGroupPermissionsRequest(groupId = id)
-        val result = handler.listGroupPermissions(request)
+        val result = handler.listGroupPermissions(groupId = id)
         return when (result) {
             is AccessHandler.ListGroupPermissionsResult.Success ->
-                ResponseEntity.ok(mapOf("permissions" to result.permissions))
+                ResponseEntity.ok(
+                    mapOf(
+                        "permissions" to result.permissions.map {
+                            PermissionResponse(id = it.id, resource = it.resource, action = it.action, targetId = it.targetId, createdAt = it.createdAt)
+                        },
+                    ),
+                )
         }
     }
 }

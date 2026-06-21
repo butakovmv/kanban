@@ -20,7 +20,7 @@ internal class CreateGroupControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should create group and return 201`() {
-        val request = AccessRequestGenerator.createGroupRequest()
+        val request = AccessRequestGenerator.createGroupBody()
         val group =
             Group(
                 id = GroupId("new-group-id"),
@@ -52,7 +52,7 @@ internal class CreateGroupControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should create group without description and return 201`() {
-        val request = AccessRequestGenerator.createGroupRequestWithoutDescription()
+        val request = AccessRequestGenerator.createGroupBodyWithoutDescription()
         val group =
             Group(
                 id = GroupId("new-group-id"),
@@ -82,7 +82,7 @@ internal class CreateGroupControllerTest : BaseAccessControllerTest() {
 
     @Test
     fun `should return 400 on failure`() {
-        val request = AccessRequestGenerator.createGroupRequest()
+        val request = AccessRequestGenerator.createGroupBody()
 
         coEvery {
             createGroupOperation.execute(any())

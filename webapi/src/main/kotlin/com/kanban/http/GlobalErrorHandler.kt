@@ -1,6 +1,7 @@
 package com.kanban.http
 
 import java.net.URI
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -38,10 +39,15 @@ class GlobalErrorHandler {
      */
     @ExceptionHandler(Throwable::class)
     fun handleGeneral(ex: Throwable): ProblemDetail {
+        log.error("Unhandled exception", ex)
         val detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR)
         detail.title = "Internal Error"
         detail.detail = ex.message ?: "Unknown error"
         detail.type = URI.create("/errors/internal")
         return detail
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(GlobalErrorHandler::class.java)
     }
 }

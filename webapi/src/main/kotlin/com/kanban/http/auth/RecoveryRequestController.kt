@@ -8,28 +8,16 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-/**
- * Контроллер запроса восстановления пароля.
- * Обрабатывает только запрос `POST /api/v1/auth/recovery/request`.
- *
- * @property handler обработчик запросов восстановления
- */
 @RestController
 @RequestMapping("/api/v1/auth/recovery/request")
 internal class RecoveryRequestController(
     private val handler: RecoveryHandler,
 ) {
-    /**
-     * Запрашивает отправку токена восстановления на email.
-     *
-     * @param request email пользователя
-     * @return 200 с сообщением об успешной отправке, или 400 при ошибке
-     */
     @PostMapping
     suspend fun requestRecovery(
-        @RequestBody request: RecoveryHandler.RecoveryRequestRequest,
+        @RequestBody body: RecoveryRequestBody,
     ): ResponseEntity<*> {
-        val result = handler.requestRecovery(request)
+        val result = handler.requestRecovery(email = body.email)
         return when (result) {
             is RecoveryHandler.RecoveryResult.Success ->
                 ResponseEntity.ok(mapOf("message" to result.message))
@@ -40,3 +28,7 @@ internal class RecoveryRequestController(
         }
     }
 }
+
+data class RecoveryRequestBody(
+    val email: String,
+)

@@ -42,23 +42,23 @@ internal class PermissionRepositoryImplTest {
             val now = Instant.now()
             val permission =
                 Permission(
-                    id = PermissionId("new-perm-id"),
+                    id = PermissionId("00000000-0000-0000-0000-000000000114"),
                     resource = "project",
                     action = "read",
-                    targetId = "target-1",
+                    targetId = "00000000-0000-0000-0000-000000000046",
                     createdAt = now,
                 )
 
             val saved = repository.save(permission)
 
-            assertEquals("new-perm-id", saved.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000114", saved.id.value)
 
-            val found = repository.findById("new-perm-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000114")
             assertNotNull(found)
-            assertEquals("new-perm-id", found.id.value)
+            assertEquals("00000000-0000-0000-0000-000000000114", found.id.value)
             assertEquals("project", found.resource)
             assertEquals("read", found.action)
-            assertEquals("target-1", found.targetId)
+            assertEquals("00000000-0000-0000-0000-000000000046", found.targetId)
         }
 
     @Test
@@ -67,7 +67,7 @@ internal class PermissionRepositoryImplTest {
             val now = Instant.now()
             val permission =
                 Permission(
-                    id = PermissionId("null-target-id"),
+                    id = PermissionId("00000000-0000-0000-0000-000000000119"),
                     resource = "project",
                     action = "admin",
                     targetId = null,
@@ -76,7 +76,7 @@ internal class PermissionRepositoryImplTest {
 
             repository.save(permission)
 
-            val found = repository.findById("null-target-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000119")
             assertNotNull(found)
             assertNull(found.targetId)
         }
@@ -84,7 +84,7 @@ internal class PermissionRepositoryImplTest {
     @Test
     fun `should return null for unknown id`() =
         runTest {
-            val found = repository.findById("unknown-perm-id")
+            val found = repository.findById("00000000-0000-0000-0000-000000000101")
             assertNull(found)
         }
 
@@ -104,14 +104,22 @@ internal class PermissionRepositoryImplTest {
     @Test
     fun `should find permissions by resource and targetId`() =
         runTest {
-            generator.insertPermission(resource = "project", action = "read", targetId = "t1")
-            generator.insertPermission(resource = "project", action = "read", targetId = "t2")
+            generator.insertPermission(
+                resource = "project",
+                action = "read",
+                targetId = "00000000-0000-0000-0000-000000000120",
+            )
+            generator.insertPermission(
+                resource = "project",
+                action = "read",
+                targetId = "00000000-0000-0000-0000-000000000052",
+            )
             generator.insertPermission(resource = "project", action = "read", targetId = null)
 
-            val t1Perms = repository.findByResource("project", "t1")
+            val t1Perms = repository.findByResource("project", "00000000-0000-0000-0000-000000000120")
 
             assertEquals(1, t1Perms.size)
-            assertEquals("t1", t1Perms.first().targetId)
+            assertEquals("00000000-0000-0000-0000-000000000120", t1Perms.first().targetId)
         }
 
     @Test

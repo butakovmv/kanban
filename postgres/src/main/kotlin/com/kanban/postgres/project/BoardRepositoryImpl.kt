@@ -4,6 +4,7 @@ import com.kanban.project.Board
 import com.kanban.project.BoardRepository
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
@@ -54,8 +55,8 @@ internal class BoardRepositoryImpl(
                     position = :position, archived = :archived
                 WHERE id = :id
                 """,
-            ).bind("id", board.id.value)
-            .bind("projectId", board.projectId.value)
+            ).bind("id", UUID.fromString(board.id.value))
+            .bind("projectId", UUID.fromString(board.projectId.value))
             .bind("name", board.name)
             .bind("position", board.position)
             .bind("archived", archived)
@@ -79,8 +80,8 @@ internal class BoardRepositoryImpl(
                 INSERT INTO boards (id, project_id, name, position, archived, created_at)
                 VALUES (:id, :projectId, :name, :position, :archived, :createdAt)
                 """,
-            ).bind("id", board.id.value)
-            .bind("projectId", board.projectId.value)
+            ).bind("id", UUID.fromString(board.id.value))
+            .bind("projectId", UUID.fromString(board.projectId.value))
             .bind("name", board.name)
             .bind("position", board.position)
             .bind("archived", false)
@@ -98,7 +99,7 @@ internal class BoardRepositoryImpl(
     override suspend fun findById(id: String): Board? =
         db
             .sql("SELECT * FROM boards WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ -> row.toBoard() }
             .one()
             .awaitFirstOrNull()
@@ -111,7 +112,7 @@ internal class BoardRepositoryImpl(
     private suspend fun findRawById(id: String): BoardTable? =
         db
             .sql("SELECT * FROM boards WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .map { row, _ ->
                 BoardTable(
                     id = row.get("id", String::class.java)!!,
@@ -132,7 +133,7 @@ internal class BoardRepositoryImpl(
     override suspend fun listByProjectId(projectId: String): List<Board> =
         db
             .sql("SELECT * FROM boards WHERE project_id = :projectId ORDER BY position")
-            .bind("projectId", projectId)
+            .bind("projectId", UUID.fromString(projectId))
             .map { row, _ -> row.toBoard() }
             .all()
             .collectList()
@@ -145,7 +146,7 @@ internal class BoardRepositoryImpl(
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM boards WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
@@ -158,7 +159,7 @@ internal class BoardRepositoryImpl(
     override suspend fun archive(id: String) {
         db
             .sql("UPDATE boards SET archived = TRUE WHERE id = :id")
-            .bind("id", id)
+            .bind("id", UUID.fromString(id))
             .fetch()
             .rowsUpdated()
             .awaitSingle()
