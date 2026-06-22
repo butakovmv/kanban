@@ -14,8 +14,9 @@ const tariff = ref<TariffInfo | null>(null)
 const tariffError = ref(false)
 
 onMounted(async () => {
+  if (!user.value) return
   try {
-    tariff.value = await getTariff()
+    tariff.value = await getTariff(user.value.id)
   } catch {
     tariffError.value = true
   }

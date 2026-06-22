@@ -96,6 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Registration failed'
+      console.error('Auth store error:', e)
       return false
     } finally {
       loading.value = false
@@ -116,6 +117,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Login failed'
+      console.error('Auth store error:', e)
       return false
     } finally {
       loading.value = false
@@ -129,6 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function refresh(): Promise<boolean> {
     if (refreshToken.value === null) {
       error.value = 'No refresh token'
+      console.error('Auth store error:', e)
       return false
     }
     loading.value = true
@@ -144,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Token refresh failed'
+      console.error('Auth store error:', e)
       clearSession()
       return false
     } finally {

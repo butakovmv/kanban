@@ -32,6 +32,7 @@ export const useBoardStore = defineStore('board', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load board'
+      console.error('Board store error:', e)
       currentBoard.value = null
       columns.value = []
       return false
@@ -55,6 +56,7 @@ export const useBoardStore = defineStore('board', () => {
       return board
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create board'
+      console.error('Board store error:', e)
       return null
     } finally {
       loading.value = false
@@ -78,6 +80,7 @@ export const useBoardStore = defineStore('board', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update board'
+      console.error('Board store error:', e)
       return false
     } finally {
       loading.value = false
@@ -101,6 +104,7 @@ export const useBoardStore = defineStore('board', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete board'
+      console.error('Board store error:', e)
       return false
     } finally {
       loading.value = false
@@ -123,6 +127,7 @@ export const useBoardStore = defineStore('board', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to reorder columns'
+      console.error('Board store error:', e)
       return false
     } finally {
       loading.value = false

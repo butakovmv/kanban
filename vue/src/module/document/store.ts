@@ -29,6 +29,7 @@ export const useDocumentStore = defineStore('document', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load documents'
+      console.error('Document store error:', e)
       documents.value = []
       return false
     } finally {
@@ -49,6 +50,7 @@ export const useDocumentStore = defineStore('document', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load document'
+      console.error('Document store error:', e)
       currentDocument.value = null
       return false
     } finally {
@@ -72,6 +74,7 @@ export const useDocumentStore = defineStore('document', () => {
       return created
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create document'
+      console.error('Document store error:', e)
       return null
     } finally {
       loading.value = false
@@ -99,6 +102,7 @@ export const useDocumentStore = defineStore('document', () => {
       return updated
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update document'
+      console.error('Document store error:', e)
       return null
     } finally {
       loading.value = false
@@ -126,6 +130,7 @@ export const useDocumentStore = defineStore('document', () => {
       return updated
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to replace document content'
+      console.error('Document store error:', e)
       return null
     } finally {
       loading.value = false
@@ -149,6 +154,7 @@ export const useDocumentStore = defineStore('document', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete document'
+      console.error('Document store error:', e)
       return false
     } finally {
       loading.value = false
@@ -167,6 +173,7 @@ export const useDocumentStore = defineStore('document', () => {
       return response.url
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to get download URL'
+      console.error('Document store error:', e)
       return null
     }
   }

@@ -12,6 +12,7 @@ internal class BoardHandler(
     private val deleteBoardOperation: DeleteBoardOperation,
     private val archiveBoardOperation: ArchiveBoardOperation,
     private val reorderColumnsOperation: ReorderColumnsOperation,
+    private val listBoardsOperation: ListBoardsOperation,
     private val sinkService: SinkService? = null,
 ) {
     data class BoardData(
@@ -189,6 +190,25 @@ internal class BoardHandler(
             board = board.toData(),
             columns = columns.map { it.toData() },
         )
+
+    suspend fun listByProjectId(projectId: String): ListBoardsResult {
+        val result =
+            listBoardsOperation.execute(
+                ListBoardsOperation.Arg(projectId = projectId),
+            )
+        return when (result) {
+            is ListBoardsOperation.Result.Success ->
+                ListBoardsResult.Success(
+                    boards = result.boards.map { it.toData() },
+                )
+        }
+    }
+
+    sealed interface ListBoardsResult {
+        data class Success(
+            val boards: List<BoardData>,
+        ) : ListBoardsResult
+    }
 
     sealed interface GetBoardResult {
         data class Success(

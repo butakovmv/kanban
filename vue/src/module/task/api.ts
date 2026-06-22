@@ -31,6 +31,10 @@ interface RawTask {
   updated_at: string | number
 }
 
+interface RawTasksResponse {
+  tasks: RawTask[]
+}
+
 /**
  * Комментарий к задаче.
  */
@@ -75,6 +79,14 @@ interface RawFileAttachment {
   storage_key: string
   uploaded_by: string
   uploaded_at: string | number
+}
+
+interface RawCommentsResponse {
+  comments: RawComment[]
+}
+
+interface RawFilesResponse {
+  files: RawFileAttachment[]
 }
 
 /**
@@ -175,8 +187,8 @@ function toFile(raw: RawFileAttachment): FileAttachment {
  */
 export function listTasks(boardId: string, includeArchived = false): Promise<Task[]> {
   const query = includeArchived ? '?include_archived=true' : '?include_archived=false'
-  return get<RawTask[]>(`/boards/${encodeURIComponent(boardId)}/tasks${query}`).then((items) =>
-    items.map(toTask),
+  return get<RawTasksResponse>(`/boards/${encodeURIComponent(boardId)}/tasks${query}`).then(
+    (response) => response.tasks.map(toTask),
   )
 }
 
@@ -269,8 +281,8 @@ export function deleteTask(id: string): Promise<void> {
  * @returns массив комментариев
  */
 export function listComments(taskId: string): Promise<Comment[]> {
-  return get<RawComment[]>(`/tasks/${encodeURIComponent(taskId)}/comments`).then((items) =>
-    items.map(toComment),
+  return get<RawCommentsResponse>(`/tasks/${encodeURIComponent(taskId)}/comments`).then(
+    (response) => response.comments.map(toComment),
   )
 }
 
@@ -313,8 +325,8 @@ export function deleteComment(id: string): Promise<void> {
  * @returns массив файлов
  */
 export function listFiles(taskId: string): Promise<FileAttachment[]> {
-  return get<RawFileAttachment[]>(`/tasks/${encodeURIComponent(taskId)}/files`).then((items) =>
-    items.map(toFile),
+  return get<RawFilesResponse>(`/tasks/${encodeURIComponent(taskId)}/files`).then((response) =>
+    response.files.map(toFile),
   )
 }
 

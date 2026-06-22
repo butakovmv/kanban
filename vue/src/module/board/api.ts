@@ -92,6 +92,21 @@ export function getBoard(id: string): Promise<BoardView> {
   return get<BoardView>(`/boards/${encodeURIComponent(id)}`).then(toBoardView)
 }
 
+interface BoardsListResponse {
+  boards: Board[]
+}
+
+/**
+ * Возвращает список досок проекта.
+ * @param projectId идентификатор проекта
+ * @returns массив досок
+ */
+export function listBoardsByProjectId(projectId: string): Promise<Board[]> {
+  return get<BoardsListResponse>(`/projects/${encodeURIComponent(projectId)}/boards`).then(
+    (r) => r.boards.map(toBoard),
+  )
+}
+
 /**
  * Создаёт новую доску.
  * @param request projectId, name

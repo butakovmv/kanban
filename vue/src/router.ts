@@ -9,11 +9,14 @@ import { useAuthStore } from './module/auth/store'
  * - `/login` — страница входа
  * - `/register` — страница регистрации
  * - `/projects` — список проектов
- * - `/projects/:id` — настройки проекта
+ * - `/projects/:id` — просмотр проекта (доски, ссылки на документы, отчёты)
+ * - `/projects/:id/settings` — настройки проекта
+ * - `/projects/:id/documents` — документы проекта
+ * - `/projects/:id/reports` — отчёты проекта
  * - `/boards/:id` — доска с колонками
  * - `/tasks/:id` — детали задачи
  * - `/search` — поиск задач
- * - `/reports` — отчёты
+ * - `/reports` — отчёты (глобальные)
  */
 const router = createRouter({
   history: createWebHistory(),
@@ -42,6 +45,12 @@ const router = createRouter({
     },
     {
       path: '/projects/:id',
+      name: 'project-view',
+      meta: { requiresAuth: true },
+      component: () => import('./module/project/ProjectViewPage.vue'),
+    },
+    {
+      path: '/projects/:id/settings',
       name: 'project-settings',
       meta: { requiresAuth: true },
       component: () => import('./module/project/ProjectSettingsPage.vue'),
@@ -51,6 +60,12 @@ const router = createRouter({
       name: 'project-documents',
       meta: { requiresAuth: true },
       component: () => import('./module/document/DocumentListPage.vue'),
+    },
+    {
+      path: '/projects/:id/reports',
+      name: 'project-reports',
+      meta: { requiresAuth: true },
+      component: () => import('./module/report/ReportsPage.vue'),
     },
     {
       path: '/boards/:id',

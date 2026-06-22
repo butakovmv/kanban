@@ -46,6 +46,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load tasks'
+      console.error('Task store error:', e)
       tasks.value = []
       return false
     } finally {
@@ -66,6 +67,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load task'
+      console.error('Task store error:', e)
       currentTask.value = null
       return false
     } finally {
@@ -89,6 +91,7 @@ export const useTaskStore = defineStore('task', () => {
       return task
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create task'
+      console.error('Task store error:', e)
       return null
     } finally {
       loading.value = false
@@ -116,6 +119,7 @@ export const useTaskStore = defineStore('task', () => {
       return updated
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update task'
+      console.error('Task store error:', e)
       return null
     } finally {
       loading.value = false
@@ -160,6 +164,7 @@ export const useTaskStore = defineStore('task', () => {
         }
       }
       error.value = e instanceof Error ? e.message : 'Failed to move task'
+      console.error('Task store error:', e)
       return null
     }
   }
@@ -180,6 +185,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to archive task'
+      console.error('Task store error:', e)
       return false
     }
   }
@@ -218,6 +224,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load comments'
+      console.error('Task store error:', e)
       comments.value = []
       return false
     }
@@ -240,6 +247,7 @@ export const useTaskStore = defineStore('task', () => {
       return comment
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create comment'
+      console.error('Task store error:', e)
       return null
     }
   }
@@ -261,6 +269,7 @@ export const useTaskStore = defineStore('task', () => {
       return updated
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update comment'
+      console.error('Task store error:', e)
       return null
     }
   }
@@ -278,6 +287,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete comment'
+      console.error('Task store error:', e)
       return false
     }
   }
@@ -294,6 +304,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load files'
+      console.error('Task store error:', e)
       files.value = []
       return false
     }
@@ -312,6 +323,7 @@ export const useTaskStore = defineStore('task', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete file'
+      console.error('Task store error:', e)
       return false
     }
   }

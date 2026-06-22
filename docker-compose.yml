@@ -57,14 +57,13 @@ services:
       minio:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
     develop:
       watch:
-        - path: ./spring/build/libs/spring-0.0.1-SNAPSHOT.jar
+        - path: ./spring/build/libs/spring.jar
           target: /app/app.jar
           action: sync+restart
-        - path: ./spring/build/libs/lib/
-          target: /app/lib/
-          action: sync
 
   front:
     build:

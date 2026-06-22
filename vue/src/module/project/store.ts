@@ -28,6 +28,7 @@ export const useProjectStore = defineStore('project', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load projects'
+      console.error('Project store error:', e)
       projects.value = []
       return false
     } finally {
@@ -48,6 +49,7 @@ export const useProjectStore = defineStore('project', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load project'
+      console.error('Project store error:', e)
       currentProject.value = null
       return false
     } finally {
@@ -71,6 +73,7 @@ export const useProjectStore = defineStore('project', () => {
       return project
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create project'
+      console.error('Project store error:', e)
       return null
     } finally {
       loading.value = false
@@ -98,6 +101,7 @@ export const useProjectStore = defineStore('project', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update project'
+      console.error('Project store error:', e)
       return false
     } finally {
       loading.value = false
@@ -121,6 +125,7 @@ export const useProjectStore = defineStore('project', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete project'
+      console.error('Project store error:', e)
       return false
     } finally {
       loading.value = false

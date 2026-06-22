@@ -48,23 +48,42 @@ export interface ReplaceContentRequest {
   newContentType?: string
 }
 
+interface RawDocument {
+  id: string
+  project_id: string
+  title: string
+  description: string | null
+  file_name: string
+  content_type: string
+  size_bytes: number
+  storage_key: string
+  version: number
+  uploaded_by: string
+  created_at: string | number
+  updated_at: string | number
+}
+
+interface RawDocumentsResponse {
+  documents: RawDocument[]
+}
+
 /**
  * Преобразует snake_case-ответ сервера в camelCase представление документа.
  */
-function toDocument(raw: Document): Document {
+function toDocument(raw: RawDocument): Document {
   return {
     id: raw.id,
-    projectId: raw.projectId,
+    projectId: raw.project_id,
     title: raw.title,
     description: raw.description,
-    fileName: raw.fileName,
-    contentType: raw.contentType,
-    sizeBytes: raw.sizeBytes,
-    storageKey: raw.storageKey,
+    fileName: raw.file_name,
+    contentType: raw.content_type,
+    sizeBytes: raw.size_bytes,
+    storageKey: raw.storage_key,
     version: raw.version,
-    uploadedBy: raw.uploadedBy,
-    createdAt: raw.createdAt,
-    updatedAt: raw.updatedAt,
+    uploadedBy: raw.uploaded_by,
+    createdAt: typeof raw.created_at === 'string' ? raw.created_at : new Date(raw.created_at * 1000).toISOString(),
+    updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : new Date(raw.updated_at * 1000).toISOString(),
   }
 }
 
@@ -74,9 +93,9 @@ function toDocument(raw: Document): Document {
  * @returns массив документов
  */
 export function listDocuments(projectId: string): Promise<Document[]> {
-  return get<Document[]>(
+  return get<RawDocumentsResponse>(
     `/projects/${encodeURIComponent(projectId)}/documents`,
-  ).then((items) => items.map(toDocument))
+  ).then((response) => response.documents.map(toDocument))
 }
 
 /**
@@ -84,7 +103,7 @@ export function listDocuments(projectId: string): Promise<Document[]> {
  * @param id идентификатор документа
  */
 export function getDocument(id: string): Promise<Document> {
-  return get<Document>(`/documents/${encodeURIComponent(id)}`).then(toDocument)
+  return get<RawDocument>(`/documents/${encodeURIComponent(id)}`).then(toDocument)
 }
 
 /**
@@ -104,7 +123,7 @@ export function createDocument(request: CreateDocumentRequest): Promise<Document
   if (request.description !== undefined) {
     body['description'] = request.description
   }
-  return post<Document>('/documents', body).then(toDocument)
+  return post<RawDocument>('/documents', body).then(toDocument)
 }
 
 /**
@@ -121,7 +140,7 @@ export function updateDocument(id: string, request: UpdateDocumentRequest): Prom
   if (request.description !== undefined) {
     body['description'] = request.description
   }
-  return put<Document>(`/documents/${encodeURIComponent(id)}`, body).then(toDocument)
+  return put<RawDocument>(`/documents/${encodeURIComponent(id)}`, body).then(toDocument)
 }
 
 /**

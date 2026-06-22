@@ -11,16 +11,25 @@ import org.junit.jupiter.api.Test
 
 class CreateProjectOperationImplTest {
     private val projectRepository = mockk<ProjectRepository>()
+    private val boardRepository = mockk<BoardRepository>()
+    private val columnRepository = mockk<ColumnRepository>()
     private val checkTariffLimitsOperation = mockk<CheckTariffLimitsOperation>()
-    private val operation = CreateProjectOperationImpl(projectRepository, checkTariffLimitsOperation)
+    private val operation = CreateProjectOperationImpl(
+        projectRepository,
+        boardRepository,
+        columnRepository,
+        checkTariffLimitsOperation,
+    )
 
     @Test
-    fun `should create project successfully`() =
+    fun `should create project with default board`() =
         runTest {
             coEvery {
                 checkTariffLimitsOperation.execute(any())
             } returns CheckTariffLimitsOperation.Result.Allowed
             coEvery { projectRepository.save(any()) } answers { firstArg() }
+            coEvery { boardRepository.save(any()) } answers { firstArg() }
+            coEvery { columnRepository.save(any()) } answers { firstArg() }
 
             val result =
                 operation.execute(
@@ -47,6 +56,8 @@ class CreateProjectOperationImplTest {
                 )
             }
             coVerify { projectRepository.save(any()) }
+            coVerify { boardRepository.save(any()) }
+            coVerify(exactly = 3) { columnRepository.save(any()) }
         }
 
     @Test
@@ -70,5 +81,7 @@ class CreateProjectOperationImplTest {
 
             coVerify { checkTariffLimitsOperation.execute(any()) }
             coVerify(inverse = true) { projectRepository.save(any()) }
+            coVerify(inverse = true) { boardRepository.save(any()) }
+            coVerify(inverse = true) { columnRepository.save(any()) }
         }
 }

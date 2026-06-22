@@ -46,7 +46,7 @@ function createTestRouter() {
       { path: '/projects', name: 'projects', component: ProjectListPage },
       {
         path: '/projects/:id',
-        name: 'project-settings',
+        name: 'project-view',
         component: ProjectSettingsPage,
       },
       {

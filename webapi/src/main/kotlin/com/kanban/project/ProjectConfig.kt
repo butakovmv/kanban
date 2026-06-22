@@ -57,6 +57,7 @@ internal class ProjectConfig {
         deleteBoardOperation: DeleteBoardOperation,
         archiveBoardOperation: ArchiveBoardOperation,
         reorderColumnsOperation: ReorderColumnsOperation,
+        listBoardsOperation: ListBoardsOperation,
         sinkService: SinkService,
     ): BoardHandler =
         BoardHandler(
@@ -66,6 +67,7 @@ internal class ProjectConfig {
             deleteBoardOperation = deleteBoardOperation,
             archiveBoardOperation = archiveBoardOperation,
             reorderColumnsOperation = reorderColumnsOperation,
+            listBoardsOperation = listBoardsOperation,
             sinkService = sinkService,
         )
 }

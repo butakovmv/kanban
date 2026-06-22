@@ -8,6 +8,7 @@ import com.kanban.project.DeleteBoardOperation
 import com.kanban.project.DeleteProjectOperation
 import com.kanban.project.GetBoardOperation
 import com.kanban.project.GetProjectOperation
+import com.kanban.project.ListBoardsOperation
 import com.kanban.project.ListProjectsOperation
 import com.kanban.project.ProjectHandler
 import com.kanban.project.ReorderColumnsOperation
@@ -36,6 +37,7 @@ internal abstract class BaseProjectControllerTest {
     protected lateinit var deleteBoardOperation: DeleteBoardOperation
     protected lateinit var archiveBoardOperation: ArchiveBoardOperation
     protected lateinit var reorderColumnsOperation: ReorderColumnsOperation
+    protected lateinit var listBoardsOperation: ListBoardsOperation
 
     /**
      * Создаёт WebTestClient привязанный к указанному контроллеру.
@@ -56,6 +58,7 @@ internal abstract class BaseProjectControllerTest {
         deleteBoardOperation = mockk()
         archiveBoardOperation = mockk()
         reorderColumnsOperation = mockk()
+        listBoardsOperation = mockk()
 
         val projectHandler =
             ProjectHandler(
@@ -74,6 +77,7 @@ internal abstract class BaseProjectControllerTest {
                 deleteBoardOperation = deleteBoardOperation,
                 archiveBoardOperation = archiveBoardOperation,
                 reorderColumnsOperation = reorderColumnsOperation,
+                listBoardsOperation = listBoardsOperation,
             )
 
         val controller =
@@ -89,6 +93,7 @@ internal abstract class BaseProjectControllerTest {
                 DeleteBoardController::class.java -> DeleteBoardController(boardHandler)
                 ArchiveBoardController::class.java -> ArchiveBoardController(boardHandler)
                 ReorderColumnsController::class.java -> ReorderColumnsController(boardHandler)
+                ListProjectBoardsController::class.java -> ListProjectBoardsController(boardHandler)
                 else -> throw IllegalArgumentException("Unsupported controller: $controllerClass")
             }
 

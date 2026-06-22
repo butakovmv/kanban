@@ -16,6 +16,7 @@ export const useReportStore = defineStore('report', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load CFD data'
+      console.error('Report store error:', e)
       cfdData.value = []
       return false
     } finally {
@@ -31,6 +32,7 @@ export const useReportStore = defineStore('report', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load lead time data'
+      console.error('Report store error:', e)
       leadTimeData.value = []
       return false
     } finally {

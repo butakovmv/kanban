@@ -48,10 +48,50 @@ function leadTimeParamsToQuery(params: LeadTimeParams): string {
   return new URLSearchParams(q).toString()
 }
 
+interface RawCfdResponse {
+  points: {
+    date: string
+    column_id: string
+    column_name: string
+    count: number
+  }[]
+}
+
+interface RawLeadTimeResponse {
+  points: {
+    date: string
+    task_id: string
+    task_title: string
+    lead_time_hours: number
+  }[]
+}
+
+function toCfdDataPoint(raw: RawCfdResponse['points'][0]): CfdDataPoint {
+  return {
+    date: raw.date,
+    columnId: raw.column_id,
+    columnName: raw.column_name,
+    count: raw.count,
+  }
+}
+
+function toLeadTimeDataPoint(raw: RawLeadTimeResponse['points'][0]): LeadTimeDataPoint {
+  return {
+    date: raw.date,
+    taskId: raw.task_id,
+    taskTitle: raw.task_title,
+    leadTimeHours: raw.lead_time_hours,
+  }
+}
+
 export function getCfd(params: CfdParams): Promise<CfdDataPoint[]> {
-  return get<CfdDataPoint[]>(`/reports/cfd?${cfdParamsToQuery(params)}`)
+  return get<RawCfdResponse>(`/reports/cfd?${cfdParamsToQuery(params)}`).then(
+    (response) => response.points.map(toCfdDataPoint),
+  )
 }
 
 export function getLeadTime(params: LeadTimeParams): Promise<LeadTimeDataPoint[]> {
-  return get<LeadTimeDataPoint[]>(`/reports/lead-time?${leadTimeParamsToQuery(params)}`)
+  return get<RawLeadTimeResponse>(`/reports/lead-time?${leadTimeParamsToQuery(params)}`).then(
+    (response) => response.points.map(toLeadTimeDataPoint),
+  )
 }

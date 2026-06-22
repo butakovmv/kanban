@@ -68,7 +68,7 @@ async function handleCreate() {
     <ul v-else-if="projects.length > 0" class="project-list__items">
       <li v-for="project in projects" :key="project.id" class="project-list__item">
         <RouterLink
-          :to="{ name: 'project-settings', params: { id: project.id } }"
+          :to="{ name: 'project-view', params: { id: project.id } }"
           class="project-list__link"
         >
           <div class="project-list__name">{{ project.name }}</div>

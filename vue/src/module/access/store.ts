@@ -19,6 +19,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load groups'
+      console.error('Access store error:', e)
       groups.value = []
       return false
     } finally {
@@ -34,6 +35,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load group'
+      console.error('Access store error:', e)
       currentGroup.value = null
       return false
     } finally {
@@ -52,6 +54,7 @@ export const useAccessStore = defineStore('access', () => {
       return group
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to create group'
+      console.error('Access store error:', e)
       return null
     } finally {
       loading.value = false
@@ -73,6 +76,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to update group'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -93,6 +97,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to delete group'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -107,6 +112,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load members'
+      console.error('Access store error:', e)
       members.value = []
       return false
     } finally {
@@ -123,6 +129,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to add member'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -138,6 +145,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to remove member'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -152,6 +160,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load permissions'
+      console.error('Access store error:', e)
       permissions.value = []
       return false
     } finally {
@@ -167,6 +176,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load group permissions'
+      console.error('Access store error:', e)
       groupPermissions.value = []
       return false
     } finally {
@@ -183,6 +193,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to grant permission'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -203,6 +214,7 @@ export const useAccessStore = defineStore('access', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to revoke permission'
+      console.error('Access store error:', e)
       return false
     } finally {
       loading.value = false
@@ -221,6 +233,7 @@ export const useAccessStore = defineStore('access', () => {
       return await accessApi.checkPermission(userId, resource, action, targetId)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to check permission'
+      console.error('Access store error:', e)
       return null
     } finally {
       loading.value = false

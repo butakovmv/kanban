@@ -150,6 +150,6 @@ export function logout(request: LogoutRequest): Promise<void> {
   })
 }
 
-export function getTariff(): Promise<TariffInfo> {
-  return get<TariffInfo>('/profile/tariff')
+export function getTariff(userId: string): Promise<TariffInfo> {
+  return get<TariffInfo>(`/profile/tariff?user_id=${encodeURIComponent(userId)}`)
 }

@@ -75,7 +75,7 @@ async function handleDelete() {
 <template>
   <div class="project-settings">
     <header class="project-settings__header">
-      <RouterLink :to="{ name: 'projects' }" class="project-settings__back">&larr; Projects</RouterLink>
+      <RouterLink :to="{ name: 'project-view', params: { id: projectId } }" class="project-settings__back">&larr; Project</RouterLink>
       <h1>Project settings</h1>
     </header>
 
