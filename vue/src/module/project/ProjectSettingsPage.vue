@@ -1,13 +1,13 @@
 <script setup lang="ts">
 /**
  * Страница настроек проекта.
- * Позволяет редактировать название и описание проекта, а также удалять проект.
- * Использует route-параметр `id` для загрузки данных проекта.
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from './store'
+import { useBoards } from '../../composables/useBoards'
+import ProjectLayout from '../../component/ProjectLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,11 +23,12 @@ const projectId = computed(() => {
   return Array.isArray(id) ? id[0] : id
 })
 
+const { boards, loadBoards } = useBoards(() => projectId.value)
+
 async function load() {
-  if (projectId.value === undefined) {
-    return
-  }
+  if (projectId.value === undefined) return
   await projectStore.loadProject(projectId.value)
+  await loadBoards()
   if (currentProject.value !== null) {
     editName.value = currentProject.value.name
     editDescription.value = currentProject.value.description ?? ''
@@ -74,63 +75,39 @@ async function handleDelete() {
 
 <template>
   <div class="project-settings">
-    <header class="project-settings__header">
-      <RouterLink :to="{ name: 'project-view', params: { id: projectId } }" class="project-settings__back">&larr; Project</RouterLink>
-      <h1>Project settings</h1>
-    </header>
-
     <div v-if="loading && currentProject === null" class="project-settings__loading">
       Loading...
     </div>
 
-    <form v-else-if="currentProject !== null" class="project-settings__form" @submit.prevent="handleSave">
-      <div v-if="error" class="project-settings__error">{{ error }}</div>
+    <ProjectLayout v-else-if="currentProject !== null && projectId" :project-id="projectId" :boards="boards">
+      <form class="project-settings__form" @submit.prevent="handleSave">
+        <div v-if="error" class="project-settings__error">{{ error }}</div>
 
-      <label>
-        Name
-        <input v-model="editName" type="text" required maxlength="200" @input="markDirty" />
-      </label>
+        <label>
+          Name
+          <input v-model="editName" type="text" required maxlength="200" @input="markDirty" />
+        </label>
 
-      <label>
-        Description
-        <textarea
-          v-model="editDescription"
-          rows="4"
-          maxlength="2000"
-          @input="markDirty"
-        />
-      </label>
+        <label>
+          Description
+          <textarea v-model="editDescription" rows="4" maxlength="2000" @input="markDirty" />
+        </label>
 
-      <div class="project-settings__meta">
-        <div>ID: {{ currentProject.id }}</div>
-        <div>Owner: {{ currentProject.ownerId }}</div>
-        <div>Created: {{ currentProject.createdAt }}</div>
-        <div>Updated: {{ currentProject.updatedAt }}</div>
-      </div>
+        <div class="project-settings__meta">
+          <div>ID: {{ currentProject.id }}</div>
+          <div>Owner: {{ currentProject.ownerId }}</div>
+          <div>Created: {{ currentProject.createdAt }}</div>
+          <div>Updated: {{ currentProject.updatedAt }}</div>
+        </div>
 
-      <div class="project-settings__actions">
-        <button type="submit" :disabled="loading || !isDirty">Save</button>
-        <RouterLink
-          :to="{ name: 'projects' }"
-          class="project-settings__cancel"
-        >
-          Cancel
-        </RouterLink>
-      </div>
-
-      <div class="project-settings__danger">
-        <h2>Danger zone</h2>
-        <p>Deleting the project will erase all of its data. This action cannot be undone.</p>
-        <button
-          type="button"
-          class="project-settings__delete"
-          :disabled="loading"
-          @click="handleDelete"
-        >
-          Delete project
-        </button>
-      </div>
-    </form>
+        <div class="project-settings__actions">
+          <button type="submit" :disabled="loading || !isDirty">Save</button>
+          <button type="button" class="project-settings__cancel" @click="handleDelete">
+            Delete project
+          </button>
+        </div>
+      </form>
+    </ProjectLayout>
 
     <div v-else class="project-settings__not-found">Project not found.</div>
   </div>
@@ -138,38 +115,19 @@ async function handleDelete() {
 
 <style scoped>
 .project-settings {
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 0 auto;
 }
-.project-settings__header {
-  margin-bottom: 1.5rem;
-}
-.project-settings__back {
-  display: inline-block;
-  margin-bottom: 0.5rem;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-.project-settings__back:hover {
-  color: var(--color-primary);
-}
-.project-settings__header h1 {
-  font-size: 1.5rem;
-}
-.project-settings__loading,
-.project-settings__not-found {
+.project-settings__loading {
   padding: 2rem;
   text-align: center;
   color: var(--color-text-secondary);
-  background: var(--color-surface);
-  border-radius: var(--radius);
 }
 .project-settings__form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 1rem;
   background: var(--color-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -200,8 +158,8 @@ async function handleDelete() {
 }
 .project-settings__actions {
   display: flex;
-  align-items: center;
   gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 .project-settings__actions button {
   padding: 0.5rem 1rem;
@@ -219,36 +177,10 @@ async function handleDelete() {
   cursor: not-allowed;
 }
 .project-settings__cancel {
-  padding: 0.5rem 1rem;
-  color: var(--color-text-secondary);
-  text-decoration: none;
+  background: var(--color-danger) !important;
 }
-.project-settings__danger {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border);
-}
-.project-settings__danger h2 {
-  font-size: 1rem;
-  color: var(--color-danger);
-  margin-bottom: 0.5rem;
-}
-.project-settings__danger p {
-  margin-bottom: 0.75rem;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-.project-settings__delete {
-  padding: 0.5rem 1rem;
-  background: var(--color-danger);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 600;
-}
-.project-settings__delete:disabled {
-  background: var(--color-text-secondary);
-  cursor: not-allowed;
+.project-settings__cancel:hover {
+  background: var(--color-danger) !important;
 }
 .project-settings__error {
   padding: 0.75rem 1rem;
@@ -256,5 +188,10 @@ async function handleDelete() {
   color: #fff;
   border-radius: var(--radius);
   font-size: 0.875rem;
+}
+.project-settings__not-found {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
 }
 </style>

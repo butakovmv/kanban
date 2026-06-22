@@ -80,7 +80,7 @@ function toPermission(raw: Permission): Permission {
 }
 
 export function listGroups(): Promise<Group[]> {
-  return get<{ items: Group[] }>('/groups').then((r) => r.items.map(toGroup))
+  return get<{ groups: Group[] }>('/groups').then((r) => r.groups.map(toGroup))
 }
 
 export function getGroup(id: string): Promise<Group> {
@@ -107,8 +107,8 @@ export function deleteGroup(id: string): Promise<void> {
 }
 
 export function listMembers(groupId: string): Promise<GroupMember[]> {
-  return get<{ items: GroupMember[] }>(`/groups/${encodeURIComponent(groupId)}/members`).then(
-    (r) => r.items.map(toMember),
+  return get<{ members: GroupMember[] }>(`/groups/${encodeURIComponent(groupId)}/members`).then(
+    (r) => r.members.map(toMember),
   )
 }
 
@@ -125,8 +125,8 @@ export function removeMember(groupId: string, userId: string): Promise<void> {
 }
 
 export function listUserGroups(userId: string): Promise<Group[]> {
-  return get<{ items: Group[] }>(`/users/${encodeURIComponent(userId)}/groups`).then(
-    (r) => r.items.map(toGroup),
+  return get<{ groups: Group[] }>(`/users/${encodeURIComponent(userId)}/groups`).then(
+    (r) => r.groups.map(toGroup),
   )
 }
 
@@ -153,7 +153,7 @@ export function findPermissions(
   if (targetId !== undefined && targetId !== null) {
     url += `&target_id=${encodeURIComponent(targetId)}`
   }
-  return get<{ items: Permission[] }>(url).then((r) => r.items.map(toPermission))
+  return get<{ permissions: Permission[] }>(url).then((r) => r.permissions.map(toPermission))
 }
 
 export function grantPermission(groupId: string, permissionId: string): Promise<void> {
@@ -169,9 +169,9 @@ export function revokePermission(groupId: string, permissionId: string): Promise
 }
 
 export function listGroupPermissions(groupId: string): Promise<Permission[]> {
-  return get<{ items: Permission[] }>(
+  return get<{ permissions: Permission[] }>(
     `/groups/${encodeURIComponent(groupId)}/permissions`,
-  ).then((r) => r.items.map(toPermission))
+  ).then((r) => r.permissions.map(toPermission))
 }
 
 export function checkPermission(

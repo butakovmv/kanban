@@ -31,6 +31,11 @@ export async function login(page: Page, email: string): Promise<string> {
   await page.waitForURL(/\/board|\/projects|\/login/)
   const response = await tokenPromise
   const data = await response.json()
+  await page.waitForFunction(() => {
+    const store = localStorage.getItem('kanban_access_token')
+    return store !== null && store.length > 0
+  })
+  await page.waitForLoadState('networkidle')
   return data.access_token
 }
 
@@ -41,6 +46,11 @@ export async function loginAsNewUser(
   const email = testEmail(label)
   await registerUser(page, email)
   const token = await login(page, email)
+  await page.waitForFunction(() => {
+    const store = localStorage.getItem('kanban_access_token')
+    return store !== null && store.length > 0
+  })
+  await page.waitForLoadState('networkidle')
   return { email, token }
 }
 

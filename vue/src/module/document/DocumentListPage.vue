@@ -1,23 +1,18 @@
 <script setup lang="ts">
 /**
  * Страница списка документов проекта.
- * Загружает документы выбранного проекта (id берётся из route-параметра `id`),
- * отображает их в виде таблицы и позволяет:
- * — открыть модалку загрузки нового документа,
- * — скачать документ через presigned URL,
- * — отредактировать метаданные (название/описание) inline,
- * — удалить документ.
  */
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDocumentStore } from './store'
 import { useAuthStore } from '../auth/store'
+import { useBoards } from '../../composables/useBoards'
+import ProjectLayout from '../../component/ProjectLayout.vue'
 import DocumentUpload from './DocumentUpload.vue'
 import type { CreateDocumentRequest, Document, UpdateDocumentRequest } from './api'
 
 const route = useRoute()
-const router = useRouter()
 const documentStore = useDocumentStore()
 const authStore = useAuthStore()
 const { documents, loading, error } = storeToRefs(documentStore)
@@ -33,42 +28,33 @@ const projectId = computed(() => {
   return Array.isArray(id) ? id[0] : id
 })
 
+const { boards, loadBoards } = useBoards(() => projectId.value)
+
 async function load() {
-  if (projectId.value === undefined) {
-    return
-  }
+  if (projectId.value === undefined) return
   await documentStore.loadDocuments(projectId.value)
+  await loadBoards()
 }
 
 onMounted(load)
 watch(projectId, load)
 
 function formatSize(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`
-  }
-  if (bytes < 1024 * 1024 * 1024) {
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-  }
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
   return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
 function formatTime(value: string): string {
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
+  if (Number.isNaN(date.getTime())) return value
   return date.toISOString().replace('T', ' ').slice(0, 16)
 }
 
 async function handleDownload(doc: Document) {
   const url = await documentStore.getDownloadUrl(doc.id)
-  if (url === null) {
-    return
-  }
+  if (url === null) return
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
@@ -86,53 +72,31 @@ function cancelEdit() {
 
 async function saveEdit(doc: Document) {
   const request: UpdateDocumentRequest = { title: editTitle.value }
-  if (editDescription.value === '') {
-    request.description = null
-  } else {
-    request.description = editDescription.value
-  }
+  if (editDescription.value === '') request.description = null
+  else request.description = editDescription.value
   const updated = await documentStore.updateDocument(doc.id, request)
-  if (updated !== null) {
-    cancelEdit()
-  }
+  if (updated !== null) cancelEdit()
 }
 
 async function handleDelete(doc: Document) {
-  const confirmed = globalThis.confirm(
-    `Delete document "${doc.title}"? This action cannot be undone.`,
-  )
-  if (!confirmed) {
-    return
-  }
+  const confirmed = globalThis.confirm(`Delete "${doc.title}"? This cannot be undone.`)
+  if (!confirmed) return
   await documentStore.deleteDocument(doc.id)
 }
 
 async function handleUpload(request: CreateDocumentRequest) {
   const created = await documentStore.createDocument(request)
-  if (created !== null) {
-    showUpload.value = false
-  }
+  if (created !== null) showUpload.value = false
 }
 
 function handleUploadCancel() {
   showUpload.value = false
-}
-
-function goBack() {
-  if (projectId.value !== undefined) {
-    void router.push({ name: 'project-settings', params: { id: projectId.value } })
-  } else {
-    void router.push({ name: 'projects' })
-  }
 }
 </script>
 
 <template>
   <div class="document-list">
     <header class="document-list__header">
-      <button type="button" class="document-list__back" @click="goBack">
-        &larr; Back
-      </button>
       <h1>Documents</h1>
       <button
         type="button"
@@ -144,95 +108,82 @@ function goBack() {
       </button>
     </header>
 
-    <div v-if="error" class="document-list__error">{{ error }}</div>
+    <ProjectLayout v-if="projectId" :project-id="projectId" :boards="boards">
+      <div v-if="error" class="document-list__error">{{ error }}</div>
 
-    <div v-if="loading && documents.length === 0" class="document-list__loading">
-      Loading...
-    </div>
+      <div v-if="loading && documents.length === 0" class="document-list__loading">
+        Loading...
+      </div>
 
-    <table v-else-if="documents.length > 0" class="document-list__table">
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>File</th>
-          <th>Size</th>
-          <th>Version</th>
-          <th>Updated</th>
-          <th class="document-list__actions-col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template v-for="doc in documents" :key="doc.id">
-          <tr v-if="editingId !== doc.id" class="document-list__row">
-            <td>
-              <button
-                type="button"
-                class="document-list__title-link"
-                :title="`Download ${doc.fileName}`"
-                @click="handleDownload(doc)"
-              >
-                {{ doc.title }}
-              </button>
-              <div v-if="doc.description" class="document-list__description">
-                {{ doc.description }}
-              </div>
-            </td>
-            <td class="document-list__file">{{ doc.fileName }}</td>
-            <td class="document-list__size">{{ formatSize(doc.sizeBytes) }}</td>
-            <td class="document-list__version">v{{ doc.version }}</td>
-            <td class="document-list__updated">{{ formatTime(doc.updatedAt) }}</td>
-            <td class="document-list__actions">
-              <button
-                type="button"
-                class="document-list__action"
-                :disabled="loading"
-                @click="handleDownload(doc)"
-              >
-                Download
-              </button>
-              <button
-                type="button"
-                class="document-list__action"
-                :disabled="loading"
-                @click="startEdit(doc)"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                class="document-list__action document-list__action--danger"
-                :disabled="loading"
-                @click="handleDelete(doc)"
-              >
-                Delete
-              </button>
-            </td>
+      <table v-else-if="documents.length > 0" class="document-list__table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>File</th>
+            <th>Size</th>
+            <th>Version</th>
+            <th>Updated</th>
+            <th class="document-list__actions-col">Actions</th>
           </tr>
-          <tr v-else class="document-list__edit-row">
-            <td colspan="6">
-              <form class="document-list__edit-form" @submit.prevent="saveEdit(doc)">
-                <label>
-                  Title
-                  <input v-model="editTitle" type="text" required maxlength="200" />
-                </label>
-                <label>
-                  Description
-                  <textarea v-model="editDescription" rows="2" maxlength="2000" />
-                </label>
-                <div class="document-list__edit-actions">
-                  <button type="submit" :disabled="loading">Save</button>
-                  <button type="button" @click="cancelEdit">Cancel</button>
+        </thead>
+        <tbody>
+          <template v-for="doc in documents" :key="doc.id">
+            <tr v-if="editingId !== doc.id" class="document-list__row">
+              <td>
+                <button
+                  type="button"
+                  class="document-list__title-link"
+                  :title="`Download ${doc.fileName}`"
+                  @click="handleDownload(doc)"
+                >
+                  {{ doc.title }}
+                </button>
+                <div v-if="doc.description" class="document-list__description">
+                  {{ doc.description }}
                 </div>
-              </form>
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
+              </td>
+              <td class="document-list__file">{{ doc.fileName }}</td>
+              <td class="document-list__size">{{ formatSize(doc.sizeBytes) }}</td>
+              <td class="document-list__version">v{{ doc.version }}</td>
+              <td class="document-list__updated">{{ formatTime(doc.updatedAt) }}</td>
+              <td class="document-list__actions">
+                <button type="button" class="document-list__action" :disabled="loading" @click="handleDownload(doc)">
+                  Download
+                </button>
+                <button type="button" class="document-list__action" :disabled="loading" @click="startEdit(doc)">
+                  Edit
+                </button>
+                <button type="button" class="document-list__action document-list__action--danger" :disabled="loading" @click="handleDelete(doc)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            <tr v-else class="document-list__edit-row">
+              <td colspan="6">
+                <form class="document-list__edit-form" @submit.prevent="saveEdit(doc)">
+                  <label>
+                    Title
+                    <input v-model="editTitle" type="text" required maxlength="200" />
+                  </label>
+                  <label>
+                    Description
+                    <textarea v-model="editDescription" rows="2" maxlength="2000" />
+                  </label>
+                  <div class="document-list__edit-actions">
+                    <button type="submit" :disabled="loading">Save</button>
+                    <button type="button" @click="cancelEdit">Cancel</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
 
-    <div v-else class="document-list__empty">
-      No documents in this project yet. Click "Upload" to add the first one.
-    </div>
+      <div v-else class="document-list__empty">
+        No documents yet. Click "Upload" to add one.
+      </div>
+    </ProjectLayout>
 
     <DocumentUpload
       v-if="showUpload && projectId !== undefined"

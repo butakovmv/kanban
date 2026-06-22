@@ -7,6 +7,8 @@ import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.bind.support.WebExchangeBindException
+import org.springframework.web.server.MissingRequestValueException
+import org.springframework.web.server.ServerWebInputException
 
 /**
  * Глобальный обработчик ошибок для REST-контроллеров.
@@ -17,12 +19,10 @@ class GlobalErrorHandler {
     /**
      * Обрабатывает ошибки валидации запросов (WebExchangeBindException).
      * Формирует ProblemDetail со статусом 400 BAD_REQUEST и списком ошибок полей.
-     *
-     * @param ex исключение валидации с информацией об ошибках полей
-     * @return ProblemDetail с деталями ошибки валидации
      */
     @ExceptionHandler(WebExchangeBindException::class)
     fun handleValidation(ex: WebExchangeBindException): ProblemDetail {
+        log.warn("Validation error: ${ex.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }}")
         val detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         detail.title = "Validation Error"
         detail.detail = ex.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }
@@ -30,9 +30,29 @@ class GlobalErrorHandler {
         return detail
     }
 
+    @ExceptionHandler(MissingRequestValueException::class)
+    fun handleMissingRequestValue(ex: MissingRequestValueException): ProblemDetail {
+        log.warn("Missing request value: ${ex.reason}")
+        val detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        detail.title = "Bad Request"
+        detail.detail = ex.reason ?: "Missing required request value"
+        detail.type = URI.create("/errors/bad-request")
+        return detail
+    }
+
+    @ExceptionHandler(ServerWebInputException::class)
+    fun handleServerWebInput(ex: ServerWebInputException): ProblemDetail {
+        log.warn("Server web input error: ${ex.reason}")
+        val detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        detail.title = "Bad Request"
+        detail.detail = ex.reason ?: "Invalid input"
+        detail.type = URI.create("/errors/bad-request")
+        return detail
+    }
+
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
-        log.warn("Invalid request argument", ex)
+        log.warn("Invalid request argument: ${ex.message}")
         val detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
         detail.title = "Bad Request"
         detail.detail = ex.message ?: "Invalid argument"
@@ -43,9 +63,6 @@ class GlobalErrorHandler {
     /**
      * Обрабатывает все необработанные исключения (Throwable).
      * Формирует ProblemDetail со статусом 500 INTERNAL_SERVER_ERROR.
-     *
-     * @param ex непредвиденное исключение
-     * @return ProblemDetail с информацией об ошибке
      */
     @ExceptionHandler(Throwable::class)
     fun handleGeneral(ex: Throwable): ProblemDetail {

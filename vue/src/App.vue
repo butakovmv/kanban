@@ -6,11 +6,14 @@
  */
 import { RouterView, RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from './module/auth/store'
+import { useTheme } from './composables/useTheme'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { isAuthenticated, user } = storeToRefs(authStore)
+const { isDark, toggleTheme, initTheme } = useTheme()
+initTheme()
 
 async function handleLogout() {
   await authStore.logout()
@@ -32,6 +35,9 @@ async function handleLogout() {
           <RouterLink to="/login">Login</RouterLink>
           <RouterLink to="/register">Register</RouterLink>
         </template>
+        <button class="nav__theme" @click="toggleTheme" :title="isDark ? 'Switch to light theme' : 'Switch to dark theme'">
+          {{ isDark ? '☀️' : '🌙' }}
+        </button>
       </div>
     </nav>
     <main class="main">
@@ -63,11 +69,23 @@ async function handleLogout() {
 }
 .nav__links {
   display: flex;
+  align-items: center;
   gap: 1rem;
 }
 .nav__links a {
   text-decoration: none;
   color: var(--color-text-secondary);
+}
+.nav__theme {
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.nav__theme:hover {
+  background: var(--color-background);
 }
 .main {
   flex: 1;
