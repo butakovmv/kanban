@@ -2,32 +2,44 @@ import { ref } from 'vue'
 
 const THEME_KEY = 'kanban_theme'
 
-const isDark = ref(false)
-
-function applyTheme() {
-  document.documentElement.classList.remove('light', 'dark')
-  document.documentElement.classList.add(isDark.value ? 'dark' : 'light')
-}
-
-function toggleTheme() {
-  isDark.value = !isDark.value
-  localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
-  applyTheme()
-}
-
-function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY)
-  if (saved === 'dark') {
-    isDark.value = true
-  } else if (saved === 'light') {
-    isDark.value = false
-  } else {
-    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-  applyTheme()
-}
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
 
 export function useTheme() {
+  const isDark = ref(false)
+
+  function applyTheme() {
+    if (isDark.value) {
+      document.documentElement.style.colorScheme = 'dark'
+    } else {
+      document.documentElement.style.colorScheme = 'light'
+    }
+  }
+
+  function toggleTheme() {
+    isDark.value = !isDark.value
+    localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
+    applyTheme()
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY)
+    if (saved) {
+      isDark.value = saved === 'dark'
+    } else {
+      isDark.value = prefersDark.matches
+    }
+    applyTheme()
+  }
+
+  initTheme()
+
+  prefersDark.addEventListener('change', (e) => {
+    if (!localStorage.getItem(THEME_KEY)) {
+      isDark.value = e.matches
+      applyTheme()
+    }
+  })
+
   return {
     isDark,
     toggleTheme,

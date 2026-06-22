@@ -1,29 +1,16 @@
-:root,
-.light {
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-surface: #ffffff;
-  --color-background: #f9fafb;
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
+:root {
+  color-scheme: light dark;
+  --color-primary: light-dark(#4f46e5, #818cf8);
+  --color-primary-hover: light-dark(#4338ca, #6366f1);
+  --color-surface: light-dark(#ffffff, #1f2937);
+  --color-background: light-dark(#f9fafb, #111827);
+  --color-text: light-dark(#111827, #f9fafb);
+  --color-text-secondary: light-dark(#6b7280, #9ca3af);
+  --color-border: light-dark(#e5e7eb, #374151);
+  --color-danger: light-dark(#ef4444, #f87171);
+  --color-success: light-dark(#22c55e, #4ade80);
   --radius: 0.5rem;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.dark {
-  --color-primary: #818cf8;
-  --color-primary-hover: #6366f1;
-  --color-surface: #1f2937;
-  --color-background: #111827;
-  --color-text: #f9fafb;
-  --color-text-secondary: #9ca3af;
-  --color-border: #374151;
-  --color-danger: #f87171;
-  --color-success: #4ade80;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow: light-dark(0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.3));
 }
 
 * {
