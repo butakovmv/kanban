@@ -54,6 +54,36 @@ internal class TariffRepositoryImpl(
             .collectList()
             .awaitSingle()
 
+    override suspend fun save(tariff: Tariff): Tariff {
+        val table = tariff.toTable()
+        db.sql(
+            """
+            INSERT INTO tariffs (id, name, max_projects, max_boards_per_project, max_tasks_per_board,
+                                 max_file_size_mb, max_storage_mb, created_at)
+            VALUES (:id, :name, :maxProjects, :maxBoardsPerProject, :maxTasksPerBoard,
+                    :maxFileSizeMb, :maxStorageMb, :createdAt)
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                max_projects = EXCLUDED.max_projects,
+                max_boards_per_project = EXCLUDED.max_boards_per_project,
+                max_tasks_per_board = EXCLUDED.max_tasks_per_board,
+                max_file_size_mb = EXCLUDED.max_file_size_mb,
+                max_storage_mb = EXCLUDED.max_storage_mb
+            """,
+        )
+            .bind("id", UUID.fromString(table.id))
+            .bind("name", table.name)
+            .bind("maxProjects", table.maxProjects)
+            .bind("maxBoardsPerProject", table.maxBoardsPerProject)
+            .bind("maxTasksPerBoard", table.maxTasksPerBoard)
+            .bind("maxFileSizeMb", table.maxFileSizeMb)
+            .bind("maxStorageMb", table.maxStorageMb)
+            .bind("createdAt", table.createdAt)
+            .then()
+            .awaitFirstOrNull()
+        return tariff
+    }
+
     /**
      * Преобразование строки результата запроса R2DBC в доменную сущность [Tariff].
      * Считывает колонки таблицы `tariffs` и создаёт [TariffTable], затем маппит в домен.

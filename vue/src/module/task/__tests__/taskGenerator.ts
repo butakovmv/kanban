@@ -9,18 +9,22 @@ import type {
   UpdateTaskRequest,
 } from '../api'
 
+function uid(): string {
+  return Math.random().toString(36).slice(2, 10)
+}
+
 /**
  * Генератор тестовых данных для task-модуля.
  * Создаёт случайные сущности для тестов api.ts и store.ts.
  */
 export const taskGenerator = {
   task(overrides: Partial<Task> = {}): Task {
-    const id = `task-${Math.random().toString(36).slice(2, 10)}`
+    const id = `task-${uid()}`
     return {
       id,
-      boardId: `board-${Math.random().toString(36).slice(2, 8)}`,
-      columnId: `column-${Math.random().toString(36).slice(2, 8)}`,
-      title: `Task ${Math.random().toString(36).slice(2, 6)}`,
+      boardId: `board-${uid()}`,
+      columnId: `column-${uid()}`,
+      title: `Task ${uid()}`,
       description: 'A test task description',
       assigneeId: null,
       position: 0,
@@ -35,6 +39,30 @@ export const taskGenerator = {
   tasks(count: number, columnId?: string, boardId?: string): Task[] {
     return Array.from({ length: count }, (_, i) =>
       this.task({ position: i, columnId, boardId }),
+    )
+  },
+
+  rawTask(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    const id = `task-${uid()}`
+    return {
+      id,
+      board_id: `board-${uid()}`,
+      column_id: `column-${uid()}`,
+      title: `Task ${uid()}`,
+      description: 'A test task description',
+      assignee_id: null,
+      position: 0,
+      due_date: null,
+      archived: false,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-02T00:00:00.000Z',
+      ...overrides,
+    }
+  },
+
+  rawTasks(count: number, columnId?: string, boardId?: string): Record<string, unknown>[] {
+    return Array.from({ length: count }, (_, i) =>
+      this.rawTask({ position: i, column_id: columnId, board_id: boardId }),
     )
   },
 
@@ -63,12 +91,12 @@ export const taskGenerator = {
   },
 
   comment(overrides: Partial<Comment> = {}): Comment {
-    const id = `comment-${Math.random().toString(36).slice(2, 10)}`
+    const id = `comment-${uid()}`
     return {
       id,
-      taskId: `task-${Math.random().toString(36).slice(2, 8)}`,
-      authorId: `user-${Math.random().toString(36).slice(2, 8)}`,
-      text: `Comment ${Math.random().toString(36).slice(2, 6)}`,
+      taskId: `task-${uid()}`,
+      authorId: `user-${uid()}`,
+      text: `Comment ${uid()}`,
       createdAt: new Date('2025-01-01T00:00:00Z').toISOString(),
       updatedAt: new Date('2025-01-02T00:00:00Z').toISOString(),
       ...overrides,
@@ -79,9 +107,27 @@ export const taskGenerator = {
     return Array.from({ length: count }, () => this.comment({ taskId }))
   },
 
+  rawComment(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    const id = `comment-${uid()}`
+    return {
+      id,
+      task_id: `task-${uid()}`,
+      author_id: `user-${uid()}`,
+      text: `Comment ${uid()}`,
+      created_at: '2025-01-01T00:00:00.000Z',
+      updated_at: '2025-01-02T00:00:00.000Z',
+      ...overrides,
+    }
+  },
+
+  rawComments(count: number, taskId?: string): Record<string, unknown>[] {
+    return Array.from({ length: count }, () => this.rawComment({ task_id: taskId }))
+  },
+
   createCommentRequest(overrides: Partial<CreateCommentRequest> = {}): CreateCommentRequest {
     return {
-      text: `Comment ${Math.random().toString(36).slice(2, 6)}`,
+      authorId: `user-${uid()}`,
+      text: `Comment ${uid()}`,
       ...overrides,
     }
   },
@@ -96,15 +142,15 @@ export const taskGenerator = {
   },
 
   file(overrides: Partial<FileAttachment> = {}): FileAttachment {
-    const id = `file-${Math.random().toString(36).slice(2, 10)}`
+    const id = `file-${uid()}`
     return {
       id,
-      taskId: `task-${Math.random().toString(36).slice(2, 8)}`,
-      fileName: `file-${Math.random().toString(36).slice(2, 6)}.txt`,
+      taskId: `task-${uid()}`,
+      fileName: `file-${uid()}.txt`,
       contentType: 'text/plain',
       sizeBytes: 1024,
       storageKey: `storage/${id}`,
-      uploadedBy: `user-${Math.random().toString(36).slice(2, 8)}`,
+      uploadedBy: `user-${uid()}`,
       uploadedAt: new Date('2025-01-01T00:00:00Z').toISOString(),
       ...overrides,
     }
@@ -112,5 +158,24 @@ export const taskGenerator = {
 
   files(count: number, taskId?: string): FileAttachment[] {
     return Array.from({ length: count }, () => this.file({ taskId }))
+  },
+
+  rawFile(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    const id = `file-${uid()}`
+    return {
+      id,
+      task_id: `task-${uid()}`,
+      file_name: `file-${uid()}.txt`,
+      content_type: 'text/plain',
+      size_bytes: 1024,
+      storage_key: `storage/${id}`,
+      uploaded_by: `user-${uid()}`,
+      uploaded_at: '2025-01-01T00:00:00.000Z',
+      ...overrides,
+    }
+  },
+
+  rawFiles(count: number, taskId?: string): Record<string, unknown>[] {
+    return Array.from({ length: count }, () => this.rawFile({ task_id: taskId }))
   },
 }

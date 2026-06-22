@@ -3,7 +3,6 @@ import {
   loginAsNewUser,
   createProjectViaUi,
   createBoardViaApi,
-  createColumnViaApi,
 } from '../helpers'
 
 test.describe('Realtime SSE sync', () => {
@@ -28,8 +27,6 @@ test.describe('Realtime SSE sync', () => {
       'RT Board',
       token1,
     )
-    const colId = await createColumnViaApi(page1, boardId, 'To Do', token1)
-    await createColumnViaApi(page1, boardId, 'Done', token1)
 
     const creds2 = await loginAsNewUser(page2, 'rt2')
     const token2 = creds2.token

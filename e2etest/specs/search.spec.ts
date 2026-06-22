@@ -22,7 +22,7 @@ test.describe('Search', () => {
   test('should show filters section @regression', async ({ page }) => {
     await page.goto('/search')
     await expect(page.locator('.search-page__filters')).toBeVisible()
-    await expect(page.getByText(/filters/i)).toBeVisible()
+    await expect(page.getByText('Filters', { exact: true })).toBeVisible()
   })
 
   test('should show no results when searching without data @regression', async ({

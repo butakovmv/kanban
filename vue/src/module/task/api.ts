@@ -17,6 +17,20 @@ export interface Task {
   updatedAt: string
 }
 
+interface RawTask {
+  id: string
+  board_id: string
+  column_id: string
+  title: string
+  description: string | null
+  assignee_id: string | null
+  position: number
+  due_date: string | null
+  archived: boolean
+  created_at: string | number
+  updated_at: string | number
+}
+
 /**
  * Комментарий к задаче.
  */
@@ -27,6 +41,15 @@ export interface Comment {
   text: string
   createdAt: string
   updatedAt: string
+}
+
+interface RawComment {
+  id: string
+  task_id: string
+  author_id: string
+  text: string
+  created_at: string | number
+  updated_at: string | number
 }
 
 /**
@@ -41,6 +64,17 @@ export interface FileAttachment {
   storageKey: string
   uploadedBy: string
   uploadedAt: string
+}
+
+interface RawFileAttachment {
+  id: string
+  task_id: string
+  file_name: string
+  content_type: string
+  size_bytes: number
+  storage_key: string
+  uploaded_by: string
+  uploaded_at: string | number
 }
 
 /**
@@ -77,6 +111,7 @@ export interface MoveTaskRequest {
  * Параметры запроса создания комментария.
  */
 export interface CreateCommentRequest {
+  authorId: string
   text: string
 }
 
@@ -87,52 +122,48 @@ export interface UpdateCommentRequest {
   text: string
 }
 
-/**
- * Преобразует snake_case-ответ сервера в camelCase представление задачи.
- */
-function toTask(raw: Task): Task {
+function toDate(value: string | number): string {
+  if (typeof value === 'string') return value
+  return new Date(value * 1000).toISOString()
+}
+
+function toTask(raw: RawTask): Task {
   return {
     id: raw.id,
-    boardId: raw.boardId,
-    columnId: raw.columnId,
+    boardId: raw.board_id,
+    columnId: raw.column_id,
     title: raw.title,
     description: raw.description,
-    assigneeId: raw.assigneeId,
+    assigneeId: raw.assignee_id,
     position: raw.position,
-    dueDate: raw.dueDate,
+    dueDate: raw.due_date,
     archived: raw.archived,
-    createdAt: raw.createdAt,
-    updatedAt: raw.updatedAt,
+    createdAt: toDate(raw.created_at),
+    updatedAt: toDate(raw.updated_at),
   }
 }
 
-/**
- * Преобразует snake_case-ответ сервера в camelCase представление комментария.
- */
-function toComment(raw: Comment): Comment {
+function toComment(raw: RawComment): Comment {
   return {
     id: raw.id,
-    taskId: raw.taskId,
-    authorId: raw.authorId,
+    taskId: raw.task_id,
+    authorId: raw.author_id,
     text: raw.text,
-    createdAt: raw.createdAt,
-    updatedAt: raw.updatedAt,
+    createdAt: toDate(raw.created_at),
+    updatedAt: toDate(raw.updated_at),
   }
 }
 
-/**
- * Преобразует snake_case-ответ сервера в camelCase представление файла.
- */
-function toFile(raw: FileAttachment): FileAttachment {
+function toFile(raw: RawFileAttachment): FileAttachment {
   return {
     id: raw.id,
-    taskId: raw.taskId,
-    fileName: raw.fileName,
-    contentType: raw.contentType,
-    sizeBytes: raw.sizeBytes,
-    storageKey: raw.storageKey,
-    uploadedBy: raw.uploadedBy,
-    uploadedAt: raw.uploadedAt,
+    taskId: raw.task_id,
+    fileName: raw.file_name,
+    contentType: raw.content_type,
+    sizeBytes: raw.size_bytes,
+    storageKey: raw.storage_key,
+    uploadedBy: raw.uploaded_by,
+    uploadedAt: toDate(raw.uploaded_at),
   }
 }
 
@@ -144,7 +175,7 @@ function toFile(raw: FileAttachment): FileAttachment {
  */
 export function listTasks(boardId: string, includeArchived = false): Promise<Task[]> {
   const query = includeArchived ? '?include_archived=true' : '?include_archived=false'
-  return get<Task[]>(`/boards/${encodeURIComponent(boardId)}/tasks${query}`).then((items) =>
+  return get<RawTask[]>(`/boards/${encodeURIComponent(boardId)}/tasks${query}`).then((items) =>
     items.map(toTask),
   )
 }
@@ -154,7 +185,7 @@ export function listTasks(boardId: string, includeArchived = false): Promise<Tas
  * @param id идентификатор задачи
  */
 export function getTask(id: string): Promise<Task> {
-  return get<Task>(`/tasks/${encodeURIComponent(id)}`).then(toTask)
+  return get<RawTask>(`/tasks/${encodeURIComponent(id)}`).then(toTask)
 }
 
 /**
@@ -177,7 +208,7 @@ export function createTask(request: CreateTaskRequest): Promise<Task> {
   if (request.dueDate !== undefined) {
     body['due_date'] = request.dueDate
   }
-  return post<Task>('/tasks', body).then(toTask)
+  return post<RawTask>('/tasks', body).then(toTask)
 }
 
 /**
@@ -200,7 +231,7 @@ export function updateTask(id: string, request: UpdateTaskRequest): Promise<Task
   if (request.dueDate !== undefined) {
     body['due_date'] = request.dueDate
   }
-  return put<Task>(`/tasks/${encodeURIComponent(id)}`, body).then(toTask)
+  return put<RawTask>(`/tasks/${encodeURIComponent(id)}`, body).then(toTask)
 }
 
 /**
@@ -210,7 +241,7 @@ export function updateTask(id: string, request: UpdateTaskRequest): Promise<Task
  * @returns перемещённая задача
  */
 export function moveTask(id: string, request: MoveTaskRequest): Promise<Task> {
-  return patch<Task>(`/tasks/${encodeURIComponent(id)}/move`, {
+  return patch<RawTask>(`/tasks/${encodeURIComponent(id)}/move`, {
     column_id: request.columnId,
     position: request.position,
   }).then(toTask)
@@ -238,7 +269,7 @@ export function deleteTask(id: string): Promise<void> {
  * @returns массив комментариев
  */
 export function listComments(taskId: string): Promise<Comment[]> {
-  return get<Comment[]>(`/tasks/${encodeURIComponent(taskId)}/comments`).then((items) =>
+  return get<RawComment[]>(`/tasks/${encodeURIComponent(taskId)}/comments`).then((items) =>
     items.map(toComment),
   )
 }
@@ -250,7 +281,8 @@ export function listComments(taskId: string): Promise<Comment[]> {
  * @returns созданный комментарий
  */
 export function createComment(taskId: string, request: CreateCommentRequest): Promise<Comment> {
-  return post<Comment>(`/tasks/${encodeURIComponent(taskId)}/comments`, {
+  return post<RawComment>(`/tasks/${encodeURIComponent(taskId)}/comments`, {
+    author_id: request.authorId,
     text: request.text,
   }).then(toComment)
 }
@@ -262,7 +294,7 @@ export function createComment(taskId: string, request: CreateCommentRequest): Pr
  * @returns обновлённый комментарий
  */
 export function updateComment(id: string, request: UpdateCommentRequest): Promise<Comment> {
-  return put<Comment>(`/comments/${encodeURIComponent(id)}`, {
+  return put<RawComment>(`/comments/${encodeURIComponent(id)}`, {
     text: request.text,
   }).then(toComment)
 }
@@ -281,7 +313,7 @@ export function deleteComment(id: string): Promise<void> {
  * @returns массив файлов
  */
 export function listFiles(taskId: string): Promise<FileAttachment[]> {
-  return get<FileAttachment[]>(`/tasks/${encodeURIComponent(taskId)}/files`).then((items) =>
+  return get<RawFileAttachment[]>(`/tasks/${encodeURIComponent(taskId)}/files`).then((items) =>
     items.map(toFile),
   )
 }

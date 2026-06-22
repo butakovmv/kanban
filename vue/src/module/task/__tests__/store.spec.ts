@@ -253,7 +253,7 @@ describe('task store', () => {
       vi.mocked(api.createComment).mockResolvedValue(comment)
 
       const store = useTaskStore()
-      const result = await store.createComment('t-1', { text: 'Hi' })
+      const result = await store.createComment('t-1', { authorId: 'u-1', text: 'Hi' })
 
       expect(result).toEqual(comment)
       expect(store.comments).toHaveLength(1)

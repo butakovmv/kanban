@@ -15,14 +15,14 @@ describe('search api', () => {
     vi.clearAllMocks()
   })
 
-  it('sends GET to /tasks/search with query param', async () => {
+  it('sends GET to /search with query param', async () => {
     const mockResponse = { results: [], total: 0 }
     vi.mocked(fetchModule.get).mockResolvedValue(mockResponse)
 
     const result = await api.searchTasks({ q: 'test', page: 1, size: 10 })
 
     expect(fetchModule.get).toHaveBeenCalledWith(
-      '/tasks/search?q=test&page=1&size=10',
+      '/search?q=test&page=1&size=10',
     )
     expect(result).toEqual(mockResponse)
   })
@@ -33,7 +33,7 @@ describe('search api', () => {
     await api.searchTasks({ q: 'hello world' })
 
     expect(fetchModule.get).toHaveBeenCalledWith(
-      '/tasks/search?q=hello+world',
+      '/search?q=hello+world',
     )
   })
 
@@ -54,7 +54,7 @@ describe('search api', () => {
     })
 
     expect(fetchModule.get).toHaveBeenCalledWith(
-      '/tasks/search?q=bug&project_id=proj-1&board_id=board-2&status=open&priority=high&assignee_id=user-3&due_date_from=2025-01-01&due_date_to=2025-12-31&page=2&size=5',
+      '/search?q=bug&project_id=proj-1&board_id=board-2&status=open&priority=high&assignee_id=user-3&due_date_from=2025-01-01&due_date_to=2025-12-31&page=2&size=5',
     )
   })
 
@@ -64,6 +64,6 @@ describe('search api', () => {
     await api.searchTasks({ q: 'test' })
 
     const callUrl = vi.mocked(fetchModule.get).mock.calls[0][0] as string
-    expect(callUrl).toBe('/tasks/search?q=test')
+    expect(callUrl).toBe('/search?q=test')
   })
 })

@@ -31,7 +31,7 @@ export async function login(page: Page, email: string): Promise<string> {
   await page.waitForURL(/\/board|\/projects|\/login/)
   const response = await tokenPromise
   const data = await response.json()
-  return data.accessToken
+  return data.access_token
 }
 
 export async function loginAsNewUser(
@@ -110,24 +110,12 @@ export async function createBoardViaApi(
   projectId: string,
   boardName: string,
   token: string,
-): Promise<{ boardId: string }> {
+): Promise<{ boardId: string; columnIds: string[] }> {
   const body = await apiPost(page, '/boards', token, {
     project_id: projectId,
     name: boardName,
   })
-  return { boardId: body.id }
-}
-
-export async function createColumnViaApi(
-  page: Page,
-  boardId: string,
-  columnName: string,
-  token: string,
-): Promise<string> {
-  const body = await apiPost(page, `/boards/${boardId}/columns`, token, {
-    name: columnName,
-  })
-  return body.id
+  return { boardId: body.board.id, columnIds: body.columns.map((c: { id: string }) => c.id) }
 }
 
 export async function createTaskViaApi(

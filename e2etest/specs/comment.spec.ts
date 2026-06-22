@@ -3,7 +3,6 @@ import {
   loginAsNewUser,
   createProjectViaUi,
   createBoardViaApi,
-  createColumnViaApi,
   createTaskViaApi,
 } from '../helpers'
 
@@ -20,17 +19,16 @@ test.describe('Comment operations', () => {
       page,
       `CommentProj ${Date.now().toString(36)}`,
     )
-    const { boardId } = await createBoardViaApi(
+    const { boardId, columnIds } = await createBoardViaApi(
       page,
       projectId,
       'Comment Board',
       token,
     )
-    const colId = await createColumnViaApi(page, boardId, 'To Do', token)
     const taskId = await createTaskViaApi(
       page,
       boardId,
-      colId,
+      columnIds[0],
       `CommentTask ${Date.now().toString(36)}`,
       token,
     )

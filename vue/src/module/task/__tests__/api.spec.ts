@@ -22,13 +22,17 @@ describe('task api', () => {
 
   describe('listTasks', () => {
     it('sends GET to /boards/{boardId}/tasks with default include_archived=false', async () => {
-      const tasks = taskGenerator.tasks(2, 'c-1', 'b-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(tasks)
+      const rawTasks = taskGenerator.rawTasks(2, 'c-1', 'b-1')
+      vi.mocked(fetchModule.get).mockResolvedValue(rawTasks)
 
       const result = await api.listTasks('b-1')
 
       expect(fetchModule.get).toHaveBeenCalledWith('/boards/b-1/tasks?include_archived=false')
-      expect(result).toEqual(tasks)
+      expect(result).toHaveLength(2)
+      expect(result[0].boardId).toBe('b-1')
+      expect(result[0].columnId).toBe('c-1')
+      expect(result[0].position).toBe(0)
+      expect(result[1].position).toBe(1)
     })
 
     it('sends include_archived=true when requested', async () => {
@@ -42,20 +46,21 @@ describe('task api', () => {
 
   describe('getTask', () => {
     it('sends GET to /tasks/{id} and returns the task', async () => {
-      const task = taskGenerator.task({ id: 't-1', title: 'Hello' })
-      vi.mocked(fetchModule.get).mockResolvedValue(task)
+      const raw = taskGenerator.rawTask({ id: 't-1', title: 'Hello' })
+      vi.mocked(fetchModule.get).mockResolvedValue(raw)
 
       const result = await api.getTask('t-1')
 
       expect(fetchModule.get).toHaveBeenCalledWith('/tasks/t-1')
-      expect(result).toEqual(task)
+      expect(result.id).toBe('t-1')
+      expect(result.title).toBe('Hello')
     })
   })
 
   describe('createTask', () => {
     it('sends POST to /tasks with snake_case body and returns the task', async () => {
-      const created = taskGenerator.task({ id: 't-1', title: 'New' })
-      vi.mocked(fetchModule.post).mockResolvedValue(created)
+      const raw = taskGenerator.rawTask({ id: 't-1', title: 'New' })
+      vi.mocked(fetchModule.post).mockResolvedValue(raw)
 
       const result = await api.createTask({
         boardId: 'b-1',
@@ -74,11 +79,12 @@ describe('task api', () => {
         assignee_id: 'u-1',
         due_date: '2025-12-31',
       })
-      expect(result).toEqual(created)
+      expect(result.id).toBe('t-1')
+      expect(result.title).toBe('New')
     })
 
     it('omits optional fields when not provided', async () => {
-      vi.mocked(fetchModule.post).mockResolvedValue(taskGenerator.task())
+      vi.mocked(fetchModule.post).mockResolvedValue(taskGenerator.rawTask())
 
       await api.createTask({ boardId: 'b-1', columnId: 'c-1', title: 'X' })
 
@@ -91,17 +97,17 @@ describe('task api', () => {
 
   describe('updateTask', () => {
     it('sends PUT to /tasks/{id} with provided fields only', async () => {
-      const updated = taskGenerator.task({ title: 'Updated' })
-      vi.mocked(fetchModule.put).mockResolvedValue(updated)
+      const raw = taskGenerator.rawTask({ title: 'Updated' })
+      vi.mocked(fetchModule.put).mockResolvedValue(raw)
 
       const result = await api.updateTask('t-1', { title: 'Updated' })
 
       expect(fetchModule.put).toHaveBeenCalledWith('/tasks/t-1', { title: 'Updated' })
-      expect(result).toEqual(updated)
+      expect(result.title).toBe('Updated')
     })
 
     it('supports nullable description via null', async () => {
-      vi.mocked(fetchModule.put).mockResolvedValue(taskGenerator.task())
+      vi.mocked(fetchModule.put).mockResolvedValue(taskGenerator.rawTask())
 
       await api.updateTask('t-1', { description: null })
 
@@ -111,8 +117,8 @@ describe('task api', () => {
 
   describe('moveTask', () => {
     it('sends PATCH to /tasks/{id}/move with column_id and position', async () => {
-      const moved = taskGenerator.task({ columnId: 'c-2', position: 3 })
-      vi.mocked(fetchModule.patch).mockResolvedValue(moved)
+      const raw = taskGenerator.rawTask({ column_id: 'c-2', position: 3 })
+      vi.mocked(fetchModule.patch).mockResolvedValue(raw)
 
       const result = await api.moveTask('t-1', { columnId: 'c-2', position: 3 })
 
@@ -120,7 +126,8 @@ describe('task api', () => {
         column_id: 'c-2',
         position: 3,
       })
-      expect(result).toEqual(moved)
+      expect(result.columnId).toBe('c-2')
+      expect(result.position).toBe(3)
     })
   })
 
@@ -146,37 +153,41 @@ describe('task api', () => {
 
   describe('listComments', () => {
     it('sends GET to /tasks/{taskId}/comments', async () => {
-      const comments = taskGenerator.comments(2, 't-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(comments)
+      const raw = taskGenerator.rawComments(2, 't-1')
+      vi.mocked(fetchModule.get).mockResolvedValue(raw)
 
       const result = await api.listComments('t-1')
 
       expect(fetchModule.get).toHaveBeenCalledWith('/tasks/t-1/comments')
-      expect(result).toEqual(comments)
+      expect(result).toHaveLength(2)
+      expect(result[0].taskId).toBe('t-1')
     })
   })
 
   describe('createComment', () => {
     it('sends POST to /tasks/{taskId}/comments with text', async () => {
-      const comment = taskGenerator.comment({ text: 'Hi' })
-      vi.mocked(fetchModule.post).mockResolvedValue(comment)
+      const raw = taskGenerator.rawComment({ text: 'Hi' })
+      vi.mocked(fetchModule.post).mockResolvedValue(raw)
 
-      const result = await api.createComment('t-1', { text: 'Hi' })
+      const result = await api.createComment('t-1', { authorId: 'u-1', text: 'Hi' })
 
-      expect(fetchModule.post).toHaveBeenCalledWith('/tasks/t-1/comments', { text: 'Hi' })
-      expect(result).toEqual(comment)
+      expect(fetchModule.post).toHaveBeenCalledWith('/tasks/t-1/comments', {
+        author_id: 'u-1',
+        text: 'Hi',
+      })
+      expect(result.text).toBe('Hi')
     })
   })
 
   describe('updateComment', () => {
     it('sends PUT to /comments/{id} with text', async () => {
-      const updated = taskGenerator.comment({ text: 'New' })
-      vi.mocked(fetchModule.put).mockResolvedValue(updated)
+      const raw = taskGenerator.rawComment({ text: 'New' })
+      vi.mocked(fetchModule.put).mockResolvedValue(raw)
 
       const result = await api.updateComment('cm-1', { text: 'New' })
 
       expect(fetchModule.put).toHaveBeenCalledWith('/comments/cm-1', { text: 'New' })
-      expect(result).toEqual(updated)
+      expect(result.text).toBe('New')
     })
   })
 
@@ -192,13 +203,14 @@ describe('task api', () => {
 
   describe('listFiles', () => {
     it('sends GET to /tasks/{taskId}/files', async () => {
-      const files = taskGenerator.files(2, 't-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(files)
+      const raw = taskGenerator.rawFiles(2, 't-1')
+      vi.mocked(fetchModule.get).mockResolvedValue(raw)
 
       const result = await api.listFiles('t-1')
 
       expect(fetchModule.get).toHaveBeenCalledWith('/tasks/t-1/files')
-      expect(result).toEqual(files)
+      expect(result).toHaveLength(2)
+      expect(result[0].taskId).toBe('t-1')
     })
   })
 

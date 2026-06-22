@@ -27,8 +27,7 @@ internal class LoggingWebFilter : WebFilter {
         val query = request.uri.query
 
         MDC.put("requestId", requestId)
-        MDC.put("method", method.toString())
-        MDC.put("path", path)
+        MDC.put("request", "$method $path")
 
         val fullPath = if (query != null) "$path?$query" else path
         log.info(">>> {} {}", method, fullPath)
@@ -38,7 +37,8 @@ internal class LoggingWebFilter : WebFilter {
             val elapsed = System.currentTimeMillis() - start
             val status = extractStatus(exchange.response)
             log.info("<<< {} {} {} {}ms", status, method, fullPath, elapsed)
-            MDC.clear()
+            MDC.remove("requestId")
+            MDC.remove("request")
         }
     }
 

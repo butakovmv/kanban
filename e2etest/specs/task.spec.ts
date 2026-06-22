@@ -3,7 +3,6 @@ import {
   loginAsNewUser,
   createProjectViaUi,
   createBoardViaApi,
-  createColumnViaApi,
 } from '../helpers'
 
 test.describe('Task CRUD and operations', () => {
@@ -19,15 +18,13 @@ test.describe('Task CRUD and operations', () => {
       page,
       `TaskProj ${Date.now().toString(36)}`,
     )
-    const { boardId } = await createBoardViaApi(
+    const { boardId, columnIds } = await createBoardViaApi(
       page,
       projectId,
       'Task Board',
       token,
     )
-    const col1 = await createColumnViaApi(page, boardId, 'To Do', token)
-    const col2 = await createColumnViaApi(page, boardId, 'Done', token)
-    return { projectId, boardId, col1, col2 }
+    return { projectId, boardId, col1: columnIds[0], col2: columnIds[1] }
   }
 
   test('should create a task via modal and display it in column @smoke @critical', async ({

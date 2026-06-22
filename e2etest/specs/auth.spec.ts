@@ -3,14 +3,14 @@ import { test, expect } from '../fixtures'
 test.describe('Auth flow', () => {
   test('should navigate from login to register page', async ({ page }) => {
     await page.goto('/login')
-    await page.getByRole('link', { name: 'Register' }).click()
+    await page.getByRole('main').getByRole('link', { name: 'Register' }).click()
     await expect(page).toHaveURL(/\/register/)
     await expect(page.getByRole('heading', { name: 'Register' })).toBeVisible()
   })
 
   test('should navigate from register to login page', async ({ page }) => {
     await page.goto('/register')
-    await page.getByRole('link', { name: 'Login' }).click()
+    await page.getByRole('main').getByRole('link', { name: 'Login' }).click()
     await expect(page).toHaveURL(/\/login/)
     await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   })
@@ -34,8 +34,14 @@ test.describe('Auth flow', () => {
 
   test.describe('login', () => {
     test('should login and redirect to projects', async ({ page }) => {
-      await page.goto('/login')
-      await page.getByRole('textbox', { name: /email/i }).fill('user@kanban.test')
+      const email = `login-${Date.now()}@kanban.test`
+      await page.goto('/register')
+      await page.getByRole('textbox', { name: /name/i }).fill('Login User')
+      await page.getByRole('textbox', { name: /email/i }).fill(email)
+      await page.getByRole('textbox', { name: /password/i }).fill('password')
+      await page.getByRole('button', { name: 'Register' }).click()
+      await page.waitForURL(/\/login/)
+      await page.getByRole('textbox', { name: /email/i }).fill(email)
       await page.getByRole('textbox', { name: /password/i }).fill('password')
       await page.getByRole('button', { name: 'Login' }).click()
       await expect(page).toHaveURL(/\/projects/)

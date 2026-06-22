@@ -51,5 +51,5 @@ function toSnakeCase(params: SearchParams): Record<string, string> {
 
 export function searchTasks(params: SearchParams): Promise<{ results: SearchResult[]; total: number }> {
   const query = new URLSearchParams(toSnakeCase(params)).toString()
-  return get<SearchResponse>(`/tasks/search?${query}`)
+  return get<SearchResponse>(`/search?${query}`)
 }

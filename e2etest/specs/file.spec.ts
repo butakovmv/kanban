@@ -3,7 +3,6 @@ import {
   loginAsNewUser,
   createProjectViaUi,
   createBoardViaApi,
-  createColumnViaApi,
   createTaskViaApi,
 } from '../helpers'
 
@@ -20,17 +19,16 @@ test.describe('File attachment operations', () => {
       page,
       `FileProj ${Date.now().toString(36)}`,
     )
-    const { boardId } = await createBoardViaApi(
+    const { boardId, columnIds } = await createBoardViaApi(
       page,
       projectId,
       'File Board',
       token,
     )
-    const colId = await createColumnViaApi(page, boardId, 'To Do', token)
     const taskId = await createTaskViaApi(
       page,
       boardId,
-      colId,
+      columnIds[0],
       `FileTask ${Date.now().toString(36)}`,
       token,
     )
@@ -44,7 +42,7 @@ test.describe('File attachment operations', () => {
     await page.goto(`/tasks/${taskId}`)
     await page.waitForSelector('.task-detail__card')
     await expect(page.locator('.files')).toBeVisible()
-    await expect(page.getByText(/files/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /files/i })).toBeVisible()
   })
 
   test('should display file chooser on drag area click @regression', async ({

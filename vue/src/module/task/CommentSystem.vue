@@ -48,10 +48,13 @@ function formatTime(value: string): string {
 
 async function submit() {
   const text = newText.value.trim()
-  if (text === '') {
+  if (text === '' || !authStore.user) {
     return
   }
-  const created = await taskStore.createComment(props.taskId, { text })
+  const created = await taskStore.createComment(props.taskId, {
+    authorId: authStore.user.id,
+    text,
+  })
   if (created !== null) {
     newText.value = ''
   }

@@ -25,6 +25,42 @@ export interface AuthResponse extends AuthTokens {
   user: AuthUser
 }
 
+/* ───── raw snake‑case types, matching backend JSON ───── */
+
+interface RawAuthTokens {
+  access_token: string
+  refresh_token: string
+}
+
+interface RawAuthUser {
+  id: string
+  email: string
+  display_name: string
+}
+
+interface RawAuthResponse extends RawAuthTokens {
+  user: RawAuthUser
+}
+
+function toAuthResponse(raw: RawAuthResponse): AuthResponse {
+  return {
+    accessToken: raw.access_token,
+    refreshToken: raw.refresh_token,
+    user: {
+      id: raw.user.id,
+      email: raw.user.email,
+      displayName: raw.user.display_name,
+    },
+  }
+}
+
+function toAuthTokens(raw: RawAuthTokens): AuthTokens {
+  return {
+    accessToken: raw.access_token,
+    refreshToken: raw.refresh_token,
+  }
+}
+
 /**
  * Информация о тарифе пользователя.
  */
@@ -74,11 +110,11 @@ export interface LogoutRequest {
  * @returns токены и информация о пользователе
  */
 export function register(request: RegisterRequest): Promise<AuthResponse> {
-  return post<AuthResponse>('/auth/register', {
+  return post<RawAuthResponse>('/auth/register', {
     email: request.email,
     password: request.password,
     display_name: request.displayName,
-  })
+  }).then(toAuthResponse)
 }
 
 /**
@@ -87,10 +123,10 @@ export function register(request: RegisterRequest): Promise<AuthResponse> {
  * @returns токены и информация о пользователе
  */
 export function login(request: LoginRequest): Promise<AuthResponse> {
-  return post<AuthResponse>('/auth/login', {
+  return post<RawAuthResponse>('/auth/login', {
     email: request.email,
     password: request.password,
-  })
+  }).then(toAuthResponse)
 }
 
 /**
@@ -99,9 +135,9 @@ export function login(request: LoginRequest): Promise<AuthResponse> {
  * @returns новая пара токенов
  */
 export function refresh(request: RefreshRequest): Promise<AuthTokens> {
-  return post<AuthTokens>('/auth/refresh', {
+  return post<RawAuthTokens>('/auth/refresh', {
     refresh_token: request.refreshToken,
-  })
+  }).then(toAuthTokens)
 }
 
 /**

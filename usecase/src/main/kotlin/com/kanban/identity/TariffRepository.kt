@@ -27,4 +27,12 @@ interface TariffRepository {
      * @return список тарифов
      */
     suspend fun listAll(): List<Tariff>
+
+    /**
+     * Сохраняет новый тариф.
+     *
+     * @param tariff сущность тарифа
+     * @return сохранённый тариф
+     */
+    suspend fun save(tariff: Tariff): Tariff
 }

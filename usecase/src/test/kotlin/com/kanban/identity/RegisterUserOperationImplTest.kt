@@ -16,7 +16,15 @@ class RegisterUserOperationImplTest {
     private val userRepository = mockk<UserRepository>()
     private val passwordHasher = mockk<PasswordHasher>()
     private val tokenProvider = mockk<TokenProvider>()
-    private val operation = RegisterUserOperationImpl(userRepository, passwordHasher, tokenProvider)
+    private val userTariffRepository = mockk<UserTariffRepository>()
+    private val tariffRepository = mockk<TariffRepository>()
+    private val operation = RegisterUserOperationImpl(
+        userRepository = userRepository,
+        passwordHasher = passwordHasher,
+        tokenProvider = tokenProvider,
+        userTariffRepository = userTariffRepository,
+        tariffRepository = tariffRepository,
+    )
 
     @Test
     fun `should register user and return tokens`() =
@@ -31,6 +39,14 @@ class RegisterUserOperationImplTest {
             coEvery { userRepository.save(any()) } answers {
                 firstArg()
             }
+            coEvery { tariffRepository.findByName("Free") } returns
+                Tariff(
+                    id = com.kanban.common.TariffId("t-free"),
+                    name = "Free",
+                    limits = TariffLimits(5, 3, 50, 10, 100),
+                    createdAt = java.time.Instant.now(),
+                )
+            coEvery { userTariffRepository.save(any()) } answers { firstArg() }
             coEvery { tokenProvider.generateTokens(any()) } returns
                 AuthTokens(
                     AccessToken("access-token"),
@@ -50,6 +66,8 @@ class RegisterUserOperationImplTest {
             coVerify { passwordHasher.hash(password) }
             coVerify { userRepository.existsByEmail(email) }
             coVerify { userRepository.save(any()) }
+            coVerify { tariffRepository.findByName("Free") }
+            coVerify { userTariffRepository.save(any()) }
             coVerify { tokenProvider.generateTokens(any()) }
         }
 

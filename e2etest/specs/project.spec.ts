@@ -32,7 +32,7 @@ test.describe('Project CRUD', () => {
     await expect(page.getByText('Project settings')).toBeVisible()
     await page.getByRole('textbox', { name: /name/i }).fill(updatedName)
     await page.getByRole('button', { name: 'Save' }).click()
-    await expect(page.getByText(updatedName)).toBeVisible()
+    await expect(page.locator('input').filter({ hasValue: updatedName })).toBeVisible()
   })
 
   test('should delete a project @regression', async ({ page }) => {
@@ -44,6 +44,7 @@ test.describe('Project CRUD', () => {
     await page.waitForSelector('.project-list__item')
     await page.locator('.project-list__link').first().click()
     await page.waitForURL(/\/projects\//)
+    await page.evaluate(() => { window.confirm = () => true })
     await page.getByRole('button', { name: /delete project/i }).click()
     await expect(page).toHaveURL(/\/projects$|\/projects\?/)
   })

@@ -18,7 +18,7 @@ test.describe('Document operations', () => {
   }) => {
     const projectId = await setupProject(page, token)
     await page.goto(`/projects/${projectId}/documents`)
-    await expect(page.getByText(/documents/i)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /documents/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /upload/i })).toBeVisible()
   })
 
@@ -45,7 +45,7 @@ test.describe('Document operations', () => {
       mimeType: 'text/plain',
       buffer: Buffer.from('report content'),
     })
-    await page.getByRole('button', { name: 'Upload' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Upload' }).click()
     await expect(page.locator('.document-list__table')).toBeVisible()
   })
 
@@ -72,8 +72,9 @@ test.describe('Document operations', () => {
       mimeType: 'text/plain',
       buffer: Buffer.from('content'),
     })
-    await page.getByRole('button', { name: 'Upload' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Upload' }).click()
     await expect(page.locator('.document-list__table')).toBeVisible()
+    await page.evaluate(() => { window.confirm = () => true })
     await page.locator('.document-list__action--danger', { hasText: /delete/i }).click()
     await expect(page.getByText(/no documents/i)).toBeVisible()
   })

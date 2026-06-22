@@ -21,6 +21,7 @@ describe('auth store', () => {
     setActivePinia(createPinia())
     setAccessTokenSpy(vi.spyOn(fetchModule, 'setAccessToken'))
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -98,7 +99,7 @@ describe('auth store', () => {
   })
 
   describe('register', () => {
-    it('stores tokens and user on successful registration', async () => {
+    it('returns true on successful registration without setting session', async () => {
       const response = authGenerator.authResponse()
       vi.mocked(api.register).mockResolvedValue(response)
 
@@ -110,8 +111,8 @@ describe('auth store', () => {
       })
 
       expect(success).toBe(true)
-      expect(store.isAuthenticated).toBe(true)
-      expect(store.user).toEqual(response.user)
+      expect(store.isAuthenticated).toBe(false)
+      expect(store.user).toBeNull()
     })
 
     it('sets error on failed registration', async () => {

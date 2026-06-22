@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as api from '../api'
 import * as fetchModule from '../../../fetch'
-import { authGenerator } from './authGenerator'
 
 vi.mock('../../../fetch', async () => {
   const actual = await vi.importActual<typeof fetchModule>('../../../fetch')
@@ -17,9 +16,13 @@ describe('auth api', () => {
   })
 
   describe('register', () => {
-    it('sends POST to /auth/register with snake_case body', async () => {
-      const response = authGenerator.authResponse()
-      vi.mocked(fetchModule.post).mockResolvedValue(response)
+    it('sends POST to /auth/register with snake_case body and maps response', async () => {
+      const rawResponse = {
+        access_token: 'access-abc123',
+        refresh_token: 'refresh-def456',
+        user: { id: 'u1', email: 'new@kanban.test', display_name: 'New User' },
+      }
+      vi.mocked(fetchModule.post).mockResolvedValue(rawResponse)
 
       const result =
         await api.register({
@@ -33,14 +36,22 @@ describe('auth api', () => {
         password: 'pwd',
         display_name: 'New User',
       })
-      expect(result).toEqual(response)
+      expect(result).toEqual({
+        accessToken: 'access-abc123',
+        refreshToken: 'refresh-def456',
+        user: { id: 'u1', email: 'new@kanban.test', displayName: 'New User' },
+      })
     })
   })
 
   describe('login', () => {
-    it('sends POST to /auth/login with email and password', async () => {
-      const response = authGenerator.authResponse()
-      vi.mocked(fetchModule.post).mockResolvedValue(response)
+    it('sends POST to /auth/login and maps response', async () => {
+      const rawResponse = {
+        access_token: 'access-xyz',
+        refresh_token: 'refresh-789',
+        user: { id: 'u2', email: 'user@kanban.test', display_name: 'Test User' },
+      }
+      vi.mocked(fetchModule.post).mockResolvedValue(rawResponse)
 
       const result = await api.login({ email: 'user@kanban.test', password: 'pwd' })
 
@@ -48,21 +59,28 @@ describe('auth api', () => {
         email: 'user@kanban.test',
         password: 'pwd',
       })
-      expect(result).toEqual(response)
+      expect(result).toEqual({
+        accessToken: 'access-xyz',
+        refreshToken: 'refresh-789',
+        user: { id: 'u2', email: 'user@kanban.test', displayName: 'Test User' },
+      })
     })
   })
 
   describe('refresh', () => {
-    it('sends POST to /auth/refresh with snake_case body', async () => {
-      const tokens = authGenerator.tokens()
-      vi.mocked(fetchModule.post).mockResolvedValue(tokens)
+    it('sends POST to /auth/refresh with snake_case body and maps response', async () => {
+      const rawTokens = { access_token: 'access-new', refresh_token: 'refresh-new' }
+      vi.mocked(fetchModule.post).mockResolvedValue(rawTokens)
 
       const result = await api.refresh({ refreshToken: 'old-refresh' })
 
       expect(fetchModule.post).toHaveBeenCalledWith('/auth/refresh', {
         refresh_token: 'old-refresh',
       })
-      expect(result).toEqual(tokens)
+      expect(result).toEqual({
+        accessToken: 'access-new',
+        refreshToken: 'refresh-new',
+      })
     })
   })
 
