@@ -44,7 +44,7 @@ test.describe('Project CRUD', () => {
     await page.waitForSelector('.project-list__item')
     await page.locator('.project-list__link').first().click()
     await page.waitForURL(/\/projects\//)
-    await page.evaluate(() => { window.confirm = () => true })
+    page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: /delete project/i }).click()
     await expect(page).toHaveURL(/\/projects$|\/projects\?/)
   })

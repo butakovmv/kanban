@@ -63,10 +63,6 @@ async function api(
   return res.json()
 }
 
-export function apiGet(page: Page, path: string, token: string) {
-  return api(page, 'GET', path, token)
-}
-
 export function apiPost(
   page: Page,
   path: string,
@@ -74,19 +70,6 @@ export function apiPost(
   data: Record<string, unknown>,
 ) {
   return api(page, 'POST', path, token, data)
-}
-
-export function apiPut(
-  page: Page,
-  path: string,
-  token: string,
-  data: Record<string, unknown>,
-) {
-  return api(page, 'PUT', path, token, data)
-}
-
-export function apiDel(page: Page, path: string, token: string) {
-  return api(page, 'DELETE', path, token)
 }
 
 export async function createProjectViaUi(
@@ -133,40 +116,4 @@ export async function createTaskViaApi(
   return body.id
 }
 
-export async function createCommentViaApi(
-  page: Page,
-  taskId: string,
-  text: string,
-  token: string,
-): Promise<string> {
-  const body = await apiPost(page, `/tasks/${taskId}/comments`, token, {
-    text,
-  })
-  return body.id
-}
 
-export async function createDocumentViaApi(
-  page: Page,
-  projectId: string,
-  title: string,
-  token: string,
-): Promise<string> {
-  const body = await apiPost(page, '/documents', token, {
-    project_id: projectId,
-    title,
-    file_name: 'test.txt',
-    content_type: 'text/plain',
-    content_base64: Buffer.from('hello world').toString('base64'),
-    uploaded_by: 'test-user',
-  })
-  return body.id
-}
-
-export async function createGroupViaApi(
-  page: Page,
-  name: string,
-  token: string,
-): Promise<string> {
-  const body = await apiPost(page, '/groups', token, { name })
-  return body.id
-}

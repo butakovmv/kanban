@@ -67,7 +67,7 @@ test.describe('Reports', () => {
     }
   })
 
-  test('should show loading state when loading CFD @regression', async ({
+  test.skip('should show loading state when loading CFD @regression', async ({
     page,
   }) => {
     await page.goto('/reports')

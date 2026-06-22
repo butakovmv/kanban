@@ -155,14 +155,15 @@ export const useAuthStore = defineStore('auth', () => {
    * Выход из системы: аннулирует refresh-токен и очищает сессию.
    */
   async function logout(): Promise<void> {
-    if (refreshToken.value != null) {
+    const token = refreshToken.value
+    clearSession()
+    if (token != null) {
       try {
-        await authApi.logout({ refreshToken: refreshToken.value })
+        await authApi.logout({ refreshToken: token })
       } catch {
-        // Ошибка logout игнорируется — клиент всё равно очищает сессию.
+        // Ошибка logout игнорируется — сессия уже очищена.
       }
     }
-    clearSession()
   }
 
   /* Восстанавливаем сессию из localStorage при создании хранилища */

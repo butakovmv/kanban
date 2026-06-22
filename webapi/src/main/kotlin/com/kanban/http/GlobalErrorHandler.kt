@@ -30,6 +30,16 @@ class GlobalErrorHandler {
         return detail
     }
 
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
+        log.warn("Invalid request argument", ex)
+        val detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST)
+        detail.title = "Bad Request"
+        detail.detail = ex.message ?: "Invalid argument"
+        detail.type = URI.create("/errors/bad-request")
+        return detail
+    }
+
     /**
      * Обрабатывает все необработанные исключения (Throwable).
      * Формирует ProblemDetail со статусом 500 INTERNAL_SERVER_ERROR.

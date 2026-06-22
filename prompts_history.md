@@ -496,3 +496,91 @@ Continue if you have next steps, or stop and ask for clarification if you are un
 
 Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
 
+## Prompt 120
+
+продолжай
+
+## Prompt 121
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 122
+
+отладь e2e тесты, сейчас среди них много упавших
+
+## Prompt 123
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 124
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 125
+
+отладь e2e тесты
+
+## Prompt 126
+
+обрати внимание на секцию develop в docker compose файле
+
+## Prompt 127
+
+обрати внимание на секцию develop в docker compose файле
+
+## Prompt 128
+
+продолжи
+
+## Prompt 129
+
+продолжи
+
+## Prompt 130
+
+продолжи
+
+## Prompt 131
+
+продолжи
+
+## Prompt 132
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 133
+
+продолжи отладку e2e тестов, еще есть падающие
+
+## Prompt 134
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 135
+
+проведи ревью e2e тестов. найди неоптимальные решения или некоректные попытки обойти проблему вместо правильного решения. исправь замечания по ревью. в конце напиши в e2etests Readdme.md с перечислением реализованных тестовых сценариев и их шагами на русском языке
+
+## Prompt 136
+
+при логауте не выкидывает на /login
+
+## Prompt 137
+
+GET /api/v1/profile/tariff отдает 500 ошибку
+
+## Prompt 138
+
+Запрос GET /api/v1/boards/asd отдает 500 ошибку
+
+## Prompt 139
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 140
+
+добавь на фронт чтобы все api запросы дополнялись заголовком X-Request-Id, а бэк для requestId в mdc смотрел этот заголовок и генерировал его только если заголовок пуст
+
+## Prompt 141
+
+посмотри в логах запрос requestId=a6464fa6, почему он отдает 500 ошибку
+

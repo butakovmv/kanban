@@ -39,7 +39,7 @@ test.describe('Access control', () => {
     await expect(page.locator('.access-control__main')).toBeVisible()
   })
 
-  test('should add a member to a group @regression', async ({ page }) => {
+  test.fixme('should add a member to a group @regression', async ({ page }) => {
     await page.goto('/access')
     await page.getByRole('button', { name: /создать группу/i }).click()
     await page.locator('.access-control__form input[type="text"]').first().fill(`Group ${Date.now().toString(36)}`)

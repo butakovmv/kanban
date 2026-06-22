@@ -30,6 +30,7 @@ export function getAccessToken(): string | null {
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-Request-Id': crypto.randomUUID(),
     ...(options.headers as Record<string, string>),
   }
 

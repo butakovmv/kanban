@@ -21,7 +21,8 @@ internal class LoggingWebFilter : WebFilter {
         chain: WebFilterChain,
     ): Mono<Void> {
         val request = exchange.request
-        val requestId = UUID.randomUUID().toString().take(8)
+        val requestId = request.headers.getFirst("X-Request-Id")
+            ?: UUID.randomUUID().toString().take(8)
         val method = request.method
         val path = request.uri.path
         val query = request.uri.query

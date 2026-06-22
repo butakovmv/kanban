@@ -74,7 +74,7 @@ test.describe('Document operations', () => {
     })
     await page.getByRole('dialog').getByRole('button', { name: 'Upload' }).click()
     await expect(page.locator('.document-list__table')).toBeVisible()
-    await page.evaluate(() => { window.confirm = () => true })
+    page.once('dialog', (dialog) => dialog.accept())
     await page.locator('.document-list__action--danger', { hasText: /delete/i }).click()
     await expect(page.getByText(/no documents/i)).toBeVisible()
   })

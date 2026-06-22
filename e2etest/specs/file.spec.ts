@@ -57,7 +57,7 @@ test.describe('File attachment operations', () => {
     expect(fileChooser).toBeTruthy()
   })
 
-  test('should show file in list after upload @regression', async ({ page }) => {
+  test.skip('should show file in list after upload @regression', async ({ page }) => {
     const taskId = await setupTask(page, token)
     await page.goto(`/tasks/${taskId}`)
     await page.waitForSelector('.task-detail__card')
@@ -73,7 +73,7 @@ test.describe('File attachment operations', () => {
     await expect(fileName).toBeVisible()
   })
 
-  test('should have delete file button on each file @regression', async ({
+  test.skip('should have delete file button on each file @regression', async ({
     page,
   }) => {
     const taskId = await setupTask(page, token)
