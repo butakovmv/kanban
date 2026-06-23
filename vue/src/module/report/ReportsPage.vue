@@ -5,21 +5,26 @@
  * Для визуализации используются встроенные SVG-графики (без Chart.js).
  */
 import { onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useReportStore } from './store'
+import ProjectLayout from '../../component/ProjectLayout.vue'
 
+const route = useRoute()
 const reportStore = useReportStore()
 const { cfdData, leadTimeData, loading, error } = storeToRefs(reportStore)
 
 const activeTab = ref<'cfd' | 'leadtime'>('cfd')
 
-const cfdProjectId = ref('')
-const cfdBoardId = ref('')
+const projectId = computed(() => {
+  const id = route.params['id']
+  return Array.isArray(id) ? id[0] : id
+})
+
 const cfdFrom = ref('')
 const cfdTo = ref('')
 const cfdInterval = ref<'DAY' | 'WEEK' | 'MONTH'>('DAY')
 
-const ltProjectId = ref('')
 const ltFrom = ref('')
 const ltTo = ref('')
 
@@ -36,8 +41,7 @@ onMounted(() => {
 
 async function loadCfdChart() {
   await reportStore.loadCfd({
-    projectId: cfdProjectId.value || undefined,
-    boardId: cfdBoardId.value || undefined,
+    projectId: projectId.value,
     from: cfdFrom.value || defaultFrom,
     to: cfdTo.value || defaultTo,
     interval: cfdInterval.value,
@@ -46,7 +50,7 @@ async function loadCfdChart() {
 
 async function loadLeadTimeChart() {
   await reportStore.loadLeadTime({
-    projectId: ltProjectId.value || undefined,
+    projectId: projectId.value,
     from: ltFrom.value || defaultFrom,
     to: ltTo.value || defaultTo,
   })
@@ -179,10 +183,8 @@ const ltYAxisLabels = computed(() => {
 </script>
 
 <template>
-  <div class="reports-page">
-    <header class="reports-page__header">
-      <h1>Reports</h1>
-    </header>
+  <ProjectLayout v-if="projectId" :project-id="projectId">
+    <div class="reports-page">
 
     <div class="reports-page__tabs">
       <button
@@ -204,14 +206,6 @@ const ltYAxisLabels = computed(() => {
     <!-- CFD Chart -->
     <div v-if="activeTab === 'cfd'" class="reports-page__section">
       <div class="reports-page__filters">
-        <label>
-          Project ID
-          <input v-model="cfdProjectId" type="text" />
-        </label>
-        <label>
-          Board ID
-          <input v-model="cfdBoardId" type="text" />
-        </label>
         <label>
           From
           <input v-model="cfdFrom" type="date" />
@@ -313,10 +307,6 @@ const ltYAxisLabels = computed(() => {
     <div v-if="activeTab === 'leadtime'" class="reports-page__section">
       <div class="reports-page__filters">
         <label>
-          Project ID
-          <input v-model="ltProjectId" type="text" />
-        </label>
-        <label>
           From
           <input v-model="ltFrom" type="date" />
         </label>
@@ -396,18 +386,13 @@ const ltYAxisLabels = computed(() => {
       </div>
     </div>
   </div>
+</ProjectLayout>
 </template>
 
 <style scoped>
 .reports-page {
   max-width: 64rem;
   margin: 0 auto;
-}
-.reports-page__header {
-  margin-bottom: 1rem;
-}
-.reports-page__header h1 {
-  font-size: 1.5rem;
 }
 .reports-page__tabs {
   display: flex;

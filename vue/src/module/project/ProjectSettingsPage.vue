@@ -6,7 +6,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from './store'
-import { useBoards } from '../../composables/useBoards'
 import ProjectLayout from '../../component/ProjectLayout.vue'
 
 const route = useRoute()
@@ -23,12 +22,9 @@ const projectId = computed(() => {
   return Array.isArray(id) ? id[0] : id
 })
 
-const { boards, loadBoards } = useBoards(() => projectId.value)
-
 async function load() {
   if (projectId.value === undefined) return
   await projectStore.loadProject(projectId.value)
-  await loadBoards()
   if (currentProject.value !== null) {
     editName.value = currentProject.value.name
     editDescription.value = currentProject.value.description ?? ''
@@ -74,12 +70,12 @@ async function handleDelete() {
 </script>
 
 <template>
-  <div class="project-settings">
+  <ProjectLayout v-if="projectId" :project-id="projectId">
     <div v-if="loading && currentProject === null" class="project-settings__loading">
       Loading...
     </div>
 
-    <ProjectLayout v-else-if="currentProject !== null && projectId" :project-id="projectId" :boards="boards">
+    <template v-else-if="currentProject !== null">
       <form class="project-settings__form" @submit.prevent="handleSave">
         <div v-if="error" class="project-settings__error">{{ error }}</div>
 
@@ -107,17 +103,13 @@ async function handleDelete() {
           </button>
         </div>
       </form>
-    </ProjectLayout>
+    </template>
 
     <div v-else class="project-settings__not-found">Project not found.</div>
-  </div>
+  </ProjectLayout>
 </template>
 
 <style scoped>
-.project-settings {
-  max-width: 64rem;
-  margin: 0 auto;
-}
 .project-settings__loading {
   padding: 2rem;
   text-align: center;

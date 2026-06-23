@@ -816,3 +816,123 @@ watch уже был запущен вручную. действуй дальше
 
 переделай на light-dark
 
+## Prompt 200
+
+свежесозданный проект не показывается по адресу http://localhost/projects/fa854e58-68bf-4514-99b2-b8fd5576e856
+
+## Prompt 201
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 202
+
+документы должны быть не файлами,а хранящимися внутри системы текстами md-файлов с иерархическими путями (как файлы в папках). на странице /projects/{id}/documents должен отображаться список этих документов. актуализируй документацию по этим изменениям и идмени код под новые вводные
+
+## Prompt 203
+
+актуализируй e2e тесты и отладь их
+
+## Prompt 204
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 205
+
+посмотри ошибку в логах бэка requestId=9893bf57-d1d6-408f-b15a-3abf4a60255b
+
+## Prompt 206
+
+путь для документа не должен быть уникальным, ведь в одной папке может находиться несколько файлов.уникальным должны быть путь+название
+
+## Prompt 207
+
+добавь документам два режима - просмотра отрендеренного markdown и редактирования контента
+
+## Prompt 208
+
+на странице /projects/{id}/documents должно отображаться иерархическое дерево документов в соответствии с их путями
+
+## Prompt 209
+
+на странице /projects/{id}/documents только один документ, хотя в апи пришло два
+
+## Prompt 210
+
+на странице /projects/{id}/documents отображает плоский список, а не иерархию папок с документами в них
+
+## Prompt 211
+
+документы в любой папке должны группироваться и отображаться, что они находятся в этой папке
+
+## Prompt 212
+
+Документы в папке "Сценарии использования/1" отображается будто оно находится в папке "Сценарии использования", а не во вложенной в нее папки "1"
+
+## Prompt 213
+
+как назначить исполнителя на задачу в ui? например на странице /tasks/67716329-5469-47f6-9a71-4dbd49e103f8
+
+## Prompt 214
+
+на один проект должна быть только одна доска. и она должна отображаться по адресу /project/{id}/board. сайдбар project-layout__sidebar должен присутствовать на всех страницах: /projects/{id}/board, /projects/{id}/documents, /projects/{id}/reports, /projects/{id}/settings. Сделай его более компактным, у самого левого края экрана и замени надписи на иконки
+
+## Prompt 215
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 216
+
+project-layout не занимает всю ширину и имеет отступы,  з-за чего сайдбар не находится у самого левого края экрана
+
+## Prompt 217
+
+на части страниц проблема с project-layout сохраняется
+
+## Prompt 218
+
+на странице /projects/fa854e58-68bf-4514-99b2-b8fd5576e856/board не находит связанную доску
+
+## Prompt 219
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 220
+
+Проверь отступы у сайдбара и project-layout__content на странице с доской. они слишкомблизко друг ко другу
+
+## Prompt 221
+
+добавь чуть правее nav__logo название проекта и текущей страницы для всех страниц содержащих /projects/{id} в пути
+
+## Prompt 222
+
+продолжи
+
+## Prompt 223
+
+нет, этот хедер должен находиться рядом с nav__logo
+
+## Prompt 224
+
+да, рядом с "Kanban"
+
+## Prompt 225
+
+вставь между nav__page-name и nav__links интервал занимающий все свободное пространство, раздвигающий соседей вбок
+
+## Prompt 226
+
+убери board__title, document-list__header, reports-page__header потому что оно уже переместилось в самый главный хедер
+
+## Prompt 227
+
+убери из projects/{id}/reports из форм упоминание проекта и доски. проект должен быть текущий, а доска в нем единственная
+
+## Prompt 228
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 229
+
+поправь оставшиеся падения
+

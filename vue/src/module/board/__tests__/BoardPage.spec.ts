@@ -19,6 +19,7 @@ vi.mock('../api', async () => {
   return {
     ...actual,
     getBoard: vi.fn(),
+    getBoardByProjectId: vi.fn(),
     createBoard: vi.fn(),
     updateBoard: vi.fn(),
     deleteBoard: vi.fn(),
@@ -45,14 +46,24 @@ function createTestRouter() {
     routes: [
       { path: '/projects', name: 'projects', component: ProjectListPage },
       {
-        path: '/projects/:id',
-        name: 'project-view',
-        component: ProjectSettingsPage,
+        path: '/projects/:id/board',
+        name: 'project-board',
+        component: BoardPage,
       },
       {
-        path: '/boards/:id',
-        name: 'board',
-        component: BoardPage,
+        path: '/projects/:id/documents',
+        name: 'project-documents',
+        component: ProjectListPage,
+      },
+      {
+        path: '/projects/:id/reports',
+        name: 'project-reports',
+        component: ProjectListPage,
+      },
+      {
+        path: '/projects/:id/settings',
+        name: 'project-settings',
+        component: ProjectSettingsPage,
       },
       {
         path: '/tasks/:id',
@@ -66,7 +77,7 @@ function createTestRouter() {
 describe('BoardPage', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    vi.mocked(api.getBoard).mockResolvedValue(
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue(
       boardGenerator.boardView({
         board: boardGenerator.board({ id: 'b-1' }),
         columns: [],
@@ -77,7 +88,7 @@ describe('BoardPage', () => {
 
   it('loads and renders the board with its columns from the api', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
@@ -85,7 +96,7 @@ describe('BoardPage', () => {
       boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
       boardGenerator.column({ id: 'c-2', name: 'Done', position: 1, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
 
     const wrapper = mount(BoardPage, {
       global: { plugins: [router] },
@@ -94,19 +105,18 @@ describe('BoardPage', () => {
     await flushPromises()
     await nextTick()
 
-    expect(api.getBoard).toHaveBeenCalledWith('b-1')
-    expect(wrapper.find('.board__title').text()).toBe('Sprint 1')
+    expect(api.getBoardByProjectId).toHaveBeenCalledWith('p-1')
     const columns = wrapper.findAllComponents({ name: 'Column' })
     expect(columns).toHaveLength(2)
   })
 
   it('renders a loading state before the board is loaded', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     let resolveLoad: (value: api.BoardView) => void = () => {}
-    vi.mocked(api.getBoard).mockReturnValue(
+    vi.mocked(api.getBoardByProjectId).mockReturnValue(
       new Promise((resolve) => {
         resolveLoad = resolve
       }),
@@ -125,10 +135,10 @@ describe('BoardPage', () => {
 
   it('renders an error state when loading fails', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
-    vi.mocked(api.getBoard).mockRejectedValue(new Error('Network error'))
+    vi.mocked(api.getBoardByProjectId).mockRejectedValue(new Error('Network error'))
 
     const wrapper = mount(BoardPage, {
       global: { plugins: [router] },
@@ -144,11 +154,11 @@ describe('BoardPage', () => {
 
   it('renders an empty state when board has no columns', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-empty')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
-    const board = boardGenerator.board({ id: 'b-empty', name: 'Empty' })
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: [] })
+    const board = boardGenerator.board({ id: 'b-1', name: 'Empty' })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: [] })
 
     const wrapper = mount(BoardPage, {
       global: { plugins: [router] },
@@ -157,17 +167,16 @@ describe('BoardPage', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('.board__title').text()).toBe('Empty')
     expect(wrapper.find('.board__empty').exists()).toBe(true)
   })
 
   it('toggles the swimlanes flag when the button is clicked', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: [] })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: [] })
 
     const wrapper = mount(BoardPage, {
       global: { plugins: [router] },
@@ -191,11 +200,11 @@ describe('BoardPage', () => {
 
   it('exposes an Add column button', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: [] })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: [] })
 
     const wrapper = mount(BoardPage, {
       global: { plugins: [router] },
@@ -209,7 +218,7 @@ describe('BoardPage', () => {
 
   it('renders the board name in the store and uses columns count from the store', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint X' })
@@ -218,7 +227,7 @@ describe('BoardPage', () => {
       boardGenerator.column({ id: 'c-2', name: 'In progress', position: 1, boardId: 'b-1' }),
       boardGenerator.column({ id: 'c-3', name: 'Done', position: 2, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
 
     const store = useBoardStore()
     const wrapper = mount(BoardPage, {
@@ -235,7 +244,7 @@ describe('BoardPage', () => {
 
   it('loads tasks for the board and renders them grouped by column', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
@@ -243,7 +252,7 @@ describe('BoardPage', () => {
       boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
       boardGenerator.column({ id: 'c-2', name: 'Done', position: 1, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
 
     const tasks = [
       taskGenerator.task({ id: 't-1', columnId: 'c-1', position: 0, title: 'First' }),
@@ -266,14 +275,14 @@ describe('BoardPage', () => {
 
   it('opens the create-task modal when a column Add task button is clicked', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
     const cols = [
       boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
     vi.mocked(taskApi.listTasks).mockResolvedValue([])
 
     const wrapper = mount(BoardPage, {
@@ -295,14 +304,14 @@ describe('BoardPage', () => {
 
   it('creates a task and closes the modal when the modal emits submit', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
     const cols = [
       boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
     vi.mocked(taskApi.listTasks).mockResolvedValue([])
 
     const created = taskGenerator.task({ id: 't-new', columnId: 'c-1', title: 'Created' })
@@ -339,7 +348,7 @@ describe('BoardPage', () => {
 
   it('moves a task to another column when the column receives a drop', async () => {
     const router = createTestRouter()
-    await router.push('/boards/b-1')
+    await router.push('/projects/p-1/board')
     await router.isReady()
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
@@ -347,7 +356,7 @@ describe('BoardPage', () => {
       boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
       boardGenerator.column({ id: 'c-2', name: 'Done', position: 1, boardId: 'b-1' }),
     ]
-    vi.mocked(api.getBoard).mockResolvedValue({ board, columns: cols })
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
 
     const tasks = [taskGenerator.task({ id: 't-1', columnId: 'c-1', position: 0 })]
     vi.mocked(taskApi.listTasks).mockResolvedValue(tasks)

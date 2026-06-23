@@ -23,7 +23,7 @@ describe('task api', () => {
   describe('listTasks', () => {
     it('sends GET to /boards/{boardId}/tasks with default include_archived=false', async () => {
       const rawTasks = taskGenerator.rawTasks(2, 'c-1', 'b-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(rawTasks)
+      vi.mocked(fetchModule.get).mockResolvedValue({ tasks: rawTasks })
 
       const result = await api.listTasks('b-1')
 
@@ -36,7 +36,7 @@ describe('task api', () => {
     })
 
     it('sends include_archived=true when requested', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue([])
+      vi.mocked(fetchModule.get).mockResolvedValue({ tasks: [] })
 
       await api.listTasks('b-1', true)
 
@@ -154,7 +154,7 @@ describe('task api', () => {
   describe('listComments', () => {
     it('sends GET to /tasks/{taskId}/comments', async () => {
       const raw = taskGenerator.rawComments(2, 't-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(raw)
+      vi.mocked(fetchModule.get).mockResolvedValue({ comments: raw })
 
       const result = await api.listComments('t-1')
 
@@ -204,7 +204,7 @@ describe('task api', () => {
   describe('listFiles', () => {
     it('sends GET to /tasks/{taskId}/files', async () => {
       const raw = taskGenerator.rawFiles(2, 't-1')
-      vi.mocked(fetchModule.get).mockResolvedValue(raw)
+      vi.mocked(fetchModule.get).mockResolvedValue({ files: raw })
 
       const result = await api.listFiles('t-1')
 

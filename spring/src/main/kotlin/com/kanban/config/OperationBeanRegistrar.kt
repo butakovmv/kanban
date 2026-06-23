@@ -4,7 +4,6 @@ import com.kanban.common.AccessToken
 import com.kanban.common.AuthTokens
 import com.kanban.common.Operation
 import com.kanban.common.RefreshToken
-import com.kanban.document.DocumentStorage
 import com.kanban.identity.EmailService
 import com.kanban.identity.PasswordHasher
 import com.kanban.identity.TokenProvider
@@ -107,28 +106,6 @@ internal class InfrastructureConfig {
 
             override suspend fun delete(key: String) {
                 println("FileStorage: deleted $key")
-            }
-        }
-
-    @Bean
-    fun documentStorage(): DocumentStorage =
-        object : DocumentStorage {
-            override suspend fun upload(
-                key: String,
-                content: ByteArray,
-                contentType: String,
-            ): String {
-                println("DocumentStorage: uploaded $key ($contentType, ${content.size} bytes)")
-                return "/api/v1/documents/$key/download"
-            }
-
-            override suspend fun getDownloadUrl(
-                key: String,
-                expiresIn: kotlin.time.Duration,
-            ): String = "/api/v1/documents/$key/download?expires=${expiresIn.inWholeSeconds}"
-
-            override suspend fun delete(key: String) {
-                println("DocumentStorage: deleted $key")
             }
         }
 }

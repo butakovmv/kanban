@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from './store'
 import { useBoards } from '../../composables/useBoards'
 import ProjectLayout from '../../component/ProjectLayout.vue'
 
+const route = useRoute()
 const projectStore = useProjectStore()
 const { currentProject, loading, error } = storeToRefs(projectStore)
 
 const projectId = computed(() => {
-  const id = projectStore.currentProject?.id
-  return id
+  const id = route.params['id']
+  return Array.isArray(id) ? id[0] : id
 })
 
-const { boards } = useBoards(() => projectId.value ?? undefined)
+const { boards, loadBoards } = useBoards(() => projectId.value ?? undefined)
 
 async function load() {
   if (projectId.value === undefined) return
   await projectStore.loadProject(projectId.value)
+  await loadBoards()
 }
 
 onMounted(load)

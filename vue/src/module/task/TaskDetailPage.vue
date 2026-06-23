@@ -23,6 +23,7 @@ const { currentTask, comments, files, loading, error } = storeToRefs(taskStore)
 const editing = ref(false)
 const draftTitle = ref('')
 const draftDescription = ref('')
+const draftAssigneeId = ref('')
 const draftDueDate = ref('')
 const showDeleteConfirm = ref(false)
 
@@ -66,6 +67,7 @@ function startEdit() {
   }
   draftTitle.value = currentTask.value.title
   draftDescription.value = currentTask.value.description ?? ''
+  draftAssigneeId.value = currentTask.value.assigneeId ?? ''
   draftDueDate.value = currentTask.value.dueDate ?? ''
   editing.value = true
 }
@@ -83,10 +85,12 @@ async function commitEdit() {
     return
   }
   const description = draftDescription.value.trim()
+  const assigneeId = draftAssigneeId.value.trim()
   const dueDate = draftDueDate.value.trim()
   await taskStore.updateTask(taskId.value, {
     title,
     description: description === '' ? null : description,
+    assigneeId: assigneeId === '' ? null : assigneeId,
     dueDate: dueDate === '' ? null : dueDate,
   })
   editing.value = false
@@ -179,6 +183,25 @@ function isAssigneeMe(): boolean {
             />
           </label>
           <label>
+            <span>Assignee</span>
+            <div class="task-detail__assignee-row">
+              <input
+                v-model="draftAssigneeId"
+                type="text"
+                class="task-detail__input"
+                placeholder="User ID"
+              />
+              <button
+                type="button"
+                class="task-detail__action"
+                :disabled="authStore.user === null"
+                @click="draftAssigneeId = authStore.user!.id"
+              >
+                Assign to me
+              </button>
+            </div>
+          </label>
+          <label>
             <span>Due date</span>
             <input
               v-model="draftDueDate"
@@ -211,8 +234,12 @@ function isAssigneeMe(): boolean {
         <div class="task-detail__field">
           <dt>Assignee</dt>
           <dd>
-            {{ currentTask.assigneeId ?? '—' }}
-            <span v-if="isAssigneeMe()" class="task-detail__you"> (you)</span>
+            <template v-if="currentTask.assigneeId">
+              <span v-if="isAssigneeMe()" class="task-detail__you">{{ authStore.user!.displayName }}</span>
+              <span v-else>{{ currentTask.assigneeId }}</span>
+              <span v-if="isAssigneeMe()"> (you)</span>
+            </template>
+            <span v-else>—</span>
           </dd>
         </div>
         <div class="task-detail__field">
@@ -413,6 +440,14 @@ function isAssigneeMe(): boolean {
   font-family: inherit;
   font-size: 0.875rem;
   resize: vertical;
+}
+.task-detail__assignee-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.task-detail__assignee-row input {
+  flex: 1;
 }
 .task-detail__form-actions {
   display: flex;

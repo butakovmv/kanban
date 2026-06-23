@@ -42,6 +42,30 @@ export const useBoardStore = defineStore('board', () => {
   }
 
   /**
+   * Загружает доску по идентификатору проекта.
+   * @param projectId идентификатор проекта
+   * @returns true при успешной загрузке, false при ошибке
+   */
+  async function loadBoardByProjectId(projectId: string): Promise<boolean> {
+    loading.value = true
+    error.value = null
+    try {
+      const view = await boardApi.getBoardByProjectId(projectId)
+      currentBoard.value = view.board
+      columns.value = view.columns
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to load board'
+      console.error('Board store error:', e)
+      currentBoard.value = null
+      columns.value = []
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
    * Создаёт новую доску.
    * @param request параметры создания
    * @returns созданная доска или null при ошибке
@@ -193,6 +217,7 @@ export const useBoardStore = defineStore('board', () => {
     hasBoard,
     hasColumns,
     loadBoard,
+    loadBoardByProjectId,
     createBoard,
     updateBoard,
     deleteBoard,

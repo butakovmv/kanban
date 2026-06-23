@@ -2,11 +2,6 @@ package com.kanban.document
 
 import java.time.Instant
 
-/**
- * Реализация операции обновления метаданных документа.
- * Находит документ по ID, обновляет указанные поля (title, description) и сохраняет.
- * Версия документа не изменяется, так как меняются только метаданные.
- */
 internal class UpdateDocumentOperationImpl(
     private val documentRepository: DocumentRepository,
 ) : UpdateDocumentOperation {
@@ -16,9 +11,14 @@ internal class UpdateDocumentOperationImpl(
         if (arg.title != null && arg.title.isBlank()) {
             return UpdateDocumentOperation.Result.Failure("Title must not be blank")
         }
+        if (arg.path != null && arg.path.isBlank()) {
+            return UpdateDocumentOperation.Result.Failure("Path must not be blank")
+        }
         val updated =
             existing.copy(
+                path = arg.path?.trim() ?: existing.path,
                 title = arg.title?.trim() ?: existing.title,
+                content = arg.content ?: existing.content,
                 description = arg.description ?: existing.description,
                 updatedAt = Instant.now(),
             )

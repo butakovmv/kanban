@@ -131,7 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function refresh(): Promise<boolean> {
     if (refreshToken.value === null) {
       error.value = 'No refresh token'
-      console.error('Auth store error:', e)
+      console.error('Auth store error: No refresh token')
       return false
     }
     loading.value = true

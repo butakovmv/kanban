@@ -25,14 +25,9 @@ internal class ListDocumentsController(
                             DocumentResponse(
                                 id = it.id,
                                 projectId = it.projectId,
+                                path = it.path,
                                 title = it.title,
                                 description = it.description,
-                                fileName = it.fileName,
-                                contentType = it.contentType,
-                                sizeBytes = it.sizeBytes,
-                                storageKey = it.storageKey,
-                                version = it.version,
-                                uploadedBy = it.uploadedBy,
                                 createdAt = it.createdAt,
                                 updatedAt = it.updatedAt,
                             )

@@ -191,6 +191,20 @@ internal class BoardHandler(
             columns = columns.map { it.toData() },
         )
 
+    suspend fun getByProjectId(projectId: String): GetBoardResult {
+        val listResult =
+            listBoardsOperation.execute(
+                ListBoardsOperation.Arg(projectId = projectId),
+            )
+        return when (val boards = listResult) {
+            is ListBoardsOperation.Result.Success -> {
+                val first = boards.boards.firstOrNull()
+                    ?: return GetBoardResult.NotFound
+                get(first.id.value)
+            }
+        }
+    }
+
     suspend fun listByProjectId(projectId: String): ListBoardsResult {
         val result =
             listBoardsOperation.execute(

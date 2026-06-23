@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.web.bind.support.WebExchangeBindException
 import org.springframework.web.server.MissingRequestValueException
 import org.springframework.web.server.ServerWebInputException
@@ -47,6 +48,16 @@ class GlobalErrorHandler {
         detail.title = "Bad Request"
         detail.detail = ex.reason ?: "Invalid input"
         detail.type = URI.create("/errors/bad-request")
+        return detail
+    }
+
+    @ExceptionHandler(DuplicateKeyException::class)
+    fun handleDuplicateKey(ex: DuplicateKeyException): ProblemDetail {
+        log.warn("Duplicate key: ${ex.message}")
+        val detail = ProblemDetail.forStatus(HttpStatus.CONFLICT)
+        detail.title = "Conflict"
+        detail.detail = ex.message ?: "Resource already exists"
+        detail.type = URI.create("/errors/conflict")
         return detail
     }
 

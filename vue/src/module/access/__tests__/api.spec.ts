@@ -22,7 +22,7 @@ describe('access api', () => {
   describe('listGroups', () => {
     it('sends GET to /groups and returns items', async () => {
       const items = accessGenerator.groups(3)
-      vi.mocked(fetchModule.get).mockResolvedValue({ items, total: items.length })
+      vi.mocked(fetchModule.get).mockResolvedValue({ groups: items })
 
       const result = await api.listGroups()
 
@@ -97,7 +97,7 @@ describe('access api', () => {
   describe('listMembers', () => {
     it('sends GET to /groups/{id}/members and returns items', async () => {
       const items = accessGenerator.groupMembers(2)
-      vi.mocked(fetchModule.get).mockResolvedValue({ items, total: items.length })
+      vi.mocked(fetchModule.get).mockResolvedValue({ members: items })
 
       const result = await api.listMembers('g-1')
 
@@ -132,7 +132,7 @@ describe('access api', () => {
   describe('listUserGroups', () => {
     it('sends GET to /users/{id}/groups and returns items', async () => {
       const items = accessGenerator.groups(2)
-      vi.mocked(fetchModule.get).mockResolvedValue({ items, total: items.length })
+      vi.mocked(fetchModule.get).mockResolvedValue({ groups: items })
 
       const result = await api.listUserGroups('user-1')
 
@@ -190,7 +190,7 @@ describe('access api', () => {
   describe('findPermissions', () => {
     it('sends GET with resource query param', async () => {
       const items = accessGenerator.permissions(2)
-      vi.mocked(fetchModule.get).mockResolvedValue({ items, total: items.length })
+      vi.mocked(fetchModule.get).mockResolvedValue({ permissions: items })
 
       const result = await api.findPermissions('project')
 
@@ -199,7 +199,7 @@ describe('access api', () => {
     })
 
     it('adds target_id when provided', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue({ items: [], total: 0 })
+      vi.mocked(fetchModule.get).mockResolvedValue({ permissions: [] })
 
       await api.findPermissions('project', 'p-1')
 
@@ -209,7 +209,7 @@ describe('access api', () => {
     })
 
     it('omits target_id when null', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue({ items: [], total: 0 })
+      vi.mocked(fetchModule.get).mockResolvedValue({ permissions: [] })
 
       await api.findPermissions('project', null)
 
@@ -242,7 +242,7 @@ describe('access api', () => {
   describe('listGroupPermissions', () => {
     it('sends GET to /groups/{id}/permissions', async () => {
       const items = accessGenerator.permissions(3)
-      vi.mocked(fetchModule.get).mockResolvedValue({ items, total: items.length })
+      vi.mocked(fetchModule.get).mockResolvedValue({ permissions: items })
 
       const result = await api.listGroupPermissions('g-1')
 

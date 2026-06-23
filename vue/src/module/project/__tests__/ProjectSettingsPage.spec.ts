@@ -27,7 +27,21 @@ function createTestRouter() {
       { path: '/projects', name: 'projects', component: ProjectListPage },
       {
         path: '/projects/:id',
-        name: 'project-view',
+        redirect: (to) => ({ path: `/projects/${to.params.id}/board` }),
+      },
+      {
+        path: '/projects/:id/board',
+        name: 'project-board',
+        component: ProjectSettingsPage,
+      },
+      {
+        path: '/projects/:id/documents',
+        name: 'project-documents',
+        component: ProjectSettingsPage,
+      },
+      {
+        path: '/projects/:id/reports',
+        name: 'project-reports',
         component: ProjectSettingsPage,
       },
       {
@@ -131,7 +145,7 @@ describe('ProjectSettingsPage', () => {
 
     await flushPromises()
 
-    await wrapper.find('.project-settings__delete').trigger('click')
+    await wrapper.find('.project-settings__cancel').trigger('click')
     await flushPromises()
     await nextTick()
 
@@ -154,7 +168,7 @@ describe('ProjectSettingsPage', () => {
 
     await flushPromises()
 
-    await wrapper.find('.project-settings__delete').trigger('click')
+    await wrapper.find('.project-settings__cancel').trigger('click')
     await flushPromises()
     await nextTick()
 

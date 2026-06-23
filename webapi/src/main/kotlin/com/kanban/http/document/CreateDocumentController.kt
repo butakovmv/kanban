@@ -21,12 +21,10 @@ internal class CreateDocumentController(
         val result =
             handler.create(
                 projectId = body.projectId,
+                path = body.path,
                 title = body.title,
+                content = body.content,
                 description = body.description,
-                fileName = body.fileName,
-                contentType = body.contentType,
-                contentBase64 = body.contentBase64,
-                uploadedBy = body.uploadedBy,
             )
         return when (result) {
             is DocumentHandler.CreateDocumentResult.Success ->
@@ -36,14 +34,9 @@ internal class CreateDocumentController(
                         DocumentResponse(
                             id = result.document.id,
                             projectId = result.document.projectId,
+                            path = result.document.path,
                             title = result.document.title,
                             description = result.document.description,
-                            fileName = result.document.fileName,
-                            contentType = result.document.contentType,
-                            sizeBytes = result.document.sizeBytes,
-                            storageKey = result.document.storageKey,
-                            version = result.document.version,
-                            uploadedBy = result.document.uploadedBy,
                             createdAt = result.document.createdAt,
                             updatedAt = result.document.updatedAt,
                         ),
@@ -58,15 +51,9 @@ internal class CreateDocumentController(
     data class CreateDocumentBody(
         @JsonProperty("project_id")
         val projectId: String,
+        val path: String,
         val title: String,
+        val content: String,
         val description: String?,
-        @JsonProperty("file_name")
-        val fileName: String,
-        @JsonProperty("content_type")
-        val contentType: String,
-        @JsonProperty("content_base64")
-        val contentBase64: String,
-        @JsonProperty("uploaded_by")
-        val uploadedBy: String,
     )
 }

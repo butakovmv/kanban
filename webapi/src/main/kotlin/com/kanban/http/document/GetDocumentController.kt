@@ -20,17 +20,13 @@ internal class GetDocumentController(
         return when (result) {
             is DocumentHandler.GetDocumentResult.Success ->
                 ResponseEntity.ok(
-                    DocumentResponse(
+                    DocumentDetailResponse(
                         id = result.document.id,
                         projectId = result.document.projectId,
+                        path = result.document.path,
                         title = result.document.title,
+                        content = result.document.content,
                         description = result.document.description,
-                        fileName = result.document.fileName,
-                        contentType = result.document.contentType,
-                        sizeBytes = result.document.sizeBytes,
-                        storageKey = result.document.storageKey,
-                        version = result.document.version,
-                        uploadedBy = result.document.uploadedBy,
                         createdAt = result.document.createdAt,
                         updatedAt = result.document.updatedAt,
                     ),

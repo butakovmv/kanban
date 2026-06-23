@@ -17,7 +17,7 @@ describe('report api', () => {
 
   describe('getCfd', () => {
     it('sends GET to /reports/cfd with query params', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue([])
+      vi.mocked(fetchModule.get).mockResolvedValue({ points: [] })
 
       const result = await api.getCfd({
         from: '2025-01-01',
@@ -32,7 +32,7 @@ describe('report api', () => {
     })
 
     it('includes optional project_id and board_id', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue([])
+      vi.mocked(fetchModule.get).mockResolvedValue({ points: [] })
 
       await api.getCfd({
         projectId: 'proj-1',
@@ -50,7 +50,7 @@ describe('report api', () => {
 
   describe('getLeadTime', () => {
     it('sends GET to /reports/lead-time with query params', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue([])
+      vi.mocked(fetchModule.get).mockResolvedValue({ points: [] })
 
       const result = await api.getLeadTime({
         from: '2025-01-01',
@@ -64,7 +64,7 @@ describe('report api', () => {
     })
 
     it('includes optional project_id', async () => {
-      vi.mocked(fetchModule.get).mockResolvedValue([])
+      vi.mocked(fetchModule.get).mockResolvedValue({ points: [] })
 
       await api.getLeadTime({
         projectId: 'proj-1',

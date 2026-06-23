@@ -1,34 +1,128 @@
 <script setup lang="ts">
-/**
- * Страница списка документов проекта.
- */
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDocumentStore } from './store'
-import { useAuthStore } from '../auth/store'
-import { useBoards } from '../../composables/useBoards'
 import ProjectLayout from '../../component/ProjectLayout.vue'
 import DocumentUpload from './DocumentUpload.vue'
 import type { CreateDocumentRequest, Document, UpdateDocumentRequest } from './api'
 
 const route = useRoute()
+const router = useRouter()
 const documentStore = useDocumentStore()
-const authStore = useAuthStore()
 const { documents, loading, error } = storeToRefs(documentStore)
 
-const showUpload = ref(false)
+const showCreate = ref(false)
 const editingId = ref<string | null>(null)
-const editTitle = ref('')
-const editDescription = ref('')
-const MOCK_OWNER_ID = 'mock-owner-id'
+const editingDoc = ref<Document | null>(null)
 
 const projectId = computed(() => {
   const id = route.params['id']
   return Array.isArray(id) ? id[0] : id
 })
 
-const { boards, loadBoards } = useBoards(() => projectId.value)
+interface FlatNode {
+  id: string
+  name: string
+  depth: number
+  isLast: boolean
+  isFolder: boolean
+  expanded: boolean
+  doc?: Document
+}
+
+function buildFlatTree(docs: Document[]): FlatNode[] {
+  interface MutableNode {
+    name: string
+    isFolder: boolean
+    docList: Document[]
+    children: MutableNode[]
+    expanded: boolean
+  }
+
+  const root: MutableNode[] = []
+
+  for (const doc of docs) {
+    const segments = doc.path.split('/').filter(Boolean)
+    let currentLevel = root
+
+    for (let i = 0; i < segments.length; i++) {
+      const isLast = i === segments.length - 1
+      const segName = segments[i]
+
+      const existing = currentLevel.find((n) => n.name === segName)
+      if (existing !== undefined) {
+        if (isLast) {
+          existing.isFolder = false
+          existing.docList.push(doc)
+        }
+        currentLevel = existing.children
+      } else {
+        const node: MutableNode = {
+          name: segName,
+          isFolder: !isLast,
+          docList: isLast ? [doc] : [],
+          children: [],
+          expanded: true,
+        }
+        currentLevel.push(node)
+        currentLevel = node.children
+      }
+    }
+  }
+
+  function flattenNodes(nodes: MutableNode[], depth: number): FlatNode[] {
+    const result: FlatNode[] = []
+    for (const node of nodes) {
+      const hasDocs = node.docList.length > 0
+      const hasChildren = node.children.length > 0
+      if (node.isFolder || hasChildren || hasDocs) {
+        result.push({
+          id: `folder:${node.name}:${depth}`,
+          name: node.name,
+          depth,
+          isLast: false,
+          isFolder: true,
+          expanded: node.expanded,
+          doc: undefined,
+        })
+        if (node.expanded) {
+          for (const d of node.docList) {
+            result.push({
+              id: d.id,
+              name: node.name,
+              depth: depth + 1,
+              isLast: false,
+              isFolder: false,
+              expanded: true,
+              doc: d,
+            })
+          }
+          result.push(...flattenNodes(node.children, depth + 1))
+        }
+      }
+    }
+    return result
+  }
+
+  const flat = flattenNodes(root, 0)
+  if (flat.length > 0) flat[flat.length - 1].isLast = true
+  return flat
+}
+
+const flatTree = computed(() => buildFlatTree(documents.value))
+
+function toggleNode(node: FlatNode) {
+  if (node.isFolder) {
+    node.expanded = !node.expanded
+  }
+}
+
+function formatTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toISOString().replace('T', ' ').slice(0, 16)
+}
 
 async function load() {
   if (projectId.value === undefined) return
@@ -39,43 +133,39 @@ async function load() {
 onMounted(load)
 watch(projectId, load)
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-  return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
+async function handleCreate(request: CreateDocumentRequest) {
+  const created = await documentStore.createDocument(request)
+  if (created !== null) showCreate.value = false
 }
 
-function formatTime(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toISOString().replace('T', ' ').slice(0, 16)
-}
-
-async function handleDownload(doc: Document) {
-  const url = await documentStore.getDownloadUrl(doc.id)
-  if (url === null) return
-  window.open(url, '_blank', 'noopener,noreferrer')
+function handleCreateCancel() {
+  showCreate.value = false
 }
 
 function startEdit(doc: Document) {
   editingId.value = doc.id
-  editTitle.value = doc.title
-  editDescription.value = doc.description ?? ''
+  editingDoc.value = { ...doc }
 }
 
 function cancelEdit() {
   editingId.value = null
-  editTitle.value = ''
-  editDescription.value = ''
+  editingDoc.value = null
 }
 
-async function saveEdit(doc: Document) {
-  const request: UpdateDocumentRequest = { title: editTitle.value }
-  if (editDescription.value === '') request.description = null
-  else request.description = editDescription.value
+async function saveEdit() {
+  if (editingDoc.value === null || editingId.value === null) return
+  const doc = editingDoc.value
+  const request: UpdateDocumentRequest = {
+    path: doc.path,
+    title: doc.title,
+    description: doc.description,
+  }
   const updated = await documentStore.updateDocument(doc.id, request)
   if (updated !== null) cancelEdit()
+}
+
+function viewDocument(doc: Document) {
+  void router.push(`/projects/${projectId.value}/documents/${doc.id}`)
 }
 
 async function handleDelete(doc: Document) {
@@ -83,147 +173,83 @@ async function handleDelete(doc: Document) {
   if (!confirmed) return
   await documentStore.deleteDocument(doc.id)
 }
-
-async function handleUpload(request: CreateDocumentRequest) {
-  const created = await documentStore.createDocument(request)
-  if (created !== null) showUpload.value = false
-}
-
-function handleUploadCancel() {
-  showUpload.value = false
-}
 </script>
 
 <template>
-  <div class="document-list">
-    <header class="document-list__header">
-      <h1>Documents</h1>
-      <button
-        type="button"
-        class="document-list__upload-btn"
-        :disabled="projectId === undefined"
-        @click="showUpload = true"
+  <ProjectLayout v-if="projectId" :project-id="projectId">
+    <button
+      type="button"
+      class="document-list__create-btn"
+      :disabled="projectId === undefined"
+      @click="showCreate = true"
+    >
+      + New
+    </button>
+
+    <div v-if="error" class="document-list__error">{{ error }}</div>
+
+    <div v-if="loading && documents.length === 0" class="document-list__loading">
+      Loading...
+    </div>
+
+    <div v-else-if="flatTree.length > 0" class="document-list__tree">
+      <div
+        v-for="node in flatTree"
+        :key="node.id"
+        class="document-list__row"
+        :style="{ paddingLeft: (node.depth * 1.5 + 0.75) + 'rem' }"
       >
-        Upload
-      </button>
-    </header>
-
-    <ProjectLayout v-if="projectId" :project-id="projectId" :boards="boards">
-      <div v-if="error" class="document-list__error">{{ error }}</div>
-
-      <div v-if="loading && documents.length === 0" class="document-list__loading">
-        Loading...
-      </div>
-
-      <table v-else-if="documents.length > 0" class="document-list__table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>File</th>
-            <th>Size</th>
-            <th>Version</th>
-            <th>Updated</th>
-            <th class="document-list__actions-col">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="doc in documents" :key="doc.id">
-            <tr v-if="editingId !== doc.id" class="document-list__row">
-              <td>
-                <button
-                  type="button"
-                  class="document-list__title-link"
-                  :title="`Download ${doc.fileName}`"
-                  @click="handleDownload(doc)"
-                >
-                  {{ doc.title }}
-                </button>
-                <div v-if="doc.description" class="document-list__description">
-                  {{ doc.description }}
-                </div>
-              </td>
-              <td class="document-list__file">{{ doc.fileName }}</td>
-              <td class="document-list__size">{{ formatSize(doc.sizeBytes) }}</td>
-              <td class="document-list__version">v{{ doc.version }}</td>
-              <td class="document-list__updated">{{ formatTime(doc.updatedAt) }}</td>
-              <td class="document-list__actions">
-                <button type="button" class="document-list__action" :disabled="loading" @click="handleDownload(doc)">
-                  Download
-                </button>
-                <button type="button" class="document-list__action" :disabled="loading" @click="startEdit(doc)">
-                  Edit
-                </button>
-                <button type="button" class="document-list__action document-list__action--danger" :disabled="loading" @click="handleDelete(doc)">
-                  Delete
-                </button>
-              </td>
-            </tr>
-            <tr v-else class="document-list__edit-row">
-              <td colspan="6">
-                <form class="document-list__edit-form" @submit.prevent="saveEdit(doc)">
-                  <label>
-                    Title
-                    <input v-model="editTitle" type="text" required maxlength="200" />
-                  </label>
-                  <label>
-                    Description
-                    <textarea v-model="editDescription" rows="2" maxlength="2000" />
-                  </label>
-                  <div class="document-list__edit-actions">
-                    <button type="submit" :disabled="loading">Save</button>
-                    <button type="button" @click="cancelEdit">Cancel</button>
-                  </div>
-                </form>
-              </td>
-            </tr>
+        <div
+          v-if="node.isFolder"
+          class="document-list__folder"
+          @click="toggleNode(node)"
+        >
+          <span class="document-list__folder-icon">{{ node.expanded ? '&#9660;' : '&#9654;' }}</span>
+          <span class="document-list__folder-name">{{ node.name }}/</span>
+        </div>
+        <div v-else-if="node.doc" class="document-list__doc" :class="{ 'document-list__doc--editing': editingId === node.doc.id }">
+          <template v-if="editingId !== node.doc.id">
+            <div class="document-list__doc-info">
+              <span class="document-list__doc-name">{{ node.doc.title }}</span>
+              <span class="document-list__doc-path">{{ node.name }}</span>
+              <span class="document-list__doc-updated">{{ formatTime(node.doc.updatedAt) }}</span>
+              <span v-if="node.doc.description" class="document-list__doc-desc">{{ node.doc.description }}</span>
+            </div>
+            <div class="document-list__doc-actions">
+              <button type="button" class="document-list__action" @click="viewDocument(node.doc!)">View</button>
+              <button type="button" class="document-list__action" @click="startEdit(node.doc!)">Edit</button>
+              <button type="button" class="document-list__action document-list__action--danger" @click="handleDelete(node.doc!)">Delete</button>
+            </div>
           </template>
-        </tbody>
-      </table>
-
-      <div v-else class="document-list__empty">
-        No documents yet. Click "Upload" to add one.
+          <div v-else class="document-list__edit-form">
+            <label>Title <input v-model="editingDoc.title" type="text" required maxlength="200" /></label>
+            <label>Path <input v-model="editingDoc.path" type="text" required /></label>
+            <label>Description <textarea :value="editingDoc.description ?? ''" @input="editingDoc.description = ($event.target as HTMLTextAreaElement).value" rows="2" /></label>
+            <div class="document-list__edit-actions">
+              <button :disabled="loading" @click="saveEdit">Save</button>
+              <button @click="cancelEdit">Cancel</button>
+            </div>
+          </div>
+        </div>
       </div>
-    </ProjectLayout>
+    </div>
+
+    <div v-else class="document-list__empty">
+      No documents yet. Click "New" to create one.
+    </div>
 
     <DocumentUpload
-      v-if="showUpload && projectId !== undefined"
+      v-if="showCreate && projectId !== undefined"
       :project-id="projectId"
-      :uploaded-by="authStore.user?.id ?? MOCK_OWNER_ID"
       :loading="loading"
-      @submit="handleUpload"
-      @cancel="handleUploadCancel"
+      @submit="handleCreate"
+      @cancel="handleCreateCancel"
     />
-  </div>
+  </ProjectLayout>
 </template>
 
 <style scoped>
-.document-list {
-  max-width: 64rem;
-  margin: 0 auto;
-}
-.document-list__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-}
-.document-list__back {
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-}
-.document-list__back:hover {
-  color: var(--color-primary);
-}
-.document-list__header h1 {
-  font-size: 1.5rem;
-  flex: 1;
-}
-.document-list__upload-btn {
+.document-list__create-btn {
   padding: 0.5rem 1rem;
   background: var(--color-primary);
   color: #fff;
@@ -232,10 +258,10 @@ function handleUploadCancel() {
   font-weight: 600;
   cursor: pointer;
 }
-.document-list__upload-btn:hover {
+.document-list__create-btn:hover {
   background: var(--color-primary-hover);
 }
-.document-list__upload-btn:disabled {
+.document-list__create-btn:disabled {
   background: var(--color-text-secondary);
   cursor: not-allowed;
 }
@@ -254,68 +280,87 @@ function handleUploadCancel() {
   background: var(--color-surface);
   border-radius: var(--radius);
 }
-.document-list__table {
-  width: 100%;
-  border-collapse: collapse;
+.document-list__tree {
   background: var(--color-surface);
   border-radius: var(--radius);
-  overflow: hidden;
   box-shadow: var(--shadow);
+  padding: 0.5rem 0;
 }
-.document-list__table th,
-.document-list__table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
+.document-list__row {
+  display: flex;
+  align-items: center;
 }
-.document-list__table th {
-  background: var(--color-background);
-  color: var(--color-text-secondary);
+.document-list__folder {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  user-select: none;
   font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  width: 100%;
 }
-.document-list__table tbody tr:last-child td {
+.document-list__folder:hover {
+  background: var(--color-background);
+}
+.document-list__folder-icon {
+  font-size: 0.625rem;
+  width: 1rem;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+.document-list__folder-name {
+  color: var(--color-primary);
+}
+.document-list__doc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  gap: 1rem;
+  width: 100%;
+  border-bottom: 1px solid var(--color-border);
+}
+.document-list__row:last-child .document-list__doc {
   border-bottom: none;
 }
-.document-list__title-link {
-  background: transparent;
-  border: none;
-  color: var(--color-primary);
+.document-list__doc--editing {
+  background: var(--color-background);
+}
+.document-list__doc-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+.document-list__doc-name {
   font-weight: 600;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
+  font-size: 0.875rem;
 }
-.document-list__title-link:hover {
-  text-decoration: underline;
+.document-list__doc-path {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
-.document-list__description {
-  margin-top: 0.25rem;
+.document-list__doc-updated {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.document-list__doc-desc {
+  width: 100%;
   font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
-.document-list__file,
-.document-list__size,
-.document-list__version,
-.document-list__updated {
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-}
-.document-list__updated {
-  white-space: nowrap;
-}
-.document-list__actions-col {
-  text-align: right;
-}
-.document-list__actions {
+.document-list__doc-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 0.25rem;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .document-list__action {
   padding: 0.25rem 0.5rem;
@@ -329,10 +374,6 @@ function handleUploadCancel() {
 .document-list__action:hover {
   background: var(--color-surface);
 }
-.document-list__action:disabled {
-  color: var(--color-text-secondary);
-  cursor: not-allowed;
-}
 .document-list__action--danger {
   border-color: var(--color-danger);
   color: var(--color-danger);
@@ -341,13 +382,11 @@ function handleUploadCancel() {
   background: var(--color-danger);
   color: #fff;
 }
-.document-list__edit-row td {
-  background: var(--color-background);
-}
 .document-list__edit-form {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  width: 100%;
 }
 .document-list__edit-form label {
   display: flex;
@@ -355,6 +394,8 @@ function handleUploadCancel() {
   gap: 0.25rem;
   font-size: 0.75rem;
   color: var(--color-text-secondary);
+  flex: 1;
+  min-width: 200px;
 }
 .document-list__edit-form input,
 .document-list__edit-form textarea {
@@ -370,6 +411,8 @@ function handleUploadCancel() {
 .document-list__edit-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: flex-end;
+  padding-bottom: 0.25rem;
 }
 .document-list__edit-actions button {
   padding: 0.4rem 0.75rem;
@@ -379,17 +422,13 @@ function handleUploadCancel() {
   font-weight: 600;
   cursor: pointer;
 }
-.document-list__edit-actions button[type='submit'] {
+.document-list__edit-actions button:first-child {
   background: var(--color-primary);
   color: #fff;
 }
-.document-list__edit-actions button[type='button'] {
+.document-list__edit-actions button:last-child {
   background: var(--color-background);
   border: 1px solid var(--color-border);
   color: var(--color-text);
-}
-.document-list__edit-actions button:disabled {
-  background: var(--color-text-secondary);
-  cursor: not-allowed;
 }
 </style>

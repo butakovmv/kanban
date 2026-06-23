@@ -9,7 +9,8 @@ import { useAuthStore } from './module/auth/store'
  * - `/login` — страница входа
  * - `/register` — страница регистрации
  * - `/projects` — список проектов
- * - `/projects/:id` — просмотр проекта (доски, ссылки на документы, отчёты)
+ * - `/projects/:id` — редирект на `/projects/:id/board`
+ * - `/projects/:id/board` — доска проекта
  * - `/projects/:id/settings` — настройки проекта
  * - `/projects/:id/documents` — документы проекта
  * - `/projects/:id/reports` — отчёты проекта
@@ -45,9 +46,13 @@ const router = createRouter({
     },
     {
       path: '/projects/:id',
-      name: 'project-view',
+      redirect: (to) => ({ path: `/projects/${to.params.id}/board` }),
+    },
+    {
+      path: '/projects/:id/board',
+      name: 'project-board',
       meta: { requiresAuth: true },
-      component: () => import('./module/project/ProjectViewPage.vue'),
+      component: () => import('./module/board/BoardPage.vue'),
     },
     {
       path: '/projects/:id/settings',
@@ -60,6 +65,12 @@ const router = createRouter({
       name: 'project-documents',
       meta: { requiresAuth: true },
       component: () => import('./module/document/DocumentListPage.vue'),
+    },
+    {
+      path: '/projects/:id/documents/:docId',
+      name: 'document-detail',
+      meta: { requiresAuth: true },
+      component: () => import('./module/document/DocumentDetailPage.vue'),
     },
     {
       path: '/projects/:id/reports',

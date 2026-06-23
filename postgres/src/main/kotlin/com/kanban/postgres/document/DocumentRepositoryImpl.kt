@@ -10,20 +10,10 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 
-/**
- * Реализация [DocumentRepository] через R2DBC и DatabaseClient.
- * Реализует паттерн Upsert: при сохранении проверяет существование документа
- * и выполняет INSERT или UPDATE соответственно.
- */
 @Repository
 internal class DocumentRepositoryImpl(
     private val db: DatabaseClient,
 ) : DocumentRepository {
-    /**
-     * Сохранение документа (создание или обновление).
-     * @param document доменная сущность документа
-     * @return сохранённый документ
-     */
     override suspend fun save(document: Document): Document {
         val z = ZoneId.systemDefault()
         val createdAt = document.createdAt.atZone(z).toLocalDateTime()
@@ -36,11 +26,6 @@ internal class DocumentRepositoryImpl(
         return document
     }
 
-    /**
-     * Обновление существующей записи документа в таблице `documents`.
-     * @param document доменная сущность документа с обновлёнными данными
-     * @param updatedAt метка времени обновления в часовом поясе системы
-     */
     private suspend fun updateDocument(
         document: Document,
         updatedAt: LocalDateTime,
@@ -49,16 +34,15 @@ internal class DocumentRepositoryImpl(
             .sql(
                 """
                 UPDATE documents SET
-                    project_id = :projectId, title = :title,
-                    description = :description, file_name = :fileName,
-                    content_type = :contentType, size_bytes = :sizeBytes,
-                    storage_key = :storageKey, version = :version,
-                    uploaded_by = :uploadedBy, updated_at = :updatedAt
+                    project_id = :projectId, path = :path, title = :title,
+                    content = :content, description = :description, updated_at = :updatedAt
                 WHERE id = :id
                 """,
             ).bind("id", UUID.fromString(document.id.value))
             .bind("projectId", UUID.fromString(document.projectId.value))
+            .bind("path", document.path)
             .bind("title", document.title)
+            .bind("content", document.content)
             .let { spec ->
                 val description = document.description
                 if (description != null) {
@@ -66,24 +50,12 @@ internal class DocumentRepositoryImpl(
                 } else {
                     spec.bindNull("description", String::class.java)
                 }
-            }.bind("fileName", document.fileName)
-            .bind("contentType", document.contentType)
-            .bind("sizeBytes", document.sizeBytes)
-            .bind("storageKey", document.storageKey)
-            .bind("version", document.version)
-            .bind("uploadedBy", UUID.fromString(document.uploadedBy))
-            .bind("updatedAt", updatedAt)
+            }.bind("updatedAt", updatedAt)
             .fetch()
             .rowsUpdated()
             .awaitSingle()
     }
 
-    /**
-     * Вставка новой записи документа в таблицу `documents`.
-     * @param document доменная сущность документа для сохранения
-     * @param createdAt метка времени создания
-     * @param updatedAt метка времени обновления
-     */
     private suspend fun insertDocument(
         document: Document,
         createdAt: LocalDateTime,
@@ -92,16 +64,14 @@ internal class DocumentRepositoryImpl(
         db
             .sql(
                 """
-                INSERT INTO documents (id, project_id, title, description, file_name,
-                    content_type, size_bytes, storage_key, version, uploaded_by,
-                    created_at, updated_at)
-                VALUES (:id, :projectId, :title, :description, :fileName,
-                    :contentType, :sizeBytes, :storageKey, :version, :uploadedBy,
-                    :createdAt, :updatedAt)
+                INSERT INTO documents (id, project_id, path, title, content, description, created_at, updated_at)
+                VALUES (:id, :projectId, :path, :title, :content, :description, :createdAt, :updatedAt)
                 """,
             ).bind("id", UUID.fromString(document.id.value))
             .bind("projectId", UUID.fromString(document.projectId.value))
+            .bind("path", document.path)
             .bind("title", document.title)
+            .bind("content", document.content)
             .let { spec ->
                 val description = document.description
                 if (description != null) {
@@ -109,24 +79,13 @@ internal class DocumentRepositoryImpl(
                 } else {
                     spec.bindNull("description", String::class.java)
                 }
-            }.bind("fileName", document.fileName)
-            .bind("contentType", document.contentType)
-            .bind("sizeBytes", document.sizeBytes)
-            .bind("storageKey", document.storageKey)
-            .bind("version", document.version)
-            .bind("uploadedBy", UUID.fromString(document.uploadedBy))
-            .bind("createdAt", createdAt)
+            }.bind("createdAt", createdAt)
             .bind("updatedAt", updatedAt)
             .fetch()
             .rowsUpdated()
             .awaitSingle()
     }
 
-    /**
-     * Поиск документа по идентификатору.
-     * @param id строковый идентификатор документа
-     * @return [Document] или null, если документ не найден
-     */
     override suspend fun findById(id: String): Document? =
         db
             .sql("SELECT * FROM documents WHERE id = :id")
@@ -135,24 +94,15 @@ internal class DocumentRepositoryImpl(
             .one()
             .awaitFirstOrNull()
 
-    /**
-     * Получение списка документов указанного проекта, упорядоченных по дате последнего изменения (DESC).
-     * @param projectId идентификатор проекта
-     * @return список [Document] проекта
-     */
     override suspend fun listByProjectId(projectId: String): List<Document> =
         db
-            .sql("SELECT * FROM documents WHERE project_id = :projectId ORDER BY updated_at DESC")
+            .sql("SELECT * FROM documents WHERE project_id = :projectId ORDER BY path ASC")
             .bind("projectId", UUID.fromString(projectId))
             .map { row, _ -> row.toDocument() }
             .all()
             .collectList()
             .awaitSingle()
 
-    /**
-     * Удаление документа по идентификатору.
-     * @param id идентификатор документа
-     */
     override suspend fun delete(id: String) {
         db
             .sql("DELETE FROM documents WHERE id = :id")
@@ -162,24 +112,15 @@ internal class DocumentRepositoryImpl(
             .awaitSingle()
     }
 
-    /**
-     * Преобразование строки результата запроса R2DBC в доменную сущность [Document].
-     * @param row строка результата запроса
-     * @return доменная сущность [Document]
-     */
     private fun io.r2dbc.spi.Row.toDocument(): Document {
         val table =
             DocumentTable(
                 id = get("id", String::class.java)!!,
                 projectId = get("project_id", String::class.java)!!,
+                path = get("path", String::class.java)!!,
                 title = get("title", String::class.java)!!,
+                content = get("content", String::class.java)!!,
                 description = get("description", String::class.java),
-                fileName = get("file_name", String::class.java)!!,
-                contentType = get("content_type", String::class.java)!!,
-                sizeBytes = (get("size_bytes", java.lang.Long::class.java) ?: 0L) as Long,
-                storageKey = get("storage_key", String::class.java)!!,
-                version = get("version", java.lang.Integer::class.java)!!.toInt(),
-                uploadedBy = get("uploaded_by", String::class.java)!!,
                 createdAt = get("created_at", java.time.LocalDateTime::class.java)!!,
                 updatedAt = get("updated_at", java.time.LocalDateTime::class.java)!!,
             )

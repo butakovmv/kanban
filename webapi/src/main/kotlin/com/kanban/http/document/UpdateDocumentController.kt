@@ -1,6 +1,5 @@
 package com.kanban.http.document
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.kanban.document.DocumentHandler
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -20,21 +19,24 @@ internal class UpdateDocumentController(
         @PathVariable("id") id: String,
         @RequestBody body: UpdateDocumentBody,
     ): ResponseEntity<*> {
-        val result = handler.update(documentId = id, title = body.title, description = body.description)
+        val result =
+            handler.update(
+                documentId = id,
+                path = body.path,
+                title = body.title,
+                content = body.content,
+                description = body.description,
+            )
         return when (result) {
             is DocumentHandler.UpdateDocumentResult.Success ->
                 ResponseEntity.ok(
-                    DocumentResponse(
+                    DocumentDetailResponse(
                         id = result.document.id,
                         projectId = result.document.projectId,
+                        path = result.document.path,
                         title = result.document.title,
+                        content = result.document.content,
                         description = result.document.description,
-                        fileName = result.document.fileName,
-                        contentType = result.document.contentType,
-                        sizeBytes = result.document.sizeBytes,
-                        storageKey = result.document.storageKey,
-                        version = result.document.version,
-                        uploadedBy = result.document.uploadedBy,
                         createdAt = result.document.createdAt,
                         updatedAt = result.document.updatedAt,
                     ),
@@ -49,7 +51,9 @@ internal class UpdateDocumentController(
     }
 
     data class UpdateDocumentBody(
+        val path: String?,
         val title: String?,
+        val content: String?,
         val description: String?,
     )
 }

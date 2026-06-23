@@ -21,25 +21,30 @@ describe('board api', () => {
 
   describe('getBoard', () => {
     it('sends GET to /boards/{id} and returns board with columns', async () => {
-      const view = boardGenerator.boardView({
-        board: boardGenerator.board({ id: 'b-1', name: 'Sprint 1' }),
-        columns: [
-          boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
-          boardGenerator.column({ id: 'c-2', name: 'Done', position: 1, boardId: 'b-1' }),
-        ],
-      })
-      vi.mocked(fetchModule.get).mockResolvedValue(view)
+      const rawBoard = boardGenerator.rawBoard({ id: 'b-1', name: 'Sprint 1' })
+      const rawColumns = [
+        boardGenerator.rawColumn({ id: 'c-1', name: 'Todo', position: 0, board_id: 'b-1' }),
+        boardGenerator.rawColumn({ id: 'c-2', name: 'Done', position: 1, board_id: 'b-1' }),
+      ]
+      const raw = boardGenerator.rawBoardView({ board: rawBoard, columns: rawColumns })
+      vi.mocked(fetchModule.get).mockResolvedValue(raw)
 
       const result = await api.getBoard('b-1')
 
       expect(fetchModule.get).toHaveBeenCalledWith('/boards/b-1')
-      expect(result).toEqual(view)
+      expect(result.board.id).toBe('b-1')
+      expect(result.board.projectId).toBe(rawBoard.project_id)
+      expect(result.board.name).toBe('Sprint 1')
       expect(result.columns).toHaveLength(2)
+      expect(result.columns[0].id).toBe('c-1')
+      expect(result.columns[0].boardId).toBe('b-1')
+      expect(result.columns[1].id).toBe('c-2')
+      expect(result.columns[1].boardId).toBe('b-1')
     })
 
     it('encodes id with special characters', async () => {
-      const view = boardGenerator.boardView()
-      vi.mocked(fetchModule.get).mockResolvedValue(view)
+      const raw = boardGenerator.rawBoardView()
+      vi.mocked(fetchModule.get).mockResolvedValue(raw)
 
       await api.getBoard('id with/slash')
 
@@ -49,12 +54,8 @@ describe('board api', () => {
 
   describe('createBoard', () => {
     it('sends POST to /boards with snake_case body and returns the board', async () => {
-      const created = boardGenerator.board({
-        id: 'new-id',
-        projectId: 'p-1',
-        name: 'Sprint 2',
-      })
-      vi.mocked(fetchModule.post).mockResolvedValue(created)
+      const raw = boardGenerator.rawBoard({ id: 'new-id', project_id: 'p-1', name: 'Sprint 2' })
+      vi.mocked(fetchModule.post).mockResolvedValue(raw)
 
       const result = await api.createBoard({ projectId: 'p-1', name: 'Sprint 2' })
 
@@ -62,19 +63,23 @@ describe('board api', () => {
         project_id: 'p-1',
         name: 'Sprint 2',
       })
-      expect(result).toEqual(created)
+      expect(result.id).toBe('new-id')
+      expect(result.projectId).toBe('p-1')
+      expect(result.name).toBe('Sprint 2')
     })
   })
 
   describe('updateBoard', () => {
     it('sends PUT to /boards/{id} with name and returns the updated board', async () => {
-      const updated = boardGenerator.board({ id: 'b-1', name: 'Renamed' })
-      vi.mocked(fetchModule.put).mockResolvedValue(updated)
+      const raw = boardGenerator.rawBoard({ id: 'b-1', name: 'Renamed' })
+      vi.mocked(fetchModule.put).mockResolvedValue(raw)
 
       const result = await api.updateBoard('b-1', { name: 'Renamed' })
 
       expect(fetchModule.put).toHaveBeenCalledWith('/boards/b-1', { name: 'Renamed' })
-      expect(result).toEqual(updated)
+      expect(result.id).toBe('b-1')
+      expect(result.name).toBe('Renamed')
+      expect(result.projectId).toBe(raw.project_id)
     })
   })
 
@@ -90,21 +95,23 @@ describe('board api', () => {
 
   describe('reorderColumns', () => {
     it('sends PUT to /boards/{id}/columns/order with column_ids body', async () => {
-      const view = boardGenerator.boardView({
-        board: boardGenerator.board({ id: 'b-1' }),
-        columns: [
-          boardGenerator.column({ id: 'c-2', position: 0, boardId: 'b-1' }),
-          boardGenerator.column({ id: 'c-1', position: 1, boardId: 'b-1' }),
-        ],
-      })
-      vi.mocked(fetchModule.put).mockResolvedValue(view)
+      const rawBoard = boardGenerator.rawBoard({ id: 'b-1' })
+      const rawColumns = [
+        boardGenerator.rawColumn({ id: 'c-2', position: 0, board_id: 'b-1' }),
+        boardGenerator.rawColumn({ id: 'c-1', position: 1, board_id: 'b-1' }),
+      ]
+      const raw = boardGenerator.rawBoardView({ board: rawBoard, columns: rawColumns })
+      vi.mocked(fetchModule.put).mockResolvedValue(raw)
 
       const result = await api.reorderColumns('b-1', ['c-2', 'c-1'])
 
       expect(fetchModule.put).toHaveBeenCalledWith('/boards/b-1/columns/order', {
         column_ids: ['c-2', 'c-1'],
       })
-      expect(result).toEqual(view)
+      expect(result.board.id).toBe('b-1')
+      expect(result.columns).toHaveLength(2)
+      expect(result.columns[0].id).toBe('c-2')
+      expect(result.columns[1].id).toBe('c-1')
     })
   })
 })
