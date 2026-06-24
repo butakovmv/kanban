@@ -57,6 +57,20 @@ export function useRealtime(boardId?: string | Ref<string | undefined>, projectI
     }
   }
 
+  function handleCommentUpdated(event: { data: Record<string, unknown> }) {
+    const taskId = event.data['task_id'] as string
+    if (taskId && taskStore.currentTask?.id === taskId) {
+      taskStore.scheduleCommentRefresh(taskId)
+    }
+  }
+
+  function handleCommentDeleted(event: { data: Record<string, unknown> }) {
+    const taskId = event.data['task_id'] as string
+    if (taskId && taskStore.currentTask?.id === taskId) {
+      taskStore.scheduleCommentRefresh(taskId)
+    }
+  }
+
   function handleBoardUpdated(event: { data: Record<string, unknown> }) {
     const eBoardId = event.data['board_id'] as string | undefined
     if (eBoardId && boardStore.currentBoard?.id === eBoardId) {
@@ -73,6 +87,8 @@ export function useRealtime(boardId?: string | Ref<string | undefined>, projectI
     sseService.on('task_deleted', handleTaskDeleted)
     sseService.on('task_archived', handleTaskArchived)
     sseService.on('comment_added', handleCommentAdded)
+    sseService.on('comment_updated', handleCommentUpdated)
+    sseService.on('comment_deleted', handleCommentDeleted)
     sseService.on('board_updated', handleBoardUpdated)
   }
 
@@ -83,6 +99,8 @@ export function useRealtime(boardId?: string | Ref<string | undefined>, projectI
     sseService.off('task_deleted', handleTaskDeleted)
     sseService.off('task_archived', handleTaskArchived)
     sseService.off('comment_added', handleCommentAdded)
+    sseService.off('comment_updated', handleCommentUpdated)
+    sseService.off('comment_deleted', handleCommentDeleted)
     sseService.off('board_updated', handleBoardUpdated)
     sseService.disconnect()
   }

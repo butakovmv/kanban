@@ -9,6 +9,7 @@ internal class CommentHandler(
     private val updateCommentOperation: UpdateCommentOperation,
     private val deleteCommentOperation: DeleteCommentOperation,
     private val listCommentsOperation: ListCommentsOperation,
+    private val getTaskOperation: GetTaskOperation,
     private val sinkService: SinkService? = null,
 ) {
     data class CommentData(
@@ -35,6 +36,7 @@ internal class CommentHandler(
             )
         return when (result) {
             is CreateCommentOperation.Result.Success -> {
+                val boardId = resolveBoardId(result.comment.taskId.value)
                 val eventData =
                     buildString {
                         append("""{"comment_id":"${result.comment.id.value}",""")
@@ -44,7 +46,7 @@ internal class CommentHandler(
                     SseEvent(
                         type = "comment_added",
                         data = eventData,
-                        boardId = null,
+                        boardId = boardId,
                         projectId = null,
                         timestamp = Instant.now(),
                     ),
@@ -71,6 +73,7 @@ internal class CommentHandler(
             )
         return when (result) {
             is UpdateCommentOperation.Result.Success -> {
+                val boardId = resolveBoardId(result.comment.taskId.value)
                 val eventData =
                     buildString {
                         append("""{"comment_id":"${result.comment.id.value}",""")
@@ -80,7 +83,7 @@ internal class CommentHandler(
                     SseEvent(
                         type = "comment_updated",
                         data = eventData,
-                        boardId = null,
+                        boardId = boardId,
                         projectId = null,
                         timestamp = Instant.now(),
                     ),
@@ -127,6 +130,15 @@ internal class CommentHandler(
                 ListCommentsResult.Success(
                     comments = result.comments.map { it.toData() },
                 )
+        }
+    }
+
+    private suspend fun resolveBoardId(taskId: String): String? {
+        val taskResult =
+            getTaskOperation.execute(GetTaskOperation.Arg(taskId = taskId))
+        return when (taskResult) {
+            is GetTaskOperation.Result.Success -> taskResult.task.boardId.value
+            GetTaskOperation.Result.NotFound -> null
         }
     }
 

@@ -79,6 +79,10 @@ class SseService {
     this.handlers.get(eventType)?.delete(handler)
   }
 
+  clearHandlers(): void {
+    this.handlers.clear()
+  }
+
   private registerEventListener(eventType: string): void {
     if (!this.eventSource) return
 

@@ -15,6 +15,7 @@ const props = defineProps<{
   allColumns: Column[]
   boardId: string
   dragOver?: boolean
+  showAdd?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -75,7 +76,7 @@ const taskCount = computed(() => props.tasks.length)
       />
       <div v-if="taskCount === 0" class="column__placeholder">No tasks</div>
     </div>
-    <button type="button" class="column__add" @click="onAddClick">+ Add task</button>
+    <button v-if="showAdd" type="button" class="column__add" @click="onAddClick">+ Add task</button>
   </div>
 </template>
 

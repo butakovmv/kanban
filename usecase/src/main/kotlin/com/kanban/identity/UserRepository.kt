@@ -36,4 +36,12 @@ interface UserRepository {
      * @return true, если пользователь существует
      */
     suspend fun existsByEmail(email: String): Boolean
+
+    /**
+     * Находит пользователей по списку идентификаторов.
+     *
+     * @param userIds список идентификаторов пользователей
+     * @return список найденных пользователей
+     */
+    suspend fun findByIds(userIds: List<String>): List<User>
 }

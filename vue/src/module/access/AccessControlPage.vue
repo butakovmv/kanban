@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAccessStore } from './store'
+import { useUserStore } from '../user/store'
 import PermissionEditor from './PermissionEditor.vue'
 
 const store = useAccessStore()
+const userStore = useUserStore()
 const { groups, currentGroup, members, loading, error } = storeToRefs(store)
 
 const showCreateForm = ref(false)
@@ -20,6 +22,13 @@ const deleteConfirmId = ref<string | null>(null)
 onMounted(async () => {
   await store.loadGroups()
 })
+
+watch(members, (list) => {
+  const ids = list.map((m) => m.userId)
+  if (ids.length > 0) {
+    userStore.ensureUsers(ids)
+  }
+}, { immediate: true })
 
 function selectGroup(group: typeof groups.value[number]) {
   store.loadGroup(group.id)
@@ -205,7 +214,7 @@ async function handleRemoveMember(userId: string) {
               :key="member.userId"
               class="access-control__member-item"
             >
-              <span>{{ member.userId }}</span>
+              <span>{{ userStore.getDisplayName(member.userId) || member.userId }}</span>
               <button @click="handleRemoveMember(member.userId)">Удалить</button>
             </li>
           </ul>

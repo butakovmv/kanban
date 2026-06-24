@@ -11,23 +11,18 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 internal class ProjectConfig {
-    /**
-     * Создаёт обработчик запросов проектов.
-     *
-     * @param createProjectOperation операция создания проекта
-     * @param getProjectOperation операция получения проекта
-     * @param listProjectsOperation операция получения списка проектов
-     * @param updateProjectOperation операция обновления проекта
-     * @param deleteProjectOperation операция удаления проекта
-     * @return экземпляр [ProjectHandler]
-     */
     @Bean
+    @Suppress("LongParameterList")
     fun projectHandler(
         createProjectOperation: CreateProjectOperation,
         getProjectOperation: GetProjectOperation,
         listProjectsOperation: ListProjectsOperation,
         updateProjectOperation: UpdateProjectOperation,
         deleteProjectOperation: DeleteProjectOperation,
+        listProjectMembersOperation: ListProjectMembersOperation,
+        addProjectMemberOperation: AddProjectMemberOperation,
+        removeProjectMemberOperation: RemoveProjectMemberOperation,
+        listMemberProjectsOperation: ListMemberProjectsOperation,
     ): ProjectHandler =
         ProjectHandler(
             createProjectOperation = createProjectOperation,
@@ -35,6 +30,10 @@ internal class ProjectConfig {
             listProjectsOperation = listProjectsOperation,
             updateProjectOperation = updateProjectOperation,
             deleteProjectOperation = deleteProjectOperation,
+            listProjectMembersOperation = listProjectMembersOperation,
+            addProjectMemberOperation = addProjectMemberOperation,
+            removeProjectMemberOperation = removeProjectMemberOperation,
+            listMemberProjectsOperation = listMemberProjectsOperation,
         )
 
     /**

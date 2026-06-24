@@ -57,7 +57,7 @@ class CreateProjectOperationImplTest {
             }
             coVerify { projectRepository.save(any()) }
             coVerify { boardRepository.save(any()) }
-            coVerify(exactly = 3) { columnRepository.save(any()) }
+            coVerify(exactly = 4) { columnRepository.save(any()) }
         }
 
     @Test

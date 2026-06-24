@@ -67,6 +67,7 @@ internal class TaskConfig {
         updateCommentOperation: UpdateCommentOperation,
         deleteCommentOperation: DeleteCommentOperation,
         listCommentsOperation: ListCommentsOperation,
+        getTaskOperation: GetTaskOperation,
         sinkService: SinkService,
     ): CommentHandler =
         CommentHandler(
@@ -74,6 +75,7 @@ internal class TaskConfig {
             updateCommentOperation = updateCommentOperation,
             deleteCommentOperation = deleteCommentOperation,
             listCommentsOperation = listCommentsOperation,
+            getTaskOperation = getTaskOperation,
             sinkService = sinkService,
         )
 

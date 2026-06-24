@@ -8,6 +8,10 @@ internal class ProjectHandler(
     private val listProjectsOperation: ListProjectsOperation,
     private val updateProjectOperation: UpdateProjectOperation,
     private val deleteProjectOperation: DeleteProjectOperation,
+    private val listProjectMembersOperation: ListProjectMembersOperation,
+    private val addProjectMemberOperation: AddProjectMemberOperation,
+    private val removeProjectMemberOperation: RemoveProjectMemberOperation,
+    private val listMemberProjectsOperation: ListMemberProjectsOperation,
 ) {
     data class ProjectData(
         val id: String,
@@ -101,6 +105,54 @@ internal class ProjectHandler(
         }
     }
 
+    suspend fun listMembers(projectId: String): ListProjectMembersResult {
+        val result =
+            listProjectMembersOperation.execute(
+                ListProjectMembersOperation.Arg(projectId = projectId),
+            )
+        return when (result) {
+            is ListProjectMembersOperation.Result.Success ->
+                ListProjectMembersResult.Success(
+                    members = result.members.map { ProjectMemberDto(userId = it.userId, displayName = it.displayName, addedAt = it.addedAt) },
+                )
+        }
+    }
+
+    suspend fun addMember(projectId: String, userId: String): AddProjectMemberResult {
+        val result =
+            addProjectMemberOperation.execute(
+                AddProjectMemberOperation.Arg(projectId = projectId, userId = userId),
+            )
+        return when (result) {
+            AddProjectMemberOperation.Result.Success -> AddProjectMemberResult.Success
+            AddProjectMemberOperation.Result.ProjectNotFound -> AddProjectMemberResult.ProjectNotFound
+        }
+    }
+
+    suspend fun removeMember(projectId: String, userId: String): RemoveProjectMemberResult {
+        val result =
+            removeProjectMemberOperation.execute(
+                RemoveProjectMemberOperation.Arg(projectId = projectId, userId = userId),
+            )
+        return when (result) {
+            RemoveProjectMemberOperation.Result.Success -> RemoveProjectMemberResult.Success
+            RemoveProjectMemberOperation.Result.ProjectNotFound -> RemoveProjectMemberResult.ProjectNotFound
+        }
+    }
+
+    suspend fun listMemberProjects(userId: String): ListMemberProjectsResult {
+        val result =
+            listMemberProjectsOperation.execute(
+                ListMemberProjectsOperation.Arg(userId = userId),
+            )
+        return when (result) {
+            is ListMemberProjectsOperation.Result.Success ->
+                ListMemberProjectsResult.Success(
+                    projects = result.projects.map { it.toData() },
+                )
+        }
+    }
+
     private fun Project.toData(): ProjectData =
         ProjectData(
             id = id.value,
@@ -147,5 +199,27 @@ internal class ProjectHandler(
         data object Success : DeleteProjectResult
 
         data object NotFound : DeleteProjectResult
+    }
+
+    sealed interface ListProjectMembersResult {
+        data class Success(
+            val members: List<ProjectMemberDto>,
+        ) : ListProjectMembersResult
+    }
+
+    sealed interface AddProjectMemberResult {
+        data object Success : AddProjectMemberResult
+        data object ProjectNotFound : AddProjectMemberResult
+    }
+
+    sealed interface RemoveProjectMemberResult {
+        data object Success : RemoveProjectMemberResult
+        data object ProjectNotFound : RemoveProjectMemberResult
+    }
+
+    sealed interface ListMemberProjectsResult {
+        data class Success(
+            val projects: List<ProjectData>,
+        ) : ListMemberProjectsResult
     }
 }

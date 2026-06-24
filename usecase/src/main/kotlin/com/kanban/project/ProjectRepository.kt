@@ -35,4 +35,36 @@ interface ProjectRepository {
      * @param id идентификатор проекта
      */
     suspend fun delete(id: String)
+
+    /**
+     * Возвращает список участников проекта.
+     *
+     * @param projectId идентификатор проекта
+     * @return список участников
+     */
+    suspend fun findMembers(projectId: String): List<ProjectMember>
+
+    /**
+     * Добавляет пользователя в участники проекта.
+     *
+     * @param projectId идентификатор проекта
+     * @param userId идентификатор пользователя
+     */
+    suspend fun addMember(projectId: String, userId: String)
+
+    /**
+     * Удаляет пользователя из участников проекта.
+     *
+     * @param projectId идентификатор проекта
+     * @param userId идентификатор пользователя
+     */
+    suspend fun removeMember(projectId: String, userId: String)
+
+    /**
+     * Возвращает список проектов, в которых пользователь является участником (не владельцем).
+     *
+     * @param userId идентификатор пользователя
+     * @return список проектов
+     */
+    suspend fun listByMemberId(userId: String): List<Project>
 }

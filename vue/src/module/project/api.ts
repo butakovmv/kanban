@@ -121,3 +121,43 @@ export function updateProject(id: string, request: UpdateProjectRequest): Promis
 export function deleteProject(id: string): Promise<void> {
   return del<void>(`/projects/${encodeURIComponent(id)}`)
 }
+
+export interface ProjectMember {
+  userId: string
+  displayName: string
+  addedAt: string
+}
+
+interface RawProjectMember {
+  user_id: string
+  display_name: string
+  added_at: string
+}
+
+interface MemberListResponse {
+  members: RawProjectMember[]
+}
+
+function toProjectMember(raw: RawProjectMember): ProjectMember {
+  return { userId: raw.user_id, displayName: raw.display_name, addedAt: raw.added_at }
+}
+
+export function listProjectMembers(projectId: string): Promise<ProjectMember[]> {
+  return get<MemberListResponse>(`/projects/${encodeURIComponent(projectId)}/members`).then(
+    (r) => r.members.map(toProjectMember),
+  )
+}
+
+export function addProjectMember(projectId: string, userId: string): Promise<void> {
+  return post<void>(`/projects/${encodeURIComponent(projectId)}/members`, { user_id: userId })
+}
+
+export function removeProjectMember(projectId: string, userId: string): Promise<void> {
+  return del<void>(`/projects/${encodeURIComponent(projectId)}/members?user_id=${encodeURIComponent(userId)}`)
+}
+
+export function listMemberProjects(userId: string): Promise<Project[]> {
+  return get<ProjectListResponse>(`/projects/member?user_id=${encodeURIComponent(userId)}`).then(
+    (r) => r.projects.map(toProject),
+  )
+}

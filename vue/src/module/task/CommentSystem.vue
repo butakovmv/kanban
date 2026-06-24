@@ -8,6 +8,7 @@ import { ref, watch } from 'vue'
 import type { Comment } from './api'
 import { useTaskStore } from './store'
 import { useAuthStore } from '../auth/store'
+import { useUserStore } from '../user/store'
 
 const props = defineProps<{
   taskId: string
@@ -16,9 +17,12 @@ const props = defineProps<{
 
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const newText = ref('')
 const editingId = ref<string | null>(null)
 const editDraft = ref('')
+
+const authorNames = ref<Record<string, string>>({})
 
 watch(
   () => props.taskId,
@@ -27,6 +31,17 @@ watch(
     editingId.value = null
     editDraft.value = ''
   },
+)
+
+watch(
+  () => props.comments,
+  (comments) => {
+    const ids = comments.map((c) => c.authorId)
+    if (ids.length > 0) {
+      userStore.ensureUsers(ids)
+    }
+  },
+  { immediate: true },
 )
 
 function currentUserId(): string | null {
@@ -96,7 +111,7 @@ async function remove(comment: Comment) {
     <ul v-if="comments.length > 0" class="comments__list">
       <li v-for="comment in comments" :key="comment.id" class="comments__item">
         <div class="comments__meta">
-          <span class="comments__author">{{ comment.authorId }}</span>
+          <span class="comments__author">{{ userStore.getDisplayName(comment.authorId) || comment.authorId }}</span>
           <span class="comments__time">{{ formatTime(comment.createdAt) }}</span>
         </div>
         <p v-if="editingId !== comment.id" class="comments__text">{{ comment.text }}</p>

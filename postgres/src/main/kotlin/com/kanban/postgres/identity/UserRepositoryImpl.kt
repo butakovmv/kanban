@@ -128,6 +128,23 @@ internal class UserRepositoryImpl(
             .awaitFirstOrNull()
 
     /**
+     * Поиск пользователей по списку идентификаторов.
+     * @param userIds список идентификаторов пользователей
+     * @return список найденных пользователей
+     */
+    override suspend fun findByIds(userIds: List<String>): List<User> {
+        if (userIds.isEmpty()) return emptyList()
+        val uuids = userIds.map { UUID.fromString(it) }
+        return db
+            .sql("SELECT * FROM users WHERE id IN (:ids)")
+            .bind("ids", uuids)
+            .map { row, _ -> row.toUser() }
+            .all()
+            .collectList()
+            .awaitSingle()
+    }
+
+    /**
      * Проверка существования пользователя с указанным email.
      * @param email строковый email для проверки
      * @return true, если пользователь с таким email существует

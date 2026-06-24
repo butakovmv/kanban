@@ -10,14 +10,19 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from './store'
 import { useAuthStore } from '../auth/store'
+import { useProjectStore } from '../project/store'
 import { useRealtime } from '../realtime/useRealtime'
+import { getBoard } from '../board/api'
 import CommentSystem from './CommentSystem.vue'
 import FileUpload from './FileUpload.vue'
+import { useUserStore } from '../user/store'
 
 const route = useRoute()
 const router = useRouter()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const userStore = useUserStore()
+const projectStore = useProjectStore()
 const { currentTask, comments, files, loading, error } = storeToRefs(taskStore)
 
 const editing = ref(false)
@@ -26,11 +31,59 @@ const draftDescription = ref('')
 const draftAssigneeId = ref('')
 const draftDueDate = ref('')
 const showDeleteConfirm = ref(false)
+const memberOptions = ref<{ id: string; name: string }[]>([])
 
 const taskId = computed(() => {
   const id = route.params['id']
   return Array.isArray(id) ? id[0] : id
 })
+
+async function loadMembers(pid: string) {
+  await Promise.all([
+    projectStore.loadProject(pid),
+    projectStore.loadProjectMembers(pid),
+  ])
+  const ids: string[] = []
+  const owner = projectStore.currentProject
+  if (owner) {
+    ids.push(owner.ownerId)
+  }
+  for (const m of projectStore.projectMembers) {
+    ids.push(m.userId)
+  }
+  if (ids.length > 0) {
+    await userStore.ensureUsers(ids)
+  }
+  const seen = new Set<string>()
+  const opts: { id: string; name: string }[] = []
+  if (owner && !seen.has(owner.ownerId)) {
+    seen.add(owner.ownerId)
+    opts.push({ id: owner.ownerId, name: userStore.getDisplayName(owner.ownerId) || `${owner.ownerId} (owner)` })
+  }
+  for (const m of projectStore.projectMembers) {
+    if (!seen.has(m.userId)) {
+      seen.add(m.userId)
+      opts.push({ id: m.userId, name: m.displayName })
+    }
+  }
+  memberOptions.value = opts
+}
+
+async function resolveProjectAndLoadMembers() {
+  const qp = route.query['projectId']
+  if (qp && !Array.isArray(qp)) {
+    await loadMembers(qp)
+    return
+  }
+  const boardId = currentTask.value?.boardId
+  if (!boardId) return
+  try {
+    const boardView = await getBoard(boardId)
+    await loadMembers(boardView.board.projectId)
+  } catch {
+    // fallback: no project context
+  }
+}
 
 async function load() {
   if (taskId.value === undefined) {
@@ -44,6 +97,7 @@ async function load() {
       taskStore.loadComments(taskId.value),
       taskStore.loadFiles(taskId.value),
     ])
+    await resolveProjectAndLoadMembers()
   }
 }
 
@@ -54,11 +108,7 @@ const taskBoardId = computed(() => currentTask.value?.boardId)
 useRealtime(taskBoardId)
 
 function backToBoard() {
-  if (currentTask.value !== null) {
-    void router.push(`/boards/${currentTask.value.boardId}`)
-  } else {
-    void router.push('/')
-  }
+  router.back()
 }
 
 function startEdit() {
@@ -130,6 +180,17 @@ function isAssigneeMe(): boolean {
     authStore.user !== null && currentTask.value.assigneeId === authStore.user.id
   )
 }
+
+const assigneeDisplayName = computed(() => {
+  if (!currentTask.value?.assigneeId) return ''
+  return userStore.getDisplayName(currentTask.value.assigneeId) ?? ''
+})
+
+watch(() => currentTask.value?.assigneeId, (id) => {
+  if (id) {
+    userStore.ensureUsers([id])
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -185,12 +246,12 @@ function isAssigneeMe(): boolean {
           <label>
             <span>Assignee</span>
             <div class="task-detail__assignee-row">
-              <input
-                v-model="draftAssigneeId"
-                type="text"
-                class="task-detail__input"
-                placeholder="User ID"
-              />
+              <select v-model="draftAssigneeId" class="task-detail__input">
+                <option value="">—</option>
+                <option v-for="opt in memberOptions" :key="opt.id" :value="opt.id">
+                  {{ opt.name }}
+                </option>
+              </select>
               <button
                 type="button"
                 class="task-detail__action"
@@ -236,7 +297,7 @@ function isAssigneeMe(): boolean {
           <dd>
             <template v-if="currentTask.assigneeId">
               <span v-if="isAssigneeMe()" class="task-detail__you">{{ authStore.user!.displayName }}</span>
-              <span v-else>{{ currentTask.assigneeId }}</span>
+              <span v-else>{{ assigneeDisplayName || currentTask.assigneeId }}</span>
               <span v-if="isAssigneeMe()"> (you)</span>
             </template>
             <span v-else>—</span>

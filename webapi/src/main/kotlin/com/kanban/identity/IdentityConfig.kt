@@ -49,4 +49,8 @@ internal class IdentityConfig {
         ProfileHandler(
             getCurrentUserTariffOperation = getCurrentUserTariffOperation,
         )
+
+    @Bean
+    fun userHandler(findUsersOperation: FindUsersOperation): UserHandler =
+        UserHandler(findUsersOperation = findUsersOperation)
 }

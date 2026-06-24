@@ -4,23 +4,27 @@
  * Содержит карточки проектов и форму создания нового проекта.
  * Клик по карточке переходит на страницу настроек проекта.
  */
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from './store'
 import { useAuthStore } from '../auth/store'
 
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
-const { projects, loading, error } = storeToRefs(projectStore)
+const { projects, loading, error, memberProjects } = storeToRefs(projectStore)
 
 const showCreateForm = ref(false)
 const newName = ref('')
 const newDescription = ref('')
 
+const userId = computed(() => authStore.user?.id)
+
 onMounted(async () => {
-  const ownerId = authStore.user?.id
-  if (ownerId) {
-    await projectStore.loadProjects(ownerId)
+  if (userId.value) {
+    await Promise.all([
+      projectStore.loadProjects(userId.value),
+      projectStore.loadMemberProjects(userId.value),
+    ])
   }
 })
 
@@ -81,6 +85,24 @@ async function handleCreate() {
     </ul>
 
     <div v-else class="project-list__empty">No projects yet. Create the first one!</div>
+
+    <div v-if="memberProjects.length > 0" class="project-list__section">
+      <h2 class="project-list__section-title">Приглашён в проекты</h2>
+      <ul class="project-list__items">
+        <li v-for="project in memberProjects" :key="project.id" class="project-list__item">
+          <RouterLink
+            :to="{ name: 'project-board', params: { id: project.id } }"
+            class="project-list__link"
+          >
+            <div class="project-list__name">{{ project.name }}</div>
+            <div v-if="project.description" class="project-list__description">
+              {{ project.description }}
+            </div>
+            <div class="project-list__meta">Owner: {{ project.ownerId }}</div>
+          </RouterLink>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -191,5 +213,12 @@ async function handleCreate() {
 .project-list__meta {
   color: var(--color-text-secondary);
   font-size: 0.75rem;
+}
+.project-list__section {
+  margin-top: 2rem;
+}
+.project-list__section-title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
 }
 </style>

@@ -2,14 +2,16 @@
 /**
  * Компонент карточки задачи.
  * Отображает заголовок, превью описания, дату выполнения.
- * Поддерживает in-place редактирование заголовка,
- * перемещение между колонками, архивирование и удаление.
+ * Поддерживает in-place редактирование заголовка и удаление.
+ * Перемещение между колонками — через drag-and-drop.
+ * Архивирование — перетаскиванием в колонку Archive.
  * Поддерживает drag-and-drop через HTML5 API.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Task } from './api'
 import type { Column } from '../board/api'
 import { useTaskStore } from './store'
+import { useUserStore } from '../user/store'
 
 const props = defineProps<{
   task: Task
@@ -24,10 +26,16 @@ const emit = defineEmits<{
 }>()
 
 const taskStore = useTaskStore()
+const userStore = useUserStore()
 const editing = ref(false)
 const draftTitle = ref(props.task.title)
-const showMoveMenu = ref(false)
 const showDeleteConfirm = ref(false)
+
+const isBacklogOrArchive = computed(() => {
+  if (props.task.archived) return true
+  const col = props.columns.find(c => c.id === props.task.columnId)
+  return col?.name === 'Backlog'
+})
 
 const descriptionPreview = computed(() => {
   if (props.task.description === null) {
@@ -47,6 +55,17 @@ const formattedDueDate = computed(() => {
   }
   return date.toISOString().slice(0, 10)
 })
+
+const assigneeName = computed(() => {
+  if (!props.task.assigneeId) return ''
+  return userStore.getDisplayName(props.task.assigneeId) ?? ''
+})
+
+watch(() => props.task.assigneeId, (id) => {
+  if (id) {
+    userStore.ensureUsers([id])
+  }
+}, { immediate: true })
 
 function openTask() {
   if (editing.value) {
@@ -74,22 +93,6 @@ async function commitEdit() {
 function cancelEdit() {
   editing.value = false
   draftTitle.value = props.task.title
-}
-
-function toggleMoveMenu() {
-  showMoveMenu.value = !showMoveMenu.value
-}
-
-async function moveToColumn(columnId: string) {
-  showMoveMenu.value = false
-  if (columnId === props.task.columnId) {
-    return
-  }
-  await taskStore.moveTask(props.task.id, { columnId, position: 0 })
-}
-
-async function archive() {
-  await taskStore.archiveTask(props.task.id)
 }
 
 function askDelete() {
@@ -153,31 +156,11 @@ function onDragEnd() {
 
     <div v-if="descriptionPreview" class="task-card__description">{{ descriptionPreview }}</div>
 
+    <div v-if="assigneeName" class="task-card__assignee">{{ assigneeName }}</div>
+
     <div v-if="formattedDueDate" class="task-card__due">Due: {{ formattedDueDate }}</div>
 
-    <div class="task-card__actions" @click.stop>
-      <div class="task-card__move">
-        <button
-          type="button"
-          class="task-card__action"
-          :aria-expanded="showMoveMenu"
-          @click="toggleMoveMenu"
-        >
-          Move
-        </button>
-        <ul v-if="showMoveMenu" class="task-card__menu">
-          <li
-            v-for="column in columns"
-            :key="column.id"
-            class="task-card__menu-item"
-            :class="{ 'task-card__menu-item--active': column.id === task.columnId }"
-            @click="moveToColumn(column.id)"
-          >
-            {{ column.name }}
-          </li>
-        </ul>
-      </div>
-      <button type="button" class="task-card__action" @click="archive">Archive</button>
+    <div v-if="isBacklogOrArchive" class="task-card__actions" @click.stop>
       <button
         v-if="!showDeleteConfirm"
         type="button"
@@ -299,35 +282,6 @@ function onDragEnd() {
 .task-card__action--danger:hover {
   background: var(--color-danger);
   color: #fff;
-}
-.task-card__move {
-  position: relative;
-}
-.task-card__menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
-  margin-top: 0.25rem;
-  list-style: none;
-  padding: 0.25rem 0;
-  min-width: 8rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.task-card__menu-item {
-  padding: 0.3rem 0.6rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-.task-card__menu-item:hover {
-  background: var(--color-background);
-}
-.task-card__menu-item--active {
-  font-weight: 600;
-  color: var(--color-primary);
 }
 .task-card__confirm {
   display: flex;

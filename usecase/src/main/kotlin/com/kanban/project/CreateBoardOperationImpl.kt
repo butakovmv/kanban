@@ -10,7 +10,7 @@ import java.util.UUID
 /**
  * Реализация операции создания доски.
  * Проверяет лимиты тарифа, проверяет существование проекта, создаёт доску
- * с набором колонок по умолчанию ("To Do", "In Progress", "Done") и возвращает [BoardView].
+ * с набором колонок по умолчанию ("Backlog", "To Do", "In Progress", "Done") и возвращает [BoardView].
  */
 internal class CreateBoardOperationImpl(
     private val projectRepository: ProjectRepository,
@@ -50,7 +50,7 @@ internal class CreateBoardOperationImpl(
 
         val savedBoard = boardRepository.save(board)
 
-        val defaultColumnNames = listOf("To Do", "In Progress", "Done")
+        val defaultColumnNames = listOf("Backlog", "To Do", "In Progress", "Done")
         val columns =
             defaultColumnNames.mapIndexed { index, name ->
                 Column(

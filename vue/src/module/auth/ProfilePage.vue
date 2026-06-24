@@ -52,32 +52,32 @@ async function handleLogout() {
 
       <div v-if="tariff" class="profile__tariff">
         <h2>Tariff</h2>
-        <div class="profile__field">
-          <span class="profile__label">Plan</span>
-          <span class="profile__value">{{ tariff.name }}</span>
-        </div>
-        <div class="profile__tariff-limits">
-          <div class="profile__field">
-            <span class="profile__label">Max Projects</span>
-            <span class="profile__value">{{ tariff.maxProjects }}</span>
-          </div>
-          <div class="profile__field">
-            <span class="profile__label">Boards / Project</span>
-            <span class="profile__value">{{ tariff.maxBoardsPerProject }}</span>
-          </div>
-          <div class="profile__field">
-            <span class="profile__label">Tasks / Board</span>
-            <span class="profile__value">{{ tariff.maxTasksPerBoard }}</span>
-          </div>
-          <div class="profile__field">
-            <span class="profile__label">Max File Size</span>
-            <span class="profile__value">{{ tariff.maxFileSizeMb }} MB</span>
-          </div>
-          <div class="profile__field">
-            <span class="profile__label">Storage Limit</span>
-            <span class="profile__value">{{ tariff.maxStorageMb }} MB</span>
-          </div>
-        </div>
+        <table class="profile__table">
+          <tr>
+            <td class="profile__label">Plan</td>
+            <td class="profile__value">{{ tariff.name }}</td>
+          </tr>
+          <tr>
+            <td class="profile__label">Max Projects</td>
+            <td class="profile__value">{{ tariff.maxProjects }}</td>
+          </tr>
+          <tr>
+            <td class="profile__label">Boards / Project</td>
+            <td class="profile__value">{{ tariff.maxBoardsPerProject }}</td>
+          </tr>
+          <tr>
+            <td class="profile__label">Tasks / Board</td>
+            <td class="profile__value">{{ tariff.maxTasksPerBoard }}</td>
+          </tr>
+          <tr>
+            <td class="profile__label">Max File Size</td>
+            <td class="profile__value">{{ tariff.maxFileSizeMb }} MB</td>
+          </tr>
+          <tr>
+            <td class="profile__label">Storage Limit</td>
+            <td class="profile__value">{{ tariff.maxStorageMb }} MB</td>
+          </tr>
+        </table>
       </div>
 
       <p v-else-if="tariffError" class="profile__empty">Tariff info unavailable</p>
@@ -128,6 +128,20 @@ async function handleLogout() {
 .profile__value--mono {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.875rem;
+}
+.profile__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.profile__table tr {
+  border-bottom: 1px solid var(--color-border);
+}
+.profile__table td {
+  padding: 0.4rem 0;
+}
+.profile__table .profile__label {
+  padding-right: 1rem;
+  white-space: nowrap;
 }
 .profile__empty {
   color: var(--color-text-secondary);

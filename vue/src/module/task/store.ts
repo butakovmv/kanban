@@ -379,16 +379,14 @@ export const useTaskStore = defineStore('task', () => {
    * @param taskId идентификатор задачи
    */
   function handleTaskUpdated(taskId: string): void {
-    if (currentTask.value !== null && currentTask.value.id === taskId) {
-      taskApi.getTask(taskId).then((updated) => {
-        if (currentTask.value !== null && currentTask.value.id === taskId) {
-          currentTask.value = updated
-        }
-        tasks.value = tasks.value.map((t) => (t.id === taskId ? updated : t))
-      }).catch(() => {
-        /* ignore refresh errors */
-      })
-    }
+    taskApi.getTask(taskId).then((updated) => {
+      tasks.value = tasks.value.map((t) => (t.id === taskId ? updated : t))
+      if (currentTask.value !== null && currentTask.value.id === taskId) {
+        currentTask.value = updated
+      }
+    }).catch(() => {
+      /* ignore refresh errors */
+    })
   }
 
   /**

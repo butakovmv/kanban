@@ -1,16 +1,19 @@
 <script setup lang="ts">
 /**
  * Модальное окно создания задачи.
- * Содержит поля «Заголовок» и «Описание», а также кнопки Submit/Cancel.
+ * Содержит поля «Заголовок», «Описание» и выбор исполнителя.
  * При подтверждении эмитит событие `submit` с собранными данными.
  */
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { CreateTaskRequest } from './api'
+import { useProjectStore } from '../project/store'
+import { useUserStore } from '../user/store'
 
 const props = defineProps<{
   boardId: string
   columnId: string
   loading?: boolean
+  projectId?: string
 }>()
 
 const emit = defineEmits<{
@@ -18,16 +21,58 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+const projectStore = useProjectStore()
+const userStore = useUserStore()
+
 const title = ref('')
 const description = ref('')
+const assigneeId = ref('')
+
+const memberOptions = computed(() => {
+  const owner = projectStore.currentProject
+  const members = projectStore.projectMembers
+  const seen = new Set<string>()
+  const opts: { id: string; name: string }[] = []
+  if (owner && !seen.has(owner.ownerId)) {
+    seen.add(owner.ownerId)
+    opts.push({ id: owner.ownerId, name: userStore.getDisplayName(owner.ownerId) || `${owner.ownerId} (owner)` })
+  }
+  for (const m of members) {
+    if (!seen.has(m.userId)) {
+      seen.add(m.userId)
+      opts.push({ id: m.userId, name: m.displayName })
+    }
+  }
+  return opts
+})
 
 watch(
   () => props.columnId,
   () => {
     title.value = ''
     description.value = ''
+    assigneeId.value = ''
   },
 )
+
+watch(() => props.projectId, async (pid) => {
+  if (pid) {
+    await Promise.all([
+      projectStore.loadProject(pid),
+      projectStore.loadProjectMembers(pid),
+    ])
+    const ids: string[] = []
+    if (projectStore.currentProject) {
+      ids.push(projectStore.currentProject.ownerId)
+    }
+    for (const m of projectStore.projectMembers) {
+      ids.push(m.userId)
+    }
+    if (ids.length > 0) {
+      userStore.ensureUsers(ids)
+    }
+  }
+}, { immediate: true })
 
 function onSubmit() {
   const trimmed = title.value.trim()
@@ -41,6 +86,9 @@ function onSubmit() {
   }
   if (description.value.trim() !== '') {
     request.description = description.value
+  }
+  if (assigneeId.value !== '') {
+    request.assigneeId = assigneeId.value
   }
   emit('submit', request)
 }
@@ -85,6 +133,15 @@ function onCancel() {
             maxlength="2000"
             placeholder="Add details (optional)"
           />
+        </label>
+        <label class="modal__field">
+          <span>Assignee</span>
+          <select v-model="assigneeId" class="modal__input">
+            <option value="">—</option>
+            <option v-for="opt in memberOptions" :key="opt.id" :value="opt.id">
+              {{ opt.name }}
+            </option>
+          </select>
         </label>
         <div class="modal__actions">
           <button type="button" class="modal__button modal__button--secondary" @click="onCancel">

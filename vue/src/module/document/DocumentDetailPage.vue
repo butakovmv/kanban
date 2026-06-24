@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useDocumentStore } from './store'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import ProjectLayout from '../../component/ProjectLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,52 +73,54 @@ const renderedContent = computed(() => {
 </script>
 
 <template>
-  <div class="document-detail">
-    <header class="document-detail__header">
-      <button class="document-detail__back" @click="back">&larr; Back to documents</button>
-      <div class="document-detail__header-actions" v-if="!editing">
-        <button class="document-detail__edit-btn" @click="startEdit">Edit</button>
-      </div>
-      <div class="document-detail__header-actions" v-else>
-        <button class="document-detail__save-btn" :disabled="loading" @click="saveEdit">Save</button>
-        <button class="document-detail__cancel-btn" @click="cancelEdit">Cancel</button>
-      </div>
-    </header>
-
-    <div v-if="loading && !currentDocument" class="document-detail__loading">Loading...</div>
-    <div v-else-if="error" class="document-detail__error">{{ error }}</div>
-
-    <template v-if="currentDocument">
-      <div v-if="!editing" class="document-detail__view">
-        <h1 class="document-detail__title">{{ currentDocument.title }}</h1>
-        <div class="document-detail__meta">
-          <span class="document-detail__path">{{ currentDocument.path }}</span>
-          <span class="document-detail__updated">Updated: {{ currentDocument.updatedAt }}</span>
-          <span v-if="currentDocument.description" class="document-detail__desc">{{ currentDocument.description }}</span>
+  <ProjectLayout v-if="projectId" :project-id="projectId">
+    <div class="document-detail">
+      <header class="document-detail__header">
+        <button class="document-detail__back" @click="back">&larr; Back to documents</button>
+        <div class="document-detail__header-actions" v-if="!editing">
+          <button class="document-detail__edit-btn" @click="startEdit">Edit</button>
         </div>
-        <div class="document-detail__content" v-html="renderedContent"></div>
-      </div>
+        <div class="document-detail__header-actions" v-else>
+          <button class="document-detail__save-btn" :disabled="loading" @click="saveEdit">Save</button>
+          <button class="document-detail__cancel-btn" @click="cancelEdit">Cancel</button>
+        </div>
+      </header>
 
-      <div v-else class="document-detail__edit">
-        <label class="document-detail__field">
-          Title
-          <input v-model="draftTitle" type="text" required maxlength="200" />
-        </label>
-        <label class="document-detail__field">
-          Path
-          <input v-model="draftPath" type="text" required />
-        </label>
-        <label class="document-detail__field">
-          Description
-          <textarea v-model="draftDescription" rows="2"></textarea>
-        </label>
-        <label class="document-detail__field document-detail__field--content">
-          Content (Markdown)
-          <textarea v-model="draftContent" rows="20" class="document-detail__content-input"></textarea>
-        </label>
-      </div>
-    </template>
-  </div>
+      <div v-if="loading && !currentDocument" class="document-detail__loading">Loading...</div>
+      <div v-else-if="error" class="document-detail__error">{{ error }}</div>
+
+      <template v-if="currentDocument">
+        <div v-if="!editing" class="document-detail__view">
+          <h1 class="document-detail__title">{{ currentDocument.title }}</h1>
+          <div class="document-detail__meta">
+            <span class="document-detail__path">{{ currentDocument.path }}</span>
+            <span class="document-detail__updated">Updated: {{ currentDocument.updatedAt }}</span>
+            <span v-if="currentDocument.description" class="document-detail__desc">{{ currentDocument.description }}</span>
+          </div>
+          <div class="document-detail__content" v-html="renderedContent"></div>
+        </div>
+
+        <div v-else class="document-detail__edit">
+          <label class="document-detail__field">
+            Title
+            <input v-model="draftTitle" type="text" required maxlength="200" />
+          </label>
+          <label class="document-detail__field">
+            Path
+            <input v-model="draftPath" type="text" required />
+          </label>
+          <label class="document-detail__field">
+            Description
+            <textarea v-model="draftDescription" rows="2"></textarea>
+          </label>
+          <label class="document-detail__field document-detail__field--content">
+            Content (Markdown)
+            <textarea v-model="draftContent" rows="20" class="document-detail__content-input"></textarea>
+          </label>
+        </div>
+      </template>
+    </div>
+  </ProjectLayout>
 </template>
 
 <style scoped>
@@ -209,6 +212,8 @@ const renderedContent = computed(() => {
 .document-detail__content {
   line-height: 1.7;
   font-size: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 .document-detail__content :deep(h1),
 .document-detail__content :deep(h2),
@@ -221,7 +226,7 @@ const renderedContent = computed(() => {
 .document-detail__content :deep(ul),
 .document-detail__content :deep(ol) {
   margin: 0 0 1rem;
-  padding-left: 1.5rem;
+  padding-left: 2rem;
 }
 .document-detail__content :deep(pre) {
   background: var(--color-surface);

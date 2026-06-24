@@ -78,6 +78,7 @@ describe('useRealtime', () => {
   afterEach(() => {
     vi.useRealTimers()
     sseService.disconnect()
+    sseService.clearHandlers()
     delete (globalThis as Record<string, unknown>)['EventSource']
   })
 

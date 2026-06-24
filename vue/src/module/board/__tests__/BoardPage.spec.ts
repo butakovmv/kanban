@@ -198,6 +198,36 @@ describe('BoardPage', () => {
     expect(toggle.attributes('aria-pressed')).toBe('false')
   })
 
+  it('toggles archive visibility when the Archive button is clicked', async () => {
+    const router = createTestRouter()
+    await router.push('/projects/p-1/board')
+    await router.isReady()
+
+    const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
+    const cols = [
+      boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
+      boardGenerator.column({ id: 'c-2', name: 'Done', position: 1, boardId: 'b-1' }),
+    ]
+    vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
+
+    const wrapper = mount(BoardPage, {
+      global: { plugins: [router] },
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    const toggle = wrapper.find('.board__toggle')
+    expect(toggle.text()).toContain('on')
+
+    // Archive is an inline div, not a Column component
+    expect(wrapper.findAllComponents({ name: 'Column' })).toHaveLength(2)
+
+    await toggle.trigger('click')
+    expect(toggle.text()).toContain('off')
+    expect(wrapper.findAllComponents({ name: 'Column' })).toHaveLength(2)
+  })
+
   it('exposes an Add column button', async () => {
     const router = createTestRouter()
     await router.push('/projects/p-1/board')
@@ -280,7 +310,7 @@ describe('BoardPage', () => {
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
     const cols = [
-      boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
+      boardGenerator.column({ id: 'c-1', name: 'Backlog', position: 0, boardId: 'b-1' }),
     ]
     vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
     vi.mocked(taskApi.listTasks).mockResolvedValue([])
@@ -309,7 +339,7 @@ describe('BoardPage', () => {
 
     const board = boardGenerator.board({ id: 'b-1', name: 'Sprint 1' })
     const cols = [
-      boardGenerator.column({ id: 'c-1', name: 'Todo', position: 0, boardId: 'b-1' }),
+      boardGenerator.column({ id: 'c-1', name: 'Backlog', position: 0, boardId: 'b-1' }),
     ]
     vi.mocked(api.getBoardByProjectId).mockResolvedValue({ board, columns: cols })
     vi.mocked(taskApi.listTasks).mockResolvedValue([])

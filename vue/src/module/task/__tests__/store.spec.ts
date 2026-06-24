@@ -491,14 +491,19 @@ describe('task store', () => {
       expect(store.tasks[0].title).toBe('New')
     })
 
-    it('does not refetch when taskId does not match currentTask', async () => {
-      vi.mocked(api.getTask).mockResolvedValue(taskGenerator.task({ id: 't-1' }))
+    it('refetches and updates tasks even when taskId does not match currentTask', async () => {
+      const updated = taskGenerator.task({ id: 't-1', title: 'Updated' })
+      vi.mocked(api.getTask).mockResolvedValue(updated)
       const store = useTaskStore()
+      store.tasks = [taskGenerator.task({ id: 't-1', title: 'Old' })]
       store.currentTask = taskGenerator.task({ id: 't-2' })
 
       store.handleTaskUpdated('t-1')
+      await new Promise((r) => setTimeout(r, 0))
 
-      expect(api.getTask).not.toHaveBeenCalled()
+      expect(api.getTask).toHaveBeenCalledWith('t-1')
+      expect(store.tasks[0].title).toBe('Updated')
+      expect(store.currentTask?.id).toBe('t-2')
     })
   })
 

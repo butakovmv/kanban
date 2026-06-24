@@ -127,7 +127,6 @@ function formatTime(value: string): string {
 async function load() {
   if (projectId.value === undefined) return
   await documentStore.loadDocuments(projectId.value)
-  await loadBoards()
 }
 
 onMounted(load)
@@ -207,7 +206,7 @@ async function handleDelete(doc: Document) {
           <span class="document-list__folder-icon">{{ node.expanded ? '&#9660;' : '&#9654;' }}</span>
           <span class="document-list__folder-name">{{ node.name }}/</span>
         </div>
-        <div v-else-if="node.doc" class="document-list__doc" :class="{ 'document-list__doc--editing': editingId === node.doc.id }">
+        <div v-else-if="node.doc" class="document-list__doc" :class="{ 'document-list__doc--editing': editingId === node.doc.id }" @click="viewDocument(node.doc!)">
           <template v-if="editingId !== node.doc.id">
             <div class="document-list__doc-info">
               <span class="document-list__doc-name">{{ node.doc.title }}</span>
@@ -216,9 +215,7 @@ async function handleDelete(doc: Document) {
               <span v-if="node.doc.description" class="document-list__doc-desc">{{ node.doc.description }}</span>
             </div>
             <div class="document-list__doc-actions">
-              <button type="button" class="document-list__action" @click="viewDocument(node.doc!)">View</button>
-              <button type="button" class="document-list__action" @click="startEdit(node.doc!)">Edit</button>
-              <button type="button" class="document-list__action document-list__action--danger" @click="handleDelete(node.doc!)">Delete</button>
+              <button type="button" class="document-list__action document-list__action--danger" @click.stop="handleDelete(node.doc!)">Delete</button>
             </div>
           </template>
           <div v-else class="document-list__edit-form">
@@ -323,6 +320,10 @@ async function handleDelete(doc: Document) {
   gap: 1rem;
   width: 100%;
   border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+.document-list__doc:hover {
+  background: var(--color-background);
 }
 .document-list__row:last-child .document-list__doc {
   border-bottom: none;

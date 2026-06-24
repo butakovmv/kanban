@@ -53,14 +53,14 @@ class CreateBoardOperationImplTest {
             assertEquals("Main Board", success.view.board.name)
             assertEquals(ProjectId("project-1"), success.view.board.projectId)
             assertEquals(0, success.view.board.position)
-            assertEquals(3, success.view.columns.size)
-            assertEquals(listOf("To Do", "In Progress", "Done"), success.view.columns.map { it.name })
-            assertEquals(listOf(0, 1, 2), success.view.columns.map { it.position })
+            assertEquals(4, success.view.columns.size)
+            assertEquals(listOf("Backlog", "To Do", "In Progress", "Done"), success.view.columns.map { it.name })
+            assertEquals(listOf(0, 1, 2, 3), success.view.columns.map { it.position })
 
             coVerify { projectRepository.findById("project-1") }
             coVerify { checkTariffLimitsOperation.execute(any()) }
             coVerify { boardRepository.save(any()) }
-            coVerify(exactly = 3) { columnRepository.save(any()) }
+            coVerify(exactly = 4) { columnRepository.save(any()) }
         }
 
     @Test

@@ -57,17 +57,19 @@ internal class CreateProjectOperationImpl(
             )
         boardRepository.save(board)
 
-        val defaultColumnNames = listOf("To Do", "In Progress", "Done")
-        defaultColumnNames.mapIndexed { index, name ->
-            Column(
-                id = ColumnId(UUID.randomUUID().toString()),
-                boardId = boardId,
-                name = name,
-                position = index,
-                wipLimit = null,
-                createdAt = now,
-            )
-        }.forEach { columnRepository.save(it) }
+        val defaultColumnNames = listOf("Backlog", "To Do", "In Progress", "Done")
+        val columns =
+            defaultColumnNames.mapIndexed { index, name ->
+                Column(
+                    id = ColumnId(UUID.randomUUID().toString()),
+                    boardId = boardId,
+                    name = name,
+                    position = index,
+                    wipLimit = null,
+                    createdAt = now,
+                )
+            }
+        columns.forEach { columnRepository.save(it) }
 
         return CreateProjectOperation.Result.Success(savedProject)
     }

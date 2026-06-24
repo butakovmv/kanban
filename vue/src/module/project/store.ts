@@ -13,6 +13,9 @@ export const useProjectStore = defineStore('project', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const memberProjects = ref<projectApi.Project[]>([])
+  const projectMembers = ref<projectApi.ProjectMember[]>([])
+
   const hasProjects = computed(() => projects.value.length > 0)
 
   /**
@@ -139,17 +142,67 @@ export const useProjectStore = defineStore('project', () => {
     currentProject.value = null
   }
 
+  async function loadMemberProjects(userId: string): Promise<boolean> {
+    try {
+      memberProjects.value = await projectApi.listMemberProjects(userId)
+      return true
+    } catch (e: unknown) {
+      console.error('Project store error:', e)
+      memberProjects.value = []
+      return false
+    }
+  }
+
+  async function loadProjectMembers(projectId: string): Promise<boolean> {
+    try {
+      projectMembers.value = await projectApi.listProjectMembers(projectId)
+      return true
+    } catch (e: unknown) {
+      console.error('Project store error:', e)
+      projectMembers.value = []
+      return false
+    }
+  }
+
+  async function addProjectMember(projectId: string, userId: string): Promise<boolean> {
+    try {
+      await projectApi.addProjectMember(projectId, userId)
+      await loadProjectMembers(projectId)
+      return true
+    } catch (e: unknown) {
+      console.error('Project store error:', e)
+      return false
+    }
+  }
+
+  async function removeProjectMember(projectId: string, userId: string): Promise<boolean> {
+    try {
+      await projectApi.removeProjectMember(projectId, userId)
+      await loadProjectMembers(projectId)
+      return true
+    } catch (e: unknown) {
+      console.error('Project store error:', e)
+      return false
+    }
+  }
+
   return {
     projects,
     currentProject,
     loading,
     error,
     hasProjects,
+    memberProjects,
+    projectMembers,
     loadProjects,
     loadProject,
     createProject,
     updateProject,
     deleteProject,
     clearCurrent,
+    loadMemberProjects,
+    loadProjectMembers,
+    addProjectMember,
+    removeProjectMember,
   }
 })

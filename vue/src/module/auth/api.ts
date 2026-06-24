@@ -150,6 +150,26 @@ export function logout(request: LogoutRequest): Promise<void> {
   })
 }
 
+interface RawTariffInfo {
+  name: string
+  max_projects: number
+  max_boards_per_project: number
+  max_tasks_per_board: number
+  max_file_size_mb: number
+  max_storage_mb: number
+}
+
+function toTariffInfo(raw: RawTariffInfo): TariffInfo {
+  return {
+    name: raw.name,
+    maxProjects: raw.max_projects,
+    maxBoardsPerProject: raw.max_boards_per_project,
+    maxTasksPerBoard: raw.max_tasks_per_board,
+    maxFileSizeMb: raw.max_file_size_mb,
+    maxStorageMb: raw.max_storage_mb,
+  }
+}
+
 export function getTariff(userId: string): Promise<TariffInfo> {
-  return get<TariffInfo>(`/profile/tariff?user_id=${encodeURIComponent(userId)}`)
+  return get<RawTariffInfo>(`/profile/tariff?user_id=${encodeURIComponent(userId)}`).then(toTariffInfo)
 }
