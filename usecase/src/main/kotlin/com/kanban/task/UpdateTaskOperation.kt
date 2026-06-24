@@ -24,6 +24,7 @@ interface UpdateTaskOperation : Operation<UpdateTaskOperation.Arg, UpdateTaskOpe
         val description: String?,
         val assigneeId: String?,
         val dueDate: Instant?,
+        val priority: String?,
     )
 
     /**

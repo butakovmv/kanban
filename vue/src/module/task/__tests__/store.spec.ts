@@ -108,7 +108,7 @@ describe('task store', () => {
 
       const store = useTaskStore()
       const result = await store.createTask({
-        boardId: 'b-1',
+        projectId: 'p-1',
         columnId: 'c-1',
         title: 'New',
       })
@@ -122,7 +122,7 @@ describe('task store', () => {
       vi.mocked(api.createTask).mockRejectedValue(new Error('denied'))
 
       const store = useTaskStore()
-      const result = await store.createTask({ boardId: 'b-1', columnId: 'c-1', title: 'X' })
+      const result = await store.createTask({ projectId: 'p-1', columnId: 'c-1', title: 'X' })
 
       expect(result).toBeNull()
       expect(store.error).toBe('denied')

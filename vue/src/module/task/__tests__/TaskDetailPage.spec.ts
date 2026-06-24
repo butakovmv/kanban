@@ -116,7 +116,7 @@ describe('TaskDetailPage', () => {
     await router.isReady()
     const pushSpy = vi.spyOn(router, 'push').mockResolvedValue(undefined)
 
-    const task = taskGenerator.task({ id: 't-1', boardId: 'b-1' })
+    const task = taskGenerator.task({ id: 't-1', projectId: 'p-1' })
     vi.mocked(api.getTask).mockResolvedValue(task)
     vi.mocked(api.deleteTask).mockResolvedValue(undefined)
 
@@ -145,7 +145,7 @@ describe('TaskDetailPage', () => {
     await nextTick()
 
     expect(api.deleteTask).toHaveBeenCalledWith('t-1')
-    expect(pushSpy).toHaveBeenCalledWith('/boards/b-1')
+    expect(pushSpy).toHaveBeenCalledWith('/projects/p-1')
   })
 
   it('shows a not-found state when the task cannot be loaded', async () => {

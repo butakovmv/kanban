@@ -1,12 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { setActivePinia, createPinia } from 'pinia'
 import CreateTaskModal from '../CreateTaskModal.vue'
 
 describe('CreateTaskModal', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
   it('emits submit with the typed values when the form is valid', async () => {
     const wrapper = mount(CreateTaskModal, {
       props: {
-        boardId: 'b-1',
+        projectId: 'b-1',
         columnId: 'c-1',
       },
     })
@@ -18,7 +23,7 @@ describe('CreateTaskModal', () => {
     expect(wrapper.emitted('submit')).toBeTruthy()
     expect(wrapper.emitted('submit')?.[0]).toEqual([
       {
-        boardId: 'b-1',
+        projectId: 'b-1',
         columnId: 'c-1',
         title: 'New task',
         description: 'Description text',
@@ -28,7 +33,7 @@ describe('CreateTaskModal', () => {
 
   it('omits description in the emitted payload when the textarea is empty', async () => {
     const wrapper = mount(CreateTaskModal, {
-      props: { boardId: 'b-1', columnId: 'c-1' },
+      props: { projectId: 'b-1', columnId: 'c-1' },
     })
 
     await wrapper.find('input[type="text"]').setValue('Title only')
@@ -41,7 +46,7 @@ describe('CreateTaskModal', () => {
 
   it('emits cancel when the cancel button is clicked', async () => {
     const wrapper = mount(CreateTaskModal, {
-      props: { boardId: 'b-1', columnId: 'c-1' },
+      props: { projectId: 'b-1', columnId: 'c-1' },
     })
 
     const buttons = wrapper.findAll('button')
@@ -54,7 +59,7 @@ describe('CreateTaskModal', () => {
 
   it('disables the submit button when the title is empty', async () => {
     const wrapper = mount(CreateTaskModal, {
-      props: { boardId: 'b-1', columnId: 'c-1' },
+      props: { projectId: 'b-1', columnId: 'c-1' },
     })
 
     const submit = wrapper.find('button[type="submit"]')

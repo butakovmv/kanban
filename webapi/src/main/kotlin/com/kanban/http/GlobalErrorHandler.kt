@@ -2,6 +2,7 @@ package com.kanban.http
 
 import java.net.URI
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -17,6 +18,8 @@ import org.springframework.web.server.ServerWebInputException
  */
 @RestControllerAdvice
 class GlobalErrorHandler {
+    private fun getRequestId(): String? = MDC.get("requestId")
+
     /**
      * Обрабатывает ошибки валидации запросов (WebExchangeBindException).
      * Формирует ProblemDetail со статусом 400 BAD_REQUEST и списком ошибок полей.
@@ -28,6 +31,7 @@ class GlobalErrorHandler {
         detail.title = "Validation Error"
         detail.detail = ex.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }
         detail.type = URI.create("/errors/validation")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 
@@ -38,6 +42,7 @@ class GlobalErrorHandler {
         detail.title = "Bad Request"
         detail.detail = ex.reason ?: "Missing required request value"
         detail.type = URI.create("/errors/bad-request")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 
@@ -48,6 +53,7 @@ class GlobalErrorHandler {
         detail.title = "Bad Request"
         detail.detail = ex.reason ?: "Invalid input"
         detail.type = URI.create("/errors/bad-request")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 
@@ -58,6 +64,7 @@ class GlobalErrorHandler {
         detail.title = "Conflict"
         detail.detail = ex.message ?: "Resource already exists"
         detail.type = URI.create("/errors/conflict")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 
@@ -68,6 +75,7 @@ class GlobalErrorHandler {
         detail.title = "Bad Request"
         detail.detail = ex.message ?: "Invalid argument"
         detail.type = URI.create("/errors/bad-request")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 
@@ -82,6 +90,7 @@ class GlobalErrorHandler {
         detail.title = "Internal Error"
         detail.detail = ex.message ?: "Unknown error"
         detail.type = URI.create("/errors/internal")
+        detail.setProperty("requestId", getRequestId())
         return detail
     }
 

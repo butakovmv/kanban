@@ -55,6 +55,12 @@ const router = createRouter({
       component: () => import('./module/board/BoardPage.vue'),
     },
     {
+      path: '/projects/:id/audit',
+      name: 'project-audit',
+      meta: { requiresAuth: true },
+      component: () => import('./module/audit/AuditPage.vue'),
+    },
+    {
       path: '/projects/:id/settings',
       name: 'project-settings',
       meta: { requiresAuth: true },

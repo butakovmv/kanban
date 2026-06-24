@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{id}/columns/order")
+@RequestMapping("/api/v1/projects/{projectId}/columns/order")
 internal class ReorderColumnsController(
     private val handler: BoardHandler,
 ) {
@@ -22,11 +22,11 @@ internal class ReorderColumnsController(
 
     @PutMapping
     suspend fun reorder(
-        @PathVariable("id") id: String,
+        @PathVariable("projectId") projectId: String,
         @RequestBody body: ReorderColumnsBody,
     ): ResponseEntity<*> {
-        val result = handler.reorderColumns(
-            boardId = id,
+        val result = handler.reorderColumnsByProjectId(
+            projectId = projectId,
             columnIds = body.columnIds,
         )
         return when (result) {
@@ -35,7 +35,7 @@ internal class ReorderColumnsController(
                     mapOf(
                         "columns" to result.columns.map { c ->
                             ColumnResponse(
-                                id = c.id, boardId = c.boardId, name = c.name,
+                                id = c.id, projectId = c.projectId, name = c.name,
                                 position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
                             )
                         },

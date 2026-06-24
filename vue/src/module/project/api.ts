@@ -148,12 +148,12 @@ export function listProjectMembers(projectId: string): Promise<ProjectMember[]> 
   )
 }
 
-export function addProjectMember(projectId: string, userId: string): Promise<void> {
-  return post<void>(`/projects/${encodeURIComponent(projectId)}/members`, { user_id: userId })
+export function addProjectMember(projectId: string, userId: string, invitedBy: string): Promise<void> {
+  return post<void>(`/projects/${encodeURIComponent(projectId)}/members`, { user_id: userId, invited_by: invitedBy })
 }
 
-export function removeProjectMember(projectId: string, userId: string): Promise<void> {
-  return del<void>(`/projects/${encodeURIComponent(projectId)}/members?user_id=${encodeURIComponent(userId)}`)
+export function removeProjectMember(projectId: string, userId: string, removedBy: string): Promise<void> {
+  return del<void>(`/projects/${encodeURIComponent(projectId)}/members?user_id=${encodeURIComponent(userId)}&removed_by=${encodeURIComponent(removedBy)}`)
 }
 
 export function listMemberProjects(userId: string): Promise<Project[]> {

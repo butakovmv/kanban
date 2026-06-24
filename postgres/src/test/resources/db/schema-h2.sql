@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS boards (
 
 CREATE TABLE IF NOT EXISTS columns (
     id VARCHAR(36) PRIMARY KEY,
-    board_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36) NOT NULL,
     name VARCHAR(255) NOT NULL,
     position INT NOT NULL DEFAULT 0,
     wip_limit INT,
@@ -66,13 +66,14 @@ CREATE TABLE IF NOT EXISTS columns (
 
 CREATE TABLE IF NOT EXISTS tasks (
     id VARCHAR(36) PRIMARY KEY,
-    board_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36) NOT NULL,
     column_id VARCHAR(36) NOT NULL,
     title VARCHAR(500) NOT NULL,
     description TEXT,
     assignee_id VARCHAR(36),
     position INT NOT NULL DEFAULT 0,
     due_date TIMESTAMP,
+    priority VARCHAR(50),
     archived BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -136,6 +137,16 @@ CREATE TABLE IF NOT EXISTS recovery_tokens (
     user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id VARCHAR(36) PRIMARY KEY,
+    project_id VARCHAR(36),
+    document_id VARCHAR(36),
+    user_id VARCHAR(36) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    details TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

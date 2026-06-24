@@ -22,13 +22,14 @@ export const taskGenerator = {
     const id = `task-${uid()}`
     return {
       id,
-      boardId: `board-${uid()}`,
+      projectId: `project-${uid()}`,
       columnId: `column-${uid()}`,
       title: `Task ${uid()}`,
       description: 'A test task description',
       assigneeId: null,
       position: 0,
       dueDate: null,
+      priority: null,
       archived: false,
       createdAt: new Date('2025-01-01T00:00:00Z').toISOString(),
       updatedAt: new Date('2025-01-02T00:00:00Z').toISOString(),
@@ -36,9 +37,9 @@ export const taskGenerator = {
     }
   },
 
-  tasks(count: number, columnId?: string, boardId?: string): Task[] {
+  tasks(count: number, columnId?: string, projectId?: string): Task[] {
     return Array.from({ length: count }, (_, i) =>
-      this.task({ position: i, columnId, boardId }),
+      this.task({ position: i, columnId, projectId }),
     )
   },
 
@@ -46,13 +47,14 @@ export const taskGenerator = {
     const id = `task-${uid()}`
     return {
       id,
-      board_id: `board-${uid()}`,
+      project_id: `project-${uid()}`,
       column_id: `column-${uid()}`,
       title: `Task ${uid()}`,
       description: 'A test task description',
       assignee_id: null,
       position: 0,
       due_date: null,
+      priority: null,
       archived: false,
       created_at: '2025-01-01T00:00:00.000Z',
       updated_at: '2025-01-02T00:00:00.000Z',
@@ -60,15 +62,15 @@ export const taskGenerator = {
     }
   },
 
-  rawTasks(count: number, columnId?: string, boardId?: string): Record<string, unknown>[] {
+  rawTasks(count: number, columnId?: string, projectId?: string): Record<string, unknown>[] {
     return Array.from({ length: count }, (_, i) =>
-      this.rawTask({ position: i, column_id: columnId, board_id: boardId }),
+      this.rawTask({ position: i, column_id: columnId, project_id: projectId }),
     )
   },
 
   createRequest(overrides: Partial<CreateTaskRequest> = {}): CreateTaskRequest {
     return {
-      boardId: `board-${Math.random().toString(36).slice(2, 8)}`,
+      projectId: `project-${Math.random().toString(36).slice(2, 8)}`,
       columnId: `column-${Math.random().toString(36).slice(2, 8)}`,
       title: `New task ${Math.random().toString(36).slice(2, 6)}`,
       ...overrides,

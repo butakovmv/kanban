@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as taskApi from './api'
+import { useAuthStore } from '../auth/store'
 
 /**
  * Pinia-хранилище состояния задач, комментариев и файлов.
@@ -15,6 +16,7 @@ export const useTaskStore = defineStore('task', () => {
   const files = ref<taskApi.FileAttachment[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const authStore = useAuthStore()
 
   const hasTasks = computed(() => tasks.value.length > 0)
   const hasComments = computed(() => comments.value.length > 0)
@@ -34,15 +36,15 @@ export const useTaskStore = defineStore('task', () => {
 
   /**
    * Загружает список задач на доске.
-   * @param boardId идентификатор доски
+   * @param projectId идентификатор проекта
    * @param includeArchived включать ли архивные задачи
    * @returns true при успешной загрузке, false при ошибке
    */
-  async function loadTasks(boardId: string, includeArchived = false): Promise<boolean> {
+  async function loadTasks(projectId: string, includeArchived = false): Promise<boolean> {
     loading.value = true
     error.value = null
     try {
-      tasks.value = await taskApi.listTasks(boardId, includeArchived)
+      tasks.value = await taskApi.listTasks(projectId, includeArchived)
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Failed to load tasks'
@@ -150,7 +152,7 @@ export const useTaskStore = defineStore('task', () => {
     }
 
     try {
-      const moved = await taskApi.moveTask(id, request)
+      const moved = await taskApi.moveTask(id, { ...request, userId: authStore.user?.id ?? null })
       tasks.value = tasks.value.map((t) => (t.id === id ? moved : t))
       if (currentTask.value !== null && currentTask.value.id === id) {
         currentTask.value = moved

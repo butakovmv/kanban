@@ -9,17 +9,17 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{boardId}/tasks")
+@RequestMapping("/api/v1/projects/{projectId}/tasks")
 internal class ListTasksController(
     private val handler: TaskHandler,
 ) {
     @GetMapping
     suspend fun list(
-        @PathVariable("boardId") boardId: String,
+        @PathVariable("projectId") projectId: String,
         @RequestParam("include_archived", defaultValue = "false") includeArchived: Boolean,
     ): ResponseEntity<*> {
         val result = handler.list(
-            boardId = boardId,
+            projectId = projectId,
             includeArchived = includeArchived,
         )
         return when (result) {
@@ -29,13 +29,14 @@ internal class ListTasksController(
                         "tasks" to result.tasks.map { task ->
                             TaskResponse(
                                 id = task.id,
-                                boardId = task.boardId,
+                                projectId = task.projectId,
                                 columnId = task.columnId,
                                 title = task.title,
                                 description = task.description,
                                 assigneeId = task.assigneeId,
                                 position = task.position,
                                 dueDate = task.dueDate,
+                                priority = task.priority,
                                 archived = task.archived,
                                 createdAt = task.createdAt,
                                 updatedAt = task.updatedAt,

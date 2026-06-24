@@ -7,7 +7,6 @@ const router = useRouter()
 
 const query = ref('')
 const projectId = ref('')
-const boardId = ref('')
 const status = ref('')
 const priority = ref('')
 const assigneeId = ref('')
@@ -29,7 +28,6 @@ function buildParams(): SearchParams {
   return {
     q: query.value,
     ...(projectId.value && { projectId: projectId.value }),
-    ...(boardId.value && { boardId: boardId.value }),
     ...(status.value && { status: status.value }),
     ...(priority.value && { priority: priority.value }),
     ...(assigneeId.value && { assigneeId: assigneeId.value }),
@@ -74,7 +72,6 @@ function onQueryInput() {
 
 function clearFilters() {
   projectId.value = ''
-  boardId.value = ''
   status.value = ''
   priority.value = ''
   assigneeId.value = ''
@@ -99,7 +96,7 @@ function highlight(text: string, q: string): string {
   return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
 }
 
-watch([projectId, boardId, status, priority, assigneeId, dueDateFrom, dueDateTo], () => {
+watch([projectId, status, priority, assigneeId, dueDateFrom, dueDateTo], () => {
   page.value = 1
   doSearch()
 })
@@ -128,10 +125,6 @@ watch([projectId, boardId, status, priority, assigneeId, dueDateFrom, dueDateTo]
         <label>
           Project ID
           <input v-model="projectId" type="text" />
-        </label>
-        <label>
-          Board ID
-          <input v-model="boardId" type="text" />
         </label>
         <label>
           Status

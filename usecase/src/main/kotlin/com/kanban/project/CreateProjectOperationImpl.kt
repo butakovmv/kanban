@@ -62,7 +62,7 @@ internal class CreateProjectOperationImpl(
             defaultColumnNames.mapIndexed { index, name ->
                 Column(
                     id = ColumnId(UUID.randomUUID().toString()),
-                    boardId = boardId,
+                    projectId = projectId,
                     name = name,
                     position = index,
                     wipLimit = null,

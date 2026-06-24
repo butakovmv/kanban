@@ -27,6 +27,12 @@ kanban:
   nats:
     enabled: false
 
+springdoc:
+  api-docs:
+    path: /api/contract.yaml
+  swagger-ui:
+    path: /swagger-ui.html
+
 management:
   endpoints:
     web:
@@ -41,3 +47,4 @@ logging:
     org.springframework.r2dbc: DEBUG
     io.r2dbc.postgresql: DEBUG
     com.kanban.postgres: TRACE
+    ch.qos.logback: WARN

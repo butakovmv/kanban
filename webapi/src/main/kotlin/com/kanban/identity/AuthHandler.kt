@@ -1,5 +1,6 @@
 package com.kanban.identity
 
+import com.kanban.audit.LogAuditEventOperation
 import com.kanban.common.AuthTokens
 
 internal class AuthHandler(
@@ -7,6 +8,7 @@ internal class AuthHandler(
     private val loginWithPasswordOperation: LoginWithPasswordOperation,
     private val refreshTokenOperation: RefreshTokenOperation,
     private val logoutOperation: LogoutOperation,
+    private val logAuditEventOperation: LogAuditEventOperation,
 ) {
     suspend fun register(
         email: String,
@@ -22,7 +24,16 @@ internal class AuthHandler(
                 ),
             )
         return when (result) {
-            is RegisterUserOperation.Result.Success ->
+            is RegisterUserOperation.Result.Success -> {
+                logAuditEventOperation.execute(
+                    LogAuditEventOperation.Arg(
+                        projectId = null,
+                        documentId = null,
+                        userId = result.user.id.value,
+                        action = "user.registered",
+                        details = "{\"email\":\"${result.user.email.value}\",\"display_name\":\"${result.user.displayName}\"}",
+                    ),
+                )
                 AuthResult.Success(
                     accessToken = result.tokens.accessToken.value,
                     refreshToken = result.tokens.refreshToken.value,
@@ -30,6 +41,7 @@ internal class AuthHandler(
                     email = result.user.email.value,
                     displayName = result.user.displayName,
                 )
+            }
             is RegisterUserOperation.Result.Failure ->
                 AuthResult.Failure(reason = result.reason)
         }

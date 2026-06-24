@@ -15,8 +15,8 @@ data class BoardResponse(
 
 data class ColumnResponse(
     val id: String,
-    @JsonProperty("board_id")
-    val boardId: String,
+    @JsonProperty("project_id")
+    val projectId: String,
     val name: String,
     val position: Int,
     @JsonProperty("wip_limit")

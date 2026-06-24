@@ -6,7 +6,7 @@ import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 
 internal data class TaskSearchSpec(
-    val boardId: String,
+    val projectId: String,
     val columnId: String,
     val title: String = "Task-${UUID.randomUUID().toString().take(8)}",
     val description: String? = null,
@@ -24,13 +24,13 @@ internal class TaskSearchGenerator(
             db
                 .sql(
                     """
-                    INSERT INTO tasks (id, board_id, column_id, title, description,
+                    INSERT INTO tasks (id, project_id, column_id, title, description,
                         assignee_id, position, due_date, archived, created_at, updated_at)
-                    VALUES (:id, :boardId, :columnId, :title, :description,
+                    VALUES (:id, :projectId, :columnId, :title, :description,
                         :assigneeId, :position, :dueDate, :archived, :createdAt, :updatedAt)
                     """,
                 ).bind("id", id)
-                .bind("boardId", spec.boardId)
+                .bind("projectId", spec.projectId)
                 .bind("columnId", spec.columnId)
                 .bind("title", spec.title)
                 .bind("position", 0)

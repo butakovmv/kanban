@@ -68,15 +68,9 @@ internal class ReportRepositoryImpl(
         val sb = StringBuilder()
         sb.append("SELECT t.column_id, c.name AS column_name, t.created_at FROM tasks t")
         sb.append(" JOIN columns c ON t.column_id = c.id")
-        if (criteria.projectId != null) {
-            sb.append(" JOIN boards b ON t.board_id = b.id")
-        }
         sb.append(" WHERE t.archived = FALSE AND t.created_at >= :fromDate AND t.created_at <= :toDate")
         if (criteria.projectId != null) {
-            sb.append(" AND b.project_id = :projectId")
-        }
-        if (criteria.boardId != null) {
-            sb.append(" AND t.board_id = :boardId")
+            sb.append(" AND t.project_id = :projectId")
         }
         sb.append(" ORDER BY t.created_at")
         return sb.toString()
@@ -85,15 +79,9 @@ internal class ReportRepositoryImpl(
     private fun buildLeadTimeSql(criteria: ReportCriteria): String {
         val sb = StringBuilder()
         sb.append("SELECT t.id, t.title, t.created_at, t.updated_at FROM tasks t")
-        if (criteria.projectId != null) {
-            sb.append(" JOIN boards b ON t.board_id = b.id")
-        }
         sb.append(" WHERE t.archived = TRUE AND t.created_at >= :fromDate AND t.created_at <= :toDate")
         if (criteria.projectId != null) {
-            sb.append(" AND b.project_id = :projectId")
-        }
-        if (criteria.boardId != null) {
-            sb.append(" AND t.board_id = :boardId")
+            sb.append(" AND t.project_id = :projectId")
         }
         sb.append(" ORDER BY t.created_at")
         return sb.toString()
@@ -105,7 +93,6 @@ internal class ReportRepositoryImpl(
     ): DatabaseClient.GenericExecuteSpec {
         var s = spec
         criteria.projectId?.let { s = s.bind("projectId", UUID.fromString(it)) }
-        criteria.boardId?.let { s = s.bind("boardId", UUID.fromString(it)) }
         return s
     }
 

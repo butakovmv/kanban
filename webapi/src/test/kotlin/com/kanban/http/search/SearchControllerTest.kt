@@ -50,7 +50,7 @@ internal class SearchControllerTest : BaseSearchControllerTest() {
                 builder
                     .path("/api/v1/search")
                     .queryParam("q", "test")
-                    .queryParam("board_id", "board-1")
+                    .queryParam("project_id", "project-1")
                     .queryParam("assignee_id", "user-1")
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -73,7 +73,7 @@ internal class SearchControllerTest : BaseSearchControllerTest() {
             searchOperation.execute(
                 match {
                     it.criteria.query == "test" &&
-                        it.criteria.boardId == "board-1" &&
+                        it.criteria.projectId == "project-1" &&
                         it.criteria.assigneeId == "user-1"
                 },
             )
@@ -167,7 +167,6 @@ internal class SearchControllerTest : BaseSearchControllerTest() {
                 match {
                     it.criteria.query == "bug" &&
                         it.criteria.projectId == "proj-1" &&
-                        it.criteria.boardId == "board-1" &&
                         it.criteria.status == "in_progress" &&
                         it.criteria.priority == "high" &&
                         it.criteria.assigneeId == "user-1" &&

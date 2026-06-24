@@ -55,15 +55,15 @@ internal class TaskRepositoryImpl(
             .sql(
                 """
                 UPDATE tasks SET
-                    board_id = :boardId, column_id = :columnId,
+                    project_id = :projectId, column_id = :columnId,
                     title = :title, description = :description,
                     assignee_id = :assigneeId, position = :position,
-                    due_date = :dueDate, archived = :archived,
-                    updated_at = :updatedAt
+                    due_date = :dueDate, priority = :priority,
+                    archived = :archived, updated_at = :updatedAt
                 WHERE id = :id
                 """,
             ).bind("id", UUID.fromString(task.id.value))
-            .bind("boardId", UUID.fromString(task.boardId.value))
+            .bind("projectId", UUID.fromString(task.projectId.value))
             .bind("columnId", UUID.fromString(task.columnId.value))
             .bind("title", task.title)
             .let { spec ->
@@ -87,6 +87,13 @@ internal class TaskRepositoryImpl(
                     spec.bind("dueDate", due)
                 } else {
                     spec.bindNull("dueDate", LocalDateTime::class.java)
+                }
+            }.let { spec ->
+                val priority = task.priority
+                if (priority != null) {
+                    spec.bind("priority", priority)
+                } else {
+                    spec.bindNull("priority", String::class.java)
                 }
             }.bind("archived", archived)
             .bind("updatedAt", updatedAt)
@@ -108,13 +115,13 @@ internal class TaskRepositoryImpl(
         db
             .sql(
                 """
-                INSERT INTO tasks (id, board_id, column_id, title, description,
-                    assignee_id, position, due_date, archived, created_at, updated_at)
-                VALUES (:id, :boardId, :columnId, :title, :description,
-                    :assigneeId, :position, :dueDate, :archived, :createdAt, :updatedAt)
+                INSERT INTO tasks (id, project_id, column_id, title, description,
+                    assignee_id, position, due_date, priority, archived, created_at, updated_at)
+                VALUES (:id, :projectId, :columnId, :title, :description,
+                    :assigneeId, :position, :dueDate, :priority, :archived, :createdAt, :updatedAt)
                 """,
             ).bind("id", UUID.fromString(task.id.value))
-            .bind("boardId", UUID.fromString(task.boardId.value))
+            .bind("projectId", UUID.fromString(task.projectId.value))
             .bind("columnId", UUID.fromString(task.columnId.value))
             .bind("title", task.title)
             .let { spec ->
@@ -138,6 +145,13 @@ internal class TaskRepositoryImpl(
                     spec.bind("dueDate", due)
                 } else {
                     spec.bindNull("dueDate", LocalDateTime::class.java)
+                }
+            }.let { spec ->
+                val priority = task.priority
+                if (priority != null) {
+                    spec.bind("priority", priority)
+                } else {
+                    spec.bindNull("priority", String::class.java)
                 }
             }.bind("archived", task.archived)
             .bind("createdAt", createdAt)
@@ -175,25 +189,25 @@ internal class TaskRepositoryImpl(
             .awaitFirstOrNull()
 
     /**
-     * Получение списка задач указанной доски, упорядоченных по позиции.
+     * Получение списка задач указанного проекта, упорядоченных по позиции.
      * По умолчанию архивные задачи исключаются из результата.
-     * @param boardId идентификатор доски
+     * @param projectId идентификатор проекта
      * @param includeArchived включать ли архивные задачи
-     * @return список [Task] доски
+     * @return список [Task] проекта
      */
-    override suspend fun listByBoardId(
-        boardId: String,
+    override suspend fun listByProjectId(
+        projectId: String,
         includeArchived: Boolean,
     ): List<Task> {
         val sql =
             if (includeArchived) {
-                "SELECT * FROM tasks WHERE board_id = :boardId ORDER BY position"
+                "SELECT * FROM tasks WHERE project_id = :projectId ORDER BY position"
             } else {
-                "SELECT * FROM tasks WHERE board_id = :boardId AND archived = FALSE ORDER BY position"
+                "SELECT * FROM tasks WHERE project_id = :projectId AND archived = FALSE ORDER BY position"
             }
         return db
             .sql(sql)
-            .bind("boardId", UUID.fromString(boardId))
+            .bind("projectId", UUID.fromString(projectId))
             .map { row, _ -> row.toTask() }
             .all()
             .collectList()
@@ -232,7 +246,7 @@ internal class TaskRepositoryImpl(
      * Позиции рассчитываются по порядку элементов в переданном списке
      * (значения `position` из доменной сущности игнорируются и перезаписываются индексом).
      * Также обновляется принадлежность к колонке, что позволяет выполнять перемещение между колонками.
-     * @param tasks задачи с идентификаторами и принадлежностью к доске/колонке
+     * @param tasks задачи с идентификаторами и принадлежностью к проекту/колонке
      */
     override suspend fun updatePositions(tasks: List<Task>) {
         if (tasks.isEmpty()) return
@@ -242,12 +256,12 @@ internal class TaskRepositoryImpl(
                 .sql(
                     """
                     UPDATE tasks SET
-                        board_id = :boardId, column_id = :columnId,
+                        project_id = :projectId, column_id = :columnId,
                         position = :position, updated_at = :updatedAt
                     WHERE id = :id
                     """,
                 ).bind("id", UUID.fromString(task.id.value))
-                .bind("boardId", UUID.fromString(task.boardId.value))
+                .bind("projectId", UUID.fromString(task.projectId.value))
                 .bind("columnId", UUID.fromString(task.columnId.value))
                 .bind("position", index)
                 .bind("updatedAt", LocalDateTime.now(z))
@@ -280,13 +294,14 @@ internal class TaskRepositoryImpl(
         val table =
             TaskTable(
                 id = get("id", String::class.java)!!,
-                boardId = get("board_id", String::class.java)!!,
+                projectId = get("project_id", String::class.java)!!,
                 columnId = get("column_id", String::class.java)!!,
                 title = get("title", String::class.java)!!,
                 description = get("description", String::class.java),
                 assigneeId = get("assignee_id", String::class.java),
                 position = get("position", java.lang.Integer::class.java)!!.toInt(),
                 dueDate = get("due_date", java.time.LocalDateTime::class.java),
+                priority = get("priority", String::class.java),
                 archived = get("archived", java.lang.Boolean::class.java)!!.booleanValue(),
                 createdAt = get("created_at", java.time.LocalDateTime::class.java)!!,
                 updatedAt = get("updated_at", java.time.LocalDateTime::class.java)!!,

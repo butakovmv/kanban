@@ -23,14 +23,14 @@ interface TaskRepository {
     suspend fun findById(id: String): Task?
 
     /**
-     * Возвращает список задач указанной доски, упорядоченный по позиции.
+     * Возвращает список задач указанного проекта, упорядоченный по позиции.
      *
-     * @param boardId идентификатор доски
+     * @param projectId идентификатор проекта
      * @param includeArchived включать ли архивные задачи в результат
-     * @return список задач доски
+     * @return список задач проекта
      */
-    suspend fun listByBoardId(
-        boardId: String,
+    suspend fun listByProjectId(
+        projectId: String,
         includeArchived: Boolean = false,
     ): List<Task>
 

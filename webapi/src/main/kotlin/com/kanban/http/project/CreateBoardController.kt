@@ -39,7 +39,7 @@ internal class CreateBoardController(
                         ),
                         columns = v.columns.map { c ->
                             ColumnResponse(
-                                id = c.id, boardId = c.boardId, name = c.name,
+                                id = c.id, projectId = c.projectId, name = c.name,
                                 position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
                             )
                         },

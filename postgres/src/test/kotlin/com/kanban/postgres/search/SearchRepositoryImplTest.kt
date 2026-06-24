@@ -70,7 +70,7 @@ internal class SearchRepositoryImplTest {
         runTest {
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Alpha release",
                     description = "First version",
@@ -78,7 +78,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Beta testing",
                     description = "Second phase",
@@ -86,7 +86,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Gamma feature",
                     description = "Third iteration",
@@ -97,7 +97,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = "beta",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -117,7 +116,7 @@ internal class SearchRepositoryImplTest {
         runTest {
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Main",
                     description = "This is a critical feature",
@@ -125,7 +124,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Other",
                     description = "Minor fix",
@@ -136,7 +135,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = "critical",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -165,7 +163,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = null,
                     projectId = null,
-                    boardId = boardId,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -184,17 +181,16 @@ internal class SearchRepositoryImplTest {
     fun `should filter by project id`() =
         runTest {
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Project A task"),
+                TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Project A task"),
             )
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = otherBoardId, columnId = otherColumnId, title = "Project B task"),
+                TaskSearchSpec(projectId = otherProjectId, columnId = otherColumnId, title = "Project B task"),
             )
 
             val criteria =
                 SearchCriteria(
                     query = null,
                     projectId = projectId,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -214,7 +210,7 @@ internal class SearchRepositoryImplTest {
         runTest {
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "User 1 task",
                     assigneeId = "00000000-0000-0000-0000-000000000001",
@@ -222,7 +218,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "User 2 task",
                     assigneeId = "00000000-0000-0000-0000-000000000002",
@@ -233,7 +229,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = null,
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = "00000000-0000-0000-0000-000000000001",
@@ -256,7 +251,7 @@ internal class SearchRepositoryImplTest {
             val now = nowInstant.atZone(z).toLocalDateTime()
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Past task",
                     dueDate = now.minusDays(5),
@@ -264,7 +259,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Current task",
                     dueDate = now.plusDays(1),
@@ -272,7 +267,7 @@ internal class SearchRepositoryImplTest {
             )
             taskGenerator.createAndInsert(
                 TaskSearchSpec(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = "Future task",
                     dueDate = now.plusDays(10),
@@ -283,7 +278,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = null,
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -303,7 +297,7 @@ internal class SearchRepositoryImplTest {
         runTest {
             repeat(5) { i ->
                 taskGenerator.createAndInsert(
-                    TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Task ${i + 1}"),
+                    TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Task ${i + 1}"),
                 )
             }
 
@@ -311,7 +305,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = null,
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -336,20 +329,19 @@ internal class SearchRepositoryImplTest {
     fun `should count total matching results`() =
         runTest {
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Alpha feature"),
+                TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Alpha feature"),
             )
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Beta feature"),
+                TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Beta feature"),
             )
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Gamma feature"),
+                TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Gamma feature"),
             )
 
             val criteria =
                 SearchCriteria(
                     query = "feature",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -369,19 +361,19 @@ internal class SearchRepositoryImplTest {
             val now = LocalDateTime.now()
             val activeId =
                 taskGenerator.createAndInsert(
-                    TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Active task"),
+                    TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Active task"),
                 )
             val archivedId = UUID.randomUUID().toString()
             db
                 .sql(
                     """
-                    INSERT INTO tasks (id, board_id, column_id, title, description,
+                    INSERT INTO tasks (id, project_id, column_id, title, description,
                         assignee_id, position, due_date, archived, created_at, updated_at)
-                    VALUES (:id, :boardId, :columnId, :title, :description,
+                    VALUES (:id, :projectId, :columnId, :title, :description,
                         :assigneeId, :position, :dueDate, :archived, :createdAt, :updatedAt)
                     """,
                 ).bind("id", archivedId)
-                .bind("boardId", boardId)
+                .bind("projectId", projectId)
                 .bind("columnId", columnId)
                 .bind("title", "Archived task")
                 .bindNull("description", String::class.java)
@@ -399,7 +391,6 @@ internal class SearchRepositoryImplTest {
                 SearchCriteria(
                     query = null,
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -418,14 +409,13 @@ internal class SearchRepositoryImplTest {
     fun `should return empty list when nothing matches`() =
         runTest {
             taskGenerator.createAndInsert(
-                TaskSearchSpec(boardId = boardId, columnId = columnId, title = "Something"),
+                TaskSearchSpec(projectId = projectId, columnId = columnId, title = "Something"),
             )
 
             val criteria =
                 SearchCriteria(
                     query = "nonexistent",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,

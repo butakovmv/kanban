@@ -22,6 +22,7 @@ internal class UpdateTaskOperationImpl(
                 description = arg.description ?: existing.description,
                 assigneeId = arg.assigneeId ?: existing.assigneeId,
                 dueDate = arg.dueDate ?: existing.dueDate,
+                priority = arg.priority ?: existing.priority,
                 updatedAt = Instant.now(),
             )
         val saved = taskRepository.save(updated)

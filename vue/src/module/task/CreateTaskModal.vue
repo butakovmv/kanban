@@ -8,12 +8,12 @@ import { computed, ref, watch } from 'vue'
 import type { CreateTaskRequest } from './api'
 import { useProjectStore } from '../project/store'
 import { useUserStore } from '../user/store'
+import { useAuthStore } from '../auth/store'
 
 const props = defineProps<{
-  boardId: string
+  projectId: string
   columnId: string
   loading?: boolean
-  projectId?: string
 }>()
 
 const emit = defineEmits<{
@@ -23,10 +23,12 @@ const emit = defineEmits<{
 
 const projectStore = useProjectStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const title = ref('')
 const description = ref('')
 const assigneeId = ref('')
+const priority = ref('')
 
 const memberOptions = computed(() => {
   const owner = projectStore.currentProject
@@ -52,6 +54,7 @@ watch(
     title.value = ''
     description.value = ''
     assigneeId.value = ''
+    priority.value = ''
   },
 )
 
@@ -80,15 +83,19 @@ function onSubmit() {
     return
   }
   const request: CreateTaskRequest = {
-    boardId: props.boardId,
+    projectId: props.projectId,
     columnId: props.columnId,
     title: trimmed,
+    userId: authStore.user?.id ?? null,
   }
   if (description.value.trim() !== '') {
     request.description = description.value
   }
   if (assigneeId.value !== '') {
     request.assigneeId = assigneeId.value
+  }
+  if (priority.value !== '') {
+    request.priority = priority.value
   }
   emit('submit', request)
 }
@@ -141,6 +148,16 @@ function onCancel() {
             <option v-for="opt in memberOptions" :key="opt.id" :value="opt.id">
               {{ opt.name }}
             </option>
+          </select>
+        </label>
+        <label class="modal__field">
+          <span>Priority</span>
+          <select v-model="priority" class="modal__input">
+            <option value="">—</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
           </select>
         </label>
         <div class="modal__actions">

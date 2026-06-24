@@ -22,7 +22,6 @@ internal class ReportHandler(
 
     suspend fun getCfd(
         projectId: String?,
-        boardId: String?,
         from: Instant,
         to: Instant,
         interval: Interval,
@@ -33,7 +32,6 @@ internal class ReportHandler(
                     criteria =
                         ReportCriteria(
                             projectId = projectId,
-                            boardId = boardId,
                             fromDate = from,
                             toDate = to,
                             interval = interval,
@@ -59,7 +57,6 @@ internal class ReportHandler(
                     criteria =
                         ReportCriteria(
                             projectId = projectId,
-                            boardId = null,
                             fromDate = from,
                             toDate = to,
                             interval = Interval.DAY,

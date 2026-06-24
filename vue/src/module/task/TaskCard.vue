@@ -156,7 +156,10 @@ function onDragEnd() {
 
     <div v-if="descriptionPreview" class="task-card__description">{{ descriptionPreview }}</div>
 
-    <div v-if="assigneeName" class="task-card__assignee">{{ assigneeName }}</div>
+    <div class="task-card__meta-row">
+      <span v-if="task.priority" class="task-card__priority" :class="`task-card__priority--${task.priority}`" :title="task.priority.charAt(0).toUpperCase() + task.priority.slice(1)" />
+      <span v-if="assigneeName" class="task-card__assignee">{{ assigneeName }}</span>
+    </div>
 
     <div v-if="formattedDueDate" class="task-card__due">Due: {{ formattedDueDate }}</div>
 
@@ -256,6 +259,30 @@ function onDragEnd() {
 .task-card__due {
   font-size: 0.7rem;
   color: var(--color-text-secondary);
+}
+.task-card__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.task-card__priority {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.task-card__priority--low {
+  background: #9e9e9e;
+}
+.task-card__priority--medium {
+  background: #4caf50;
+}
+.task-card__priority--high {
+  background: #ff9800;
+}
+.task-card__priority--critical {
+  background: #f44336;
 }
 .task-card__actions {
   display: flex;

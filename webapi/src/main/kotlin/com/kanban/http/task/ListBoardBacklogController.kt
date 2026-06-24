@@ -8,15 +8,15 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{boardId}/backlog")
+@RequestMapping("/api/v1/projects/{projectId}/backlog")
 internal class ListBoardBacklogController(
     private val handler: TaskHandler,
 ) {
     @GetMapping
     suspend fun listBacklog(
-        @PathVariable("boardId") boardId: String,
+        @PathVariable("projectId") projectId: String,
     ): ResponseEntity<*> {
-        val result = handler.listBoardBacklog(boardId = boardId)
+        val result = handler.listBoardBacklog(projectId = projectId)
         return when (result) {
             is TaskHandler.ListBoardBacklogResult.Success ->
                 ResponseEntity.ok(
@@ -24,13 +24,14 @@ internal class ListBoardBacklogController(
                         "tasks" to result.tasks.map { task ->
                             TaskResponse(
                                 id = task.id,
-                                boardId = task.boardId,
+                                projectId = task.projectId,
                                 columnId = task.columnId,
                                 title = task.title,
                                 description = task.description,
                                 assigneeId = task.assigneeId,
                                 position = task.position,
                                 dueDate = task.dueDate,
+                                priority = task.priority,
                                 archived = task.archived,
                                 createdAt = task.createdAt,
                                 updatedAt = task.updatedAt,

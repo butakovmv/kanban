@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{id}")
+@RequestMapping("/api/v1/projects/{projectId}/board")
 internal class GetBoardController(
     private val handler: BoardHandler,
 ) {
     @GetMapping
-    suspend fun get(@PathVariable("id") id: String): ResponseEntity<*> {
-        val result = handler.get(boardId = id)
+    suspend fun get(@PathVariable("projectId") projectId: String): ResponseEntity<*> {
+        val result = handler.getByProjectId(projectId = projectId)
         return when (result) {
             is BoardHandler.GetBoardResult.Success -> {
                 val v = result.view
@@ -26,7 +26,7 @@ internal class GetBoardController(
                         ),
                         columns = v.columns.map { c ->
                             ColumnResponse(
-                                id = c.id, boardId = c.boardId, name = c.name,
+                                id = c.id, projectId = c.projectId, name = c.name,
                                 position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
                             )
                         },

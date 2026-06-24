@@ -29,9 +29,9 @@ internal class SearchRepositoryImpl(
                     status = row.get("status", String::class.java) ?: "",
                     priority = row.get("priority", String::class.java),
                     assigneeId = row.get("assignee_id", String::class.java),
-                    boardId = row.get("board_id", String::class.java)!!,
                     columnId = row.get("column_id", String::class.java)!!,
                     projectId = row.get("project_id", String::class.java)!!,
+                    boardId = row.get("board_id", String::class.java)!!,
                     dueDate = row.get("due_date", LocalDateTime::class.java)?.atZone(z)?.toInstant(),
                     createdAt = row.get("created_at", LocalDateTime::class.java)!!.atZone(z).toInstant(),
                     updatedAt = row.get("updated_at", LocalDateTime::class.java)!!.atZone(z).toInstant(),
@@ -57,12 +57,12 @@ internal class SearchRepositoryImpl(
             t.id, t.title, t.description,
             '' AS status,
             NULL AS priority,
-            t.assignee_id, t.board_id, t.column_id,
-            b.project_id,
+            t.assignee_id, t.column_id,
+            t.project_id, b.id AS board_id,
             t.due_date, t.created_at, t.updated_at,
             ts_rank(t.search_vector, plainto_tsquery('russian', :query)) AS rank
         FROM tasks t
-        JOIN boards b ON b.id = t.board_id
+        JOIN boards b ON t.project_id = b.project_id AND b.archived = FALSE
         WHERE t.archived = FALSE
         """.trimIndent() +
             filterClauses(criteria) +
@@ -74,7 +74,6 @@ internal class SearchRepositoryImpl(
         """
         SELECT COUNT(*) AS cnt
         FROM tasks t
-        JOIN boards b ON b.id = t.board_id
         WHERE t.archived = FALSE
         """.trimIndent() +
             filterClauses(criteria)
@@ -85,10 +84,7 @@ internal class SearchRepositoryImpl(
             clauses.add("t.search_vector @@ plainto_tsquery('russian', :query)")
         }
         if (criteria.projectId != null) {
-            clauses.add("b.project_id = :projectId")
-        }
-        if (criteria.boardId != null) {
-            clauses.add("t.board_id = :boardId")
+            clauses.add("t.project_id = :projectId")
         }
         if (criteria.assigneeId != null) {
             clauses.add("t.assignee_id = :assigneeId")
@@ -110,7 +106,6 @@ internal class SearchRepositoryImpl(
         var s = spec
         criteria.query?.let { s = s.bind("query", it) }
         criteria.projectId?.let { s = s.bind("projectId", UUID.fromString(it)) }
-        criteria.boardId?.let { s = s.bind("boardId", UUID.fromString(it)) }
         criteria.assigneeId?.let { s = s.bind("assigneeId", UUID.fromString(it)) }
         criteria.dueDateFrom?.let { s = s.bind("dueDateFrom", it.atZone(z).toLocalDateTime()) }
         criteria.dueDateTo?.let { s = s.bind("dueDateTo", it.atZone(z).toLocalDateTime()) }

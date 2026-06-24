@@ -19,7 +19,6 @@ export interface SearchResult {
 export interface SearchParams {
   q: string
   projectId?: string
-  boardId?: string
   status?: string
   priority?: string
   assigneeId?: string
@@ -38,7 +37,6 @@ function toSnakeCase(params: SearchParams): Record<string, string> {
   const q: Record<string, string> = {}
   q['q'] = params.q
   if (params.projectId !== undefined) q['project_id'] = params.projectId
-  if (params.boardId !== undefined) q['board_id'] = params.boardId
   if (params.status !== undefined) q['status'] = params.status
   if (params.priority !== undefined) q['priority'] = params.priority
   if (params.assigneeId !== undefined) q['assignee_id'] = params.assigneeId

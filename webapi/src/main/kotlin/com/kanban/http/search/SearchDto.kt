@@ -11,12 +11,12 @@ data class SearchItemResponse(
     val priority: String?,
     @JsonProperty("assignee_id")
     val assigneeId: String?,
-    @JsonProperty("board_id")
-    val boardId: String,
-    @JsonProperty("column_id")
-    val columnId: String,
     @JsonProperty("project_id")
     val projectId: String,
+    @JsonProperty("column_id")
+    val columnId: String,
+    @JsonProperty("board_id")
+    val boardId: String,
     @JsonProperty("due_date")
     val dueDate: Instant?,
     @JsonProperty("created_at")

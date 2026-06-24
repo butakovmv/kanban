@@ -53,9 +53,9 @@ internal class TestSearchRepositoryImpl(
         val base =
             StringBuilder()
                 .append("SELECT t.id, t.title, t.description, t.assignee_id, ")
-                .append("t.board_id, t.column_id, b.project_id, ")
+                .append("t.column_id, t.project_id, b.id AS board_id, ")
                 .append("t.due_date, t.created_at, t.updated_at ")
-                .append("FROM tasks t JOIN boards b ON b.id = t.board_id ")
+                .append("FROM tasks t JOIN boards b ON t.project_id = b.project_id ")
                 .append("WHERE t.archived = FALSE")
                 .toString()
         val clauses = filterClauses(criteria)
@@ -67,7 +67,7 @@ internal class TestSearchRepositoryImpl(
         val base =
             StringBuilder()
                 .append("SELECT COUNT(*) AS cnt ")
-                .append("FROM tasks t JOIN boards b ON b.id = t.board_id ")
+                .append("FROM tasks t JOIN boards b ON t.project_id = b.project_id ")
                 .append("WHERE t.archived = FALSE")
                 .toString()
         val clauses = filterClauses(criteria)
@@ -83,10 +83,7 @@ internal class TestSearchRepositoryImpl(
             )
         }
         if (criteria.projectId != null) {
-            clauses.add("b.project_id = :projectId")
-        }
-        if (criteria.boardId != null) {
-            clauses.add("t.board_id = :boardId")
+            clauses.add("t.project_id = :projectId")
         }
         if (criteria.assigneeId != null) {
             clauses.add("t.assignee_id = :assigneeId")
@@ -108,7 +105,6 @@ internal class TestSearchRepositoryImpl(
         var s = spec
         criteria.query?.let { s = s.bind("query", it) }
         criteria.projectId?.let { s = s.bind("projectId", it) }
-        criteria.boardId?.let { s = s.bind("boardId", it) }
         criteria.assigneeId?.let { s = s.bind("assigneeId", it) }
         criteria.dueDateFrom?.let { s = s.bind("dueDateFrom", it.atZone(z).toLocalDateTime()) }
         criteria.dueDateTo?.let { s = s.bind("dueDateTo", it.atZone(z).toLocalDateTime()) }

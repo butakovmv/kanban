@@ -3,6 +3,7 @@ package com.kanban.http.user
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.kanban.identity.UserDisplayInfo
 import com.kanban.identity.UserHandler
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -20,7 +21,9 @@ internal class ListUsersController(
     ): ResponseEntity<*> {
         val userIds = ids.split(",").map { it.trim() }.filter { it.isNotBlank() }
         val users = handler.findUsers(userIds)
-        return ResponseEntity.ok(mapOf("users" to users.map { it.toResponse() }))
+        return ResponseEntity.ok()
+            .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(2)))
+            .body(mapOf("users" to users.map { it.toResponse() }))
     }
 }
 

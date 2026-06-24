@@ -17,8 +17,9 @@ internal class RemoveProjectMemberController(
     suspend fun removeMember(
         @PathVariable("id") projectId: String,
         @RequestParam("user_id") userId: String,
+        @RequestParam("removed_by") removedBy: String,
     ): ResponseEntity<*> {
-        val result = handler.removeMember(projectId = projectId, userId = userId)
+        val result = handler.removeMember(projectId = projectId, userId = userId, removedBy = removedBy)
         return when (result) {
             ProjectHandler.RemoveProjectMemberResult.Success ->
                 ResponseEntity.ok(mapOf("status" to "ok"))

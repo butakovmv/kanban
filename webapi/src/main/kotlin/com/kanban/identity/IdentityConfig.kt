@@ -1,5 +1,6 @@
 package com.kanban.identity
 
+import com.kanban.audit.LogAuditEventOperation
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -24,12 +25,14 @@ internal class IdentityConfig {
         loginWithPasswordOperation: LoginWithPasswordOperation,
         refreshTokenOperation: RefreshTokenOperation,
         logoutOperation: LogoutOperation,
+        logAuditEventOperation: LogAuditEventOperation,
     ): AuthHandler =
         AuthHandler(
             registerUserOperation = registerUserOperation,
             loginWithPasswordOperation = loginWithPasswordOperation,
             refreshTokenOperation = refreshTokenOperation,
             logoutOperation = logoutOperation,
+            logAuditEventOperation = logAuditEventOperation,
         )
 
     /**

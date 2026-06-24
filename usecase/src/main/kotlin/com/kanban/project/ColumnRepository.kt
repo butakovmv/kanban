@@ -23,12 +23,12 @@ interface ColumnRepository {
     suspend fun findById(id: String): Column?
 
     /**
-     * Возвращает список колонок указанной доски, упорядоченный по позиции.
+     * Возвращает список колонок указанного проекта, упорядоченный по позиции.
      *
-     * @param boardId идентификатор доски
-     * @return список колонок доски
+     * @param projectId идентификатор проекта
+     * @return список колонок проекта
      */
-    suspend fun listByBoardId(boardId: String): List<Column>
+    suspend fun listByProjectId(projectId: String): List<Column>
 
     /**
      * Удаляет колонку по идентификатору.

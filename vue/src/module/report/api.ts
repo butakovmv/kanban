@@ -16,7 +16,6 @@ export interface LeadTimeDataPoint {
 
 export interface CfdParams {
   projectId?: string
-  boardId?: string
   from: string
   to: string
   interval: 'DAY' | 'WEEK' | 'MONTH'
@@ -35,7 +34,6 @@ function cfdParamsToQuery(params: CfdParams): string {
     interval: params.interval,
   }
   if (params.projectId !== undefined) q['project_id'] = params.projectId
-  if (params.boardId !== undefined) q['board_id'] = params.boardId
   return new URLSearchParams(q).toString()
 }
 

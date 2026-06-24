@@ -1,19 +1,19 @@
 package com.kanban.postgres.project
 
-import com.kanban.common.BoardId
 import com.kanban.common.ColumnId
+import com.kanban.common.ProjectId
 import com.kanban.project.Column
 import java.time.ZoneId
 
 /**
  * Маппинг табличной сущности [ColumnTable] в доменную сущность [Column].
  * Преобразует сырые типы (String, Int?, LocalDateTime) в типы предметной области
- * (ColumnId, BoardId, Instant).
+ * (ColumnId, ProjectId, Instant).
  */
 internal fun ColumnTable.toDomain(): Column =
     Column(
         id = ColumnId(id),
-        boardId = BoardId(boardId),
+        projectId = ProjectId(projectId),
         name = name,
         position = position,
         wipLimit = wipLimit,
@@ -27,7 +27,7 @@ internal fun ColumnTable.toDomain(): Column =
 internal fun Column.toTable(): ColumnTable =
     ColumnTable(
         id = id.value,
-        boardId = boardId.value,
+        projectId = projectId.value,
         name = name,
         position = position,
         wipLimit = wipLimit,

@@ -89,31 +89,8 @@ describe('TaskCard', () => {
     expect(api.updateTask).toHaveBeenCalledWith('t-1', { title: 'New' })
   })
 
-  it('opens the move menu and calls moveTask when a column is chosen', async () => {
-    const task = taskGenerator.task({ id: 't-1', columnId: 'c-1' })
-    const moved = taskGenerator.task({ id: 't-1', columnId: 'c-2' })
-    vi.mocked(api.moveTask).mockResolvedValue(moved)
-
-    const wrapper = mount(TaskCard, {
-      props: { task, columns },
-    })
-
-    const moveButton = wrapper.findAll('.task-card__action').find((b) => b.text() === 'Move')
-    expect(moveButton).toBeDefined()
-    await moveButton!.trigger('click')
-
-    const items = wrapper.findAll('.task-card__menu-item')
-    expect(items).toHaveLength(2)
-
-    const doneItem = items.find((i) => i.text() === 'Done')
-    expect(doneItem).toBeDefined()
-    await doneItem!.trigger('click')
-
-    expect(api.moveTask).toHaveBeenCalledWith('t-1', { columnId: 'c-2', position: 0 })
-  })
-
   it('confirms and deletes the task when the user accepts', async () => {
-    const task = taskGenerator.task({ id: 't-1' })
+    const task = taskGenerator.task({ id: 't-1', archived: true })
     vi.mocked(api.deleteTask).mockResolvedValue(undefined)
 
     const wrapper = mount(TaskCard, {

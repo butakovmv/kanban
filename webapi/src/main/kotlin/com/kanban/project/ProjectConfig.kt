@@ -1,5 +1,6 @@
 package com.kanban.project
 
+import com.kanban.audit.LogAuditEventOperation
 import com.kanban.sse.SinkService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,6 +24,7 @@ internal class ProjectConfig {
         addProjectMemberOperation: AddProjectMemberOperation,
         removeProjectMemberOperation: RemoveProjectMemberOperation,
         listMemberProjectsOperation: ListMemberProjectsOperation,
+        logAuditEventOperation: LogAuditEventOperation,
     ): ProjectHandler =
         ProjectHandler(
             createProjectOperation = createProjectOperation,
@@ -34,6 +36,7 @@ internal class ProjectConfig {
             addProjectMemberOperation = addProjectMemberOperation,
             removeProjectMemberOperation = removeProjectMemberOperation,
             listMemberProjectsOperation = listMemberProjectsOperation,
+            logAuditEventOperation = logAuditEventOperation,
         )
 
     /**

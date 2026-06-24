@@ -11,8 +11,6 @@ import { storeToRefs } from 'pinia'
 import { useTaskStore } from './store'
 import { useAuthStore } from '../auth/store'
 import { useProjectStore } from '../project/store'
-import { useRealtime } from '../realtime/useRealtime'
-import { getBoard } from '../board/api'
 import CommentSystem from './CommentSystem.vue'
 import FileUpload from './FileUpload.vue'
 import { useUserStore } from '../user/store'
@@ -24,12 +22,14 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 const projectStore = useProjectStore()
 const { currentTask, comments, files, loading, error } = storeToRefs(taskStore)
+const { user: currentUser } = storeToRefs(authStore)
 
 const editing = ref(false)
 const draftTitle = ref('')
 const draftDescription = ref('')
 const draftAssigneeId = ref('')
 const draftDueDate = ref('')
+const draftPriority = ref('')
 const showDeleteConfirm = ref(false)
 const memberOptions = ref<{ id: string; name: string }[]>([])
 
@@ -75,14 +75,9 @@ async function resolveProjectAndLoadMembers() {
     await loadMembers(qp)
     return
   }
-  const boardId = currentTask.value?.boardId
-  if (!boardId) return
-  try {
-    const boardView = await getBoard(boardId)
-    await loadMembers(boardView.board.projectId)
-  } catch {
-    // fallback: no project context
-  }
+  const projectId = currentTask.value?.projectId
+  if (!projectId) return
+  await loadMembers(projectId)
 }
 
 async function load() {
@@ -104,9 +99,6 @@ async function load() {
 onMounted(load)
 watch(taskId, load)
 
-const taskBoardId = computed(() => currentTask.value?.boardId)
-useRealtime(taskBoardId)
-
 function backToBoard() {
   router.back()
 }
@@ -119,6 +111,7 @@ function startEdit() {
   draftDescription.value = currentTask.value.description ?? ''
   draftAssigneeId.value = currentTask.value.assigneeId ?? ''
   draftDueDate.value = currentTask.value.dueDate ?? ''
+  draftPriority.value = currentTask.value.priority ?? ''
   editing.value = true
 }
 
@@ -137,11 +130,14 @@ async function commitEdit() {
   const description = draftDescription.value.trim()
   const assigneeId = draftAssigneeId.value.trim()
   const dueDate = draftDueDate.value.trim()
+  const priority = draftPriority.value.trim()
   await taskStore.updateTask(taskId.value, {
     title,
     description: description === '' ? null : description,
     assigneeId: assigneeId === '' ? null : assigneeId,
     dueDate: dueDate === '' ? null : dueDate,
+    priority: priority === '' ? null : priority,
+    userId: currentUser.value?.id,
   })
   editing.value = false
 }
@@ -165,10 +161,10 @@ async function confirmDelete() {
   if (taskId.value === undefined) {
     return
   }
-  const boardId = currentTask.value?.boardId
+  const projectId = currentTask.value?.projectId
   const ok = await taskStore.deleteTask(taskId.value)
-  if (ok && boardId !== undefined) {
-    await router.push(`/boards/${boardId}`)
+  if (ok && projectId !== undefined) {
+    await router.push(`/projects/${projectId}/board`)
   }
 }
 
@@ -270,6 +266,16 @@ watch(() => currentTask.value?.assigneeId, (id) => {
               class="task-detail__input"
             />
           </label>
+          <label>
+            <span>Priority</span>
+            <select v-model="draftPriority" class="task-detail__input">
+              <option value="">—</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </label>
           <div class="task-detail__form-actions">
             <button type="submit" class="task-detail__action task-detail__action--primary">
               Save
@@ -287,6 +293,13 @@ watch(() => currentTask.value?.assigneeId, (id) => {
         <div v-if="currentTask.dueDate" class="task-detail__field">
           <dt>Due date</dt>
           <dd>{{ currentTask.dueDate }}</dd>
+        </div>
+        <div class="task-detail__field">
+          <dt>Priority</dt>
+          <dd>
+            <span v-if="currentTask.priority" class="task-detail__priority" :class="`task-detail__priority--${currentTask.priority}`" :title="currentTask.priority.charAt(0).toUpperCase() + currentTask.priority.slice(1)" />
+            <span :style="{ marginLeft: currentTask.priority ? '0.4rem' : '0' }">{{ currentTask.priority ? currentTask.priority.charAt(0).toUpperCase() + currentTask.priority.slice(1) : '—' }}</span>
+          </dd>
         </div>
         <div class="task-detail__field">
           <dt>Column</dt>
@@ -478,6 +491,25 @@ watch(() => currentTask.value?.assigneeId, (id) => {
 .task-detail__you {
   font-size: 0.75rem;
   color: var(--color-primary);
+}
+.task-detail__priority {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.task-detail__priority--low {
+  background: #9e9e9e;
+}
+.task-detail__priority--medium {
+  background: #4caf50;
+}
+.task-detail__priority--high {
+  background: #ff9800;
+}
+.task-detail__priority--critical {
+  background: #f44336;
 }
 .task-detail__edit-form {
   display: flex;

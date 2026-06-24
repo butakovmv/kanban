@@ -21,15 +21,15 @@ describe('task api', () => {
   })
 
   describe('listTasks', () => {
-    it('sends GET to /boards/{boardId}/tasks with default include_archived=false', async () => {
-      const rawTasks = taskGenerator.rawTasks(2, 'c-1', 'b-1')
+    it('sends GET to /projects/{projectId}/tasks with default include_archived=false', async () => {
+      const rawTasks = taskGenerator.rawTasks(2, 'c-1', 'p-1')
       vi.mocked(fetchModule.get).mockResolvedValue({ tasks: rawTasks })
 
-      const result = await api.listTasks('b-1')
+      const result = await api.listTasks('p-1')
 
-      expect(fetchModule.get).toHaveBeenCalledWith('/boards/b-1/tasks?include_archived=false')
+      expect(fetchModule.get).toHaveBeenCalledWith('/projects/p-1/tasks?include_archived=false')
       expect(result).toHaveLength(2)
-      expect(result[0].boardId).toBe('b-1')
+      expect(result[0].projectId).toBe('p-1')
       expect(result[0].columnId).toBe('c-1')
       expect(result[0].position).toBe(0)
       expect(result[1].position).toBe(1)
@@ -38,9 +38,9 @@ describe('task api', () => {
     it('sends include_archived=true when requested', async () => {
       vi.mocked(fetchModule.get).mockResolvedValue({ tasks: [] })
 
-      await api.listTasks('b-1', true)
+      await api.listTasks('p-1', true)
 
-      expect(fetchModule.get).toHaveBeenCalledWith('/boards/b-1/tasks?include_archived=true')
+      expect(fetchModule.get).toHaveBeenCalledWith('/projects/p-1/tasks?include_archived=true')
     })
   })
 
@@ -63,7 +63,7 @@ describe('task api', () => {
       vi.mocked(fetchModule.post).mockResolvedValue(raw)
 
       const result = await api.createTask({
-        boardId: 'b-1',
+        projectId: 'p-1',
         columnId: 'c-1',
         title: 'New',
         description: 'Desc',
@@ -72,7 +72,7 @@ describe('task api', () => {
       })
 
       expect(fetchModule.post).toHaveBeenCalledWith('/tasks', {
-        board_id: 'b-1',
+        project_id: 'p-1',
         column_id: 'c-1',
         title: 'New',
         description: 'Desc',
@@ -86,7 +86,7 @@ describe('task api', () => {
     it('omits optional fields when not provided', async () => {
       vi.mocked(fetchModule.post).mockResolvedValue(taskGenerator.rawTask())
 
-      await api.createTask({ boardId: 'b-1', columnId: 'c-1', title: 'X' })
+      await api.createTask({ projectId: 'p-1', columnId: 'c-1', title: 'X' })
 
       const body = vi.mocked(fetchModule.post).mock.calls[0]?.[1] as Record<string, unknown>
       expect(body).not.toHaveProperty('description')

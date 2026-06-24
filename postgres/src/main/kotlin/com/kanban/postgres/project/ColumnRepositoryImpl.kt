@@ -44,12 +44,12 @@ internal class ColumnRepositoryImpl(
             .sql(
                 """
                 UPDATE columns SET
-                    board_id = :boardId, name = :name,
+                    project_id = :projectId, name = :name,
                     position = :position, wip_limit = :wipLimit
                 WHERE id = :id
                 """,
             ).bind("id", UUID.fromString(column.id.value))
-            .bind("boardId", UUID.fromString(column.boardId.value))
+            .bind("projectId", UUID.fromString(column.projectId.value))
             .bind("name", column.name)
             .bind("position", column.position)
             .let { spec ->
@@ -76,11 +76,11 @@ internal class ColumnRepositoryImpl(
         db
             .sql(
                 """
-                INSERT INTO columns (id, board_id, name, position, wip_limit, created_at)
-                VALUES (:id, :boardId, :name, :position, :wipLimit, :createdAt)
+                INSERT INTO columns (id, project_id, name, position, wip_limit, created_at)
+                VALUES (:id, :projectId, :name, :position, :wipLimit, :createdAt)
                 """,
             ).bind("id", UUID.fromString(column.id.value))
-            .bind("boardId", UUID.fromString(column.boardId.value))
+            .bind("projectId", UUID.fromString(column.projectId.value))
             .bind("name", column.name)
             .bind("position", column.position)
             .let { spec ->
@@ -110,14 +110,14 @@ internal class ColumnRepositoryImpl(
             .awaitFirstOrNull()
 
     /**
-     * Получение списка колонок указанной доски, упорядоченных по позиции.
-     * @param boardId идентификатор доски
-     * @return список [Column] доски
+     * Получение списка колонок указанного проекта, упорядоченных по позиции.
+     * @param projectId идентификатор проекта
+     * @return список [Column] проекта
      */
-    override suspend fun listByBoardId(boardId: String): List<Column> =
+    override suspend fun listByProjectId(projectId: String): List<Column> =
         db
-            .sql("SELECT * FROM columns WHERE board_id = :boardId ORDER BY position")
-            .bind("boardId", UUID.fromString(boardId))
+            .sql("SELECT * FROM columns WHERE project_id = :projectId ORDER BY position")
+            .bind("projectId", UUID.fromString(projectId))
             .map { row, _ -> row.toColumn() }
             .all()
             .collectList()
@@ -140,7 +140,7 @@ internal class ColumnRepositoryImpl(
      * Массовое обновление позиций колонок (для реордеринга).
      * Позиции рассчитываются по порядку элементов в переданном списке
      * (значения `position` из доменной сущности игнорируются и перезаписываются индексом).
-     * @param columns колонки с идентификаторами и принадлежностью к доске
+     * @param columns колонки с идентификаторами и принадлежностью к проекту
      */
     override suspend fun updatePositions(columns: List<Column>) {
         if (columns.isEmpty()) return
@@ -150,12 +150,12 @@ internal class ColumnRepositoryImpl(
                 .sql(
                     """
                     UPDATE columns SET
-                        board_id = :boardId, name = :name,
+                        project_id = :projectId, name = :name,
                         position = :position, wip_limit = :wipLimit
                     WHERE id = :id
                     """,
                 ).bind("id", UUID.fromString(column.id.value))
-                .bind("boardId", UUID.fromString(column.boardId.value))
+                .bind("projectId", UUID.fromString(column.projectId.value))
                 .bind("name", column.name)
                 .bind("position", index)
                 .let { spec ->
@@ -180,7 +180,7 @@ internal class ColumnRepositoryImpl(
         val table =
             ColumnTable(
                 id = get("id", String::class.java)!!,
-                boardId = get("board_id", String::class.java)!!,
+                projectId = get("project_id", String::class.java)!!,
                 name = get("name", String::class.java)!!,
                 position = get("position", java.lang.Integer::class.java)!!.toInt(),
                 wipLimit = get("wip_limit", java.lang.Integer::class.java)?.toInt(),

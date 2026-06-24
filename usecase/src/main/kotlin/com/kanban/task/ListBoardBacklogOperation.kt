@@ -4,7 +4,7 @@ import com.kanban.common.Operation
 
 interface ListBoardBacklogOperation : Operation<ListBoardBacklogOperation.Arg, ListBoardBacklogOperation.Result> {
     data class Arg(
-        val boardId: String,
+        val projectId: String,
     )
 
     sealed interface Result {

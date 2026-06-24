@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{id}")
+@RequestMapping("/api/v1/projects/{projectId}/board")
 internal class UpdateBoardController(
     private val handler: BoardHandler,
 ) {
@@ -19,13 +19,10 @@ internal class UpdateBoardController(
 
     @PutMapping
     suspend fun update(
-        @PathVariable("id") id: String,
+        @PathVariable("projectId") projectId: String,
         @RequestBody body: UpdateBoardBody,
     ): ResponseEntity<*> {
-        val result = handler.update(
-            boardId = id,
-            name = body.name,
-        )
+        val result = handler.updateByProjectId(projectId = projectId, name = body.name)
         return when (result) {
             is BoardHandler.UpdateBoardResult.Success -> {
                 val b = result.board

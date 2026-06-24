@@ -10,7 +10,7 @@ internal class GetBoardOperationImpl(
 ) : GetBoardOperation {
     override suspend fun execute(arg: GetBoardOperation.Arg): GetBoardOperation.Result {
         val board = boardRepository.findById(arg.boardId) ?: return GetBoardOperation.Result.NotFound
-        val columns = columnRepository.listByBoardId(arg.boardId)
+        val columns = columnRepository.listByProjectId(board.projectId.value)
         return GetBoardOperation.Result.Success(BoardView(board = board, columns = columns))
     }
 }

@@ -1,5 +1,6 @@
 package com.kanban.task
 
+import com.kanban.audit.LogAuditEventOperation
 import com.kanban.sse.SinkService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,6 +24,7 @@ internal class TaskConfig {
      * @param moveTaskOperation операция перемещения задачи
      * @param archiveTaskOperation операция архивирования задачи
      * @param deleteTaskOperation операция удаления задачи
+     * @param logAuditEventOperation операция записи аудит-логов
      * @return экземпляр [TaskHandler]
      */
     @Bean
@@ -37,6 +39,7 @@ internal class TaskConfig {
         moveTaskOperation: MoveTaskOperation,
         archiveTaskOperation: ArchiveTaskOperation,
         deleteTaskOperation: DeleteTaskOperation,
+        logAuditEventOperation: LogAuditEventOperation,
         sinkService: SinkService,
     ): TaskHandler =
         TaskHandler(
@@ -49,6 +52,7 @@ internal class TaskConfig {
             moveTaskOperation = moveTaskOperation,
             archiveTaskOperation = archiveTaskOperation,
             deleteTaskOperation = deleteTaskOperation,
+            logAuditEventOperation = logAuditEventOperation,
             sinkService = sinkService,
         )
 

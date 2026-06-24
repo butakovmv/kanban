@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{id}")
+@RequestMapping("/api/v1/projects/{projectId}/board")
 internal class DeleteBoardController(
     private val handler: BoardHandler,
 ) {
     @DeleteMapping
-    suspend fun delete(@PathVariable("id") id: String): ResponseEntity<*> {
-        val result = handler.delete(boardId = id)
+    suspend fun delete(@PathVariable("projectId") projectId: String): ResponseEntity<*> {
+        val result = handler.deleteByProjectId(projectId = projectId)
         return when (result) {
             BoardHandler.DeleteBoardResult.Success ->
                 ResponseEntity.status(HttpStatus.NO_CONTENT).build<Any>()

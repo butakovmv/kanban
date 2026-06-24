@@ -5,7 +5,6 @@ import java.time.Instant
 data class SearchCriteria(
     val query: String?,
     val projectId: String?,
-    val boardId: String?,
     val status: String?,
     val priority: String?,
     val assigneeId: String?,

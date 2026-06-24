@@ -4,14 +4,14 @@ import com.kanban.common.Operation
 import java.time.Instant
 
 /**
- * Операция создания новой задачи в колонке доски.
- * Проверяет существование доски и колонки, создаёт задачу с позицией в конец колонки.
+ * Операция создания новой задачи в колонке проекта.
+ * Проверяет существование проекта и колонки, создаёт задачу с позицией в конец колонки.
  */
 interface CreateTaskOperation : Operation<CreateTaskOperation.Arg, CreateTaskOperation.Result> {
     /**
      * Аргумент операции создания задачи.
      *
-     * @property boardId идентификатор доски
+     * @property projectId идентификатор проекта
      * @property columnId идентификатор колонки
      * @property title заголовок задачи
      * @property description описание задачи (опционально)
@@ -19,12 +19,13 @@ interface CreateTaskOperation : Operation<CreateTaskOperation.Arg, CreateTaskOpe
      * @property dueDate срок выполнения (опционально)
      */
     data class Arg(
-        val boardId: String,
+        val projectId: String,
         val columnId: String,
         val title: String,
         val description: String?,
         val assigneeId: String?,
         val dueDate: Instant?,
+        val priority: String?,
     )
 
     /**

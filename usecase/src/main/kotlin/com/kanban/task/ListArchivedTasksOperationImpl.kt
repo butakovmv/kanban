@@ -4,7 +4,7 @@ internal class ListArchivedTasksOperationImpl(
     private val taskRepository: TaskRepository,
 ) : ListArchivedTasksOperation {
     override suspend fun execute(arg: ListArchivedTasksOperation.Arg): ListArchivedTasksOperation.Result {
-        val tasks = taskRepository.listByBoardId(arg.boardId, includeArchived = true).filter { it.archived }
+        val tasks = taskRepository.listByProjectId(arg.projectId, includeArchived = true).filter { it.archived }
         return ListArchivedTasksOperation.Result.Success(tasks)
     }
 }

@@ -1,6 +1,6 @@
 package com.kanban.project
 
-import com.kanban.common.BoardId
+import com.kanban.common.ProjectId
 
 /**
  * Реализация операции реордеринга колонок доски.
@@ -15,11 +15,11 @@ internal class ReorderColumnsOperationImpl(
         val board =
             boardRepository.findById(arg.boardId) ?: return ReorderColumnsOperation.Result.BoardNotFound
 
-        val currentColumns = columnRepository.listByBoardId(arg.boardId)
+        val currentColumns = columnRepository.listByProjectId(board.projectId.value)
         val validation = validateColumns(currentColumns, arg.columnIds)
         if (validation != null) return validation
 
-        val reordered = reorder(currentColumns, arg.columnIds, board.id)
+        val reordered = reorder(currentColumns, arg.columnIds, board.projectId)
         columnRepository.updatePositions(reordered)
         return ReorderColumnsOperation.Result.Success(reordered)
     }
@@ -38,11 +38,11 @@ internal class ReorderColumnsOperationImpl(
     private fun reorder(
         current: List<Column>,
         requestedIds: List<String>,
-        boardId: BoardId,
+        projectId: ProjectId,
     ): List<Column> {
         val byId = current.associateBy { it.id.value }
         return requestedIds.mapIndexed { index, id ->
-            byId.getValue(id).copy(boardId = boardId, position = index)
+            byId.getValue(id).copy(projectId = projectId, position = index)
         }
     }
 }

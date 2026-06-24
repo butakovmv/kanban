@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { useAuthStore } from '../auth/store'
 import * as projectApi from './api'
 
 /**
@@ -166,7 +167,9 @@ export const useProjectStore = defineStore('project', () => {
 
   async function addProjectMember(projectId: string, userId: string): Promise<boolean> {
     try {
-      await projectApi.addProjectMember(projectId, userId)
+      const auth = useAuthStore()
+      const invitedBy = auth.user?.id ?? ''
+      await projectApi.addProjectMember(projectId, userId, invitedBy)
       await loadProjectMembers(projectId)
       return true
     } catch (e: unknown) {
@@ -177,7 +180,9 @@ export const useProjectStore = defineStore('project', () => {
 
   async function removeProjectMember(projectId: string, userId: string): Promise<boolean> {
     try {
-      await projectApi.removeProjectMember(projectId, userId)
+      const auth = useAuthStore()
+      const removedBy = auth.user?.id ?? ''
+      await projectApi.removeProjectMember(projectId, userId, removedBy)
       await loadProjectMembers(projectId)
       return true
     } catch (e: unknown) {

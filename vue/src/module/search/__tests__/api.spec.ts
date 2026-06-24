@@ -43,7 +43,6 @@ describe('search api', () => {
     await api.searchTasks({
       q: 'bug',
       projectId: 'proj-1',
-      boardId: 'board-2',
       status: 'open',
       priority: 'high',
       assigneeId: 'user-3',
@@ -54,7 +53,7 @@ describe('search api', () => {
     })
 
     expect(fetchModule.get).toHaveBeenCalledWith(
-      '/search?q=bug&project_id=proj-1&board_id=board-2&status=open&priority=high&assignee_id=user-3&due_date_from=2025-01-01&due_date_to=2025-12-31&page=2&size=5',
+      '/search?q=bug&project_id=proj-1&status=open&priority=high&assignee_id=user-3&due_date_from=2025-01-01&due_date_to=2025-12-31&page=2&size=5',
     )
   })
 

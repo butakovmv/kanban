@@ -1,5 +1,6 @@
 package com.kanban.task
 
+import com.kanban.audit.LogAuditEventOperation
 import com.kanban.sse.SinkService
 import com.kanban.sse.SseEvent
 import java.time.Instant
@@ -15,49 +16,65 @@ internal class TaskHandler(
     private val moveTaskOperation: MoveTaskOperation,
     private val archiveTaskOperation: ArchiveTaskOperation,
     private val deleteTaskOperation: DeleteTaskOperation,
+    private val logAuditEventOperation: LogAuditEventOperation,
     private val sinkService: SinkService? = null,
 ) {
     data class TaskData(
         val id: String,
-        val boardId: String,
+        val projectId: String,
         val columnId: String,
         val title: String,
         val description: String?,
         val assigneeId: String?,
         val position: Int,
         val dueDate: Instant?,
+        val priority: String?,
         val archived: Boolean,
         val createdAt: Instant,
         val updatedAt: Instant,
     )
 
     suspend fun create(
-        boardId: String,
+        projectId: String,
         columnId: String,
         title: String,
         description: String?,
         assigneeId: String?,
         dueDate: Instant?,
+        priority: String?,
+        userId: String?,
     ): CreateTaskResult {
         val result =
             createTaskOperation.execute(
                 CreateTaskOperation.Arg(
-                    boardId = boardId,
+                    projectId = projectId,
                     columnId = columnId,
                     title = title,
                     description = description,
                     assigneeId = assigneeId,
                     dueDate = dueDate,
+                    priority = priority,
                 ),
             )
         return when (result) {
             is CreateTaskOperation.Result.Success -> {
+                if (userId != null) {
+                    logAuditEventOperation.execute(
+                        LogAuditEventOperation.Arg(
+                            projectId = projectId,
+                            documentId = null,
+                            userId = userId,
+                            action = "task.created",
+                            details = """{"task_id":"${result.task.id.value}","title":"${result.task.title}"}""",
+                        ),
+                    )
+                }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_created",
-                        data = """{"task_id":"${result.task.id.value}","board_id":"${result.task.boardId.value}"}""",
-                        boardId = result.task.boardId.value,
-                        projectId = null,
+                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}"}""",
+                        boardId = null,
+                        projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -85,13 +102,13 @@ internal class TaskHandler(
     }
 
     suspend fun list(
-        boardId: String,
+        projectId: String,
         includeArchived: Boolean,
     ): ListTasksResult {
         val result =
             listTasksOperation.execute(
                 ListTasksOperation.Arg(
-                    boardId = boardId,
+                    projectId = projectId,
                     includeArchived = includeArchived,
                 ),
             )
@@ -103,11 +120,11 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun listBoardBacklog(boardId: String): ListBoardBacklogResult {
+    suspend fun listBoardBacklog(projectId: String): ListBoardBacklogResult {
         val result =
             listBoardBacklogOperation.execute(
                 ListBoardBacklogOperation.Arg(
-                    boardId = boardId,
+                    projectId = projectId,
                 ),
             )
         return when (result) {
@@ -118,11 +135,11 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun listArchivedTasks(boardId: String): ListArchivedTasksResult {
+    suspend fun listArchivedTasks(projectId: String): ListArchivedTasksResult {
         val result =
             listArchivedTasksOperation.execute(
                 ListArchivedTasksOperation.Arg(
-                    boardId = boardId,
+                    projectId = projectId,
                 ),
             )
         return when (result) {
@@ -139,6 +156,9 @@ internal class TaskHandler(
         description: String?,
         assigneeId: String?,
         dueDate: Instant?,
+        priority: String?,
+        userId: String?,
+        projectId: String?,
     ): UpdateTaskResult {
         val result =
             updateTaskOperation.execute(
@@ -148,16 +168,28 @@ internal class TaskHandler(
                     description = description,
                     assigneeId = assigneeId,
                     dueDate = dueDate,
+                    priority = priority,
                 ),
             )
         return when (result) {
             is UpdateTaskOperation.Result.Success -> {
+                if (userId != null && projectId != null) {
+                    logAuditEventOperation.execute(
+                        LogAuditEventOperation.Arg(
+                            projectId = projectId,
+                            documentId = null,
+                            userId = userId,
+                            action = "task.updated",
+                            details = """{"task_id":"${result.task.id.value}"}""",
+                        ),
+                    )
+                }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_updated",
-                        data = """{"task_id":"${result.task.id.value}","board_id":"${result.task.boardId.value}"}""",
-                        boardId = result.task.boardId.value,
-                        projectId = null,
+                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}""",
+                        boardId = null,
+                        projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -175,6 +207,7 @@ internal class TaskHandler(
         taskId: String,
         columnId: String,
         position: Int,
+        userId: String?,
     ): MoveTaskResult {
         val result =
             moveTaskOperation.execute(
@@ -186,18 +219,29 @@ internal class TaskHandler(
             )
         return when (result) {
             is MoveTaskOperation.Result.Success -> {
+                if (userId != null) {
+                    logAuditEventOperation.execute(
+                        LogAuditEventOperation.Arg(
+                            projectId = result.task.projectId.value,
+                            documentId = null,
+                            userId = userId,
+                            action = "task.moved",
+                            details = """{"task_id":"${result.task.id.value}","column_id":"${result.task.columnId.value}"}""",
+                        ),
+                    )
+                }
                 val eventData =
                     buildString {
                         append("""{"task_id":"${result.task.id.value}",""")
-                        append(""""board_id":"${result.task.boardId.value}",""")
+                        append(""""project_id":"${result.task.projectId.value}",""")
                         append(""""column_id":"${result.task.columnId.value}"}""")
                     }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_moved",
                         data = eventData,
-                        boardId = result.task.boardId.value,
-                        projectId = null,
+                        boardId = null,
+                        projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -209,19 +253,30 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun archive(taskId: String): ArchiveTaskResult {
+    suspend fun archive(taskId: String, userId: String?, projectId: String?): ArchiveTaskResult {
         val result =
             archiveTaskOperation.execute(
                 ArchiveTaskOperation.Arg(taskId = taskId),
             )
         return when (result) {
             ArchiveTaskOperation.Result.Success -> {
+                if (userId != null && projectId != null) {
+                    logAuditEventOperation.execute(
+                        LogAuditEventOperation.Arg(
+                            projectId = projectId,
+                            documentId = null,
+                            userId = userId,
+                            action = "task.archived",
+                            details = """{"task_id":"${taskId}"}""",
+                        ),
+                    )
+                }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_archived",
                         data = """{"task_id":"${taskId}"}""",
                         boardId = null,
-                        projectId = null,
+                        projectId = projectId,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -231,19 +286,30 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun delete(taskId: String): DeleteTaskResult {
+    suspend fun delete(taskId: String, userId: String?, projectId: String?): DeleteTaskResult {
         val result =
             deleteTaskOperation.execute(
                 DeleteTaskOperation.Arg(taskId = taskId),
             )
         return when (result) {
             DeleteTaskOperation.Result.Success -> {
+                if (userId != null && projectId != null) {
+                    logAuditEventOperation.execute(
+                        LogAuditEventOperation.Arg(
+                            projectId = projectId,
+                            documentId = null,
+                            userId = userId,
+                            action = "task.deleted",
+                            details = """{"task_id":"${taskId}"}""",
+                        ),
+                    )
+                }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_deleted",
                         data = """{"task_id":"${taskId}"}""",
                         boardId = null,
-                        projectId = null,
+                        projectId = projectId,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -256,13 +322,14 @@ internal class TaskHandler(
     private fun Task.toData(): TaskData =
         TaskData(
             id = id.value,
-            boardId = boardId.value,
+            projectId = projectId.value,
             columnId = columnId.value,
             title = title,
             description = description,
             assigneeId = assigneeId,
             position = position,
             dueDate = dueDate,
+            priority = priority,
             archived = archived,
             createdAt = createdAt,
             updatedAt = updatedAt,

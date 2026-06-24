@@ -17,6 +17,8 @@ internal class AddProjectMemberController(
     data class AddMemberBody(
         @JsonProperty("user_id")
         val userId: String,
+        @JsonProperty("invited_by")
+        val invitedBy: String,
     )
 
     @PostMapping
@@ -24,7 +26,7 @@ internal class AddProjectMemberController(
         @PathVariable("id") projectId: String,
         @RequestBody body: AddMemberBody,
     ): ResponseEntity<*> {
-        val result = handler.addMember(projectId = projectId, userId = body.userId)
+        val result = handler.addMember(projectId = projectId, userId = body.userId, invitedBy = body.invitedBy)
         return when (result) {
             ProjectHandler.AddProjectMemberResult.Success ->
                 ResponseEntity.ok(mapOf("status" to "ok"))

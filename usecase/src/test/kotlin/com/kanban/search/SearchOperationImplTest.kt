@@ -20,7 +20,6 @@ class SearchOperationImplTest {
                 SearchCriteria(
                     query = "test",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -68,7 +67,6 @@ class SearchOperationImplTest {
                 SearchCriteria(
                     query = "nonexistent",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,
@@ -94,7 +92,6 @@ class SearchOperationImplTest {
                 SearchCriteria(
                     query = "test",
                     projectId = null,
-                    boardId = null,
                     status = null,
                     priority = null,
                     assigneeId = null,

@@ -5,13 +5,14 @@ import { get, post, put, del, patch } from '../../fetch'
  */
 export interface Task {
   id: string
-  boardId: string
+  projectId: string
   columnId: string
   title: string
   description: string | null
   assigneeId: string | null
   position: number
   dueDate: string | null
+  priority: string | null
   archived: boolean
   createdAt: string
   updatedAt: string
@@ -19,13 +20,14 @@ export interface Task {
 
 interface RawTask {
   id: string
-  board_id: string
+  project_id: string
   column_id: string
   title: string
   description: string | null
   assignee_id: string | null
   position: number
   due_date: string | null
+  priority: string | null
   archived: boolean
   created_at: string | number
   updated_at: string | number
@@ -93,12 +95,14 @@ interface RawFilesResponse {
  * Параметры запроса создания задачи.
  */
 export interface CreateTaskRequest {
-  boardId: string
+  projectId: string
   columnId: string
   title: string
   description?: string | null
   assigneeId?: string | null
   dueDate?: string | null
+  priority?: string | null
+  userId?: string | null
 }
 
 /**
@@ -109,6 +113,8 @@ export interface UpdateTaskRequest {
   description?: string | null
   assigneeId?: string | null
   dueDate?: string | null
+  priority?: string | null
+  userId?: string
 }
 
 /**
@@ -117,6 +123,7 @@ export interface UpdateTaskRequest {
 export interface MoveTaskRequest {
   columnId: string
   position: number
+  userId?: string | null
 }
 
 /**
@@ -142,13 +149,14 @@ function toDate(value: string | number): string {
 function toTask(raw: RawTask): Task {
   return {
     id: raw.id,
-    boardId: raw.board_id,
+    projectId: raw.project_id,
     columnId: raw.column_id,
     title: raw.title,
     description: raw.description,
     assigneeId: raw.assignee_id,
     position: raw.position,
     dueDate: raw.due_date,
+    priority: raw.priority,
     archived: raw.archived,
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
@@ -181,13 +189,13 @@ function toFile(raw: RawFileAttachment): FileAttachment {
 
 /**
  * Возвращает список задач на доске.
- * @param boardId идентификатор доски
+ * @param projectId идентификатор проекта
  * @param includeArchived включать ли архивные задачи (по умолчанию false)
  * @returns массив задач
  */
-export function listTasks(boardId: string, includeArchived = false): Promise<Task[]> {
+export function listTasks(projectId: string, includeArchived = false): Promise<Task[]> {
   const query = includeArchived ? '?include_archived=true' : '?include_archived=false'
-  return get<RawTasksResponse>(`/boards/${encodeURIComponent(boardId)}/tasks${query}`).then(
+  return get<RawTasksResponse>(`/projects/${encodeURIComponent(projectId)}/tasks${query}`).then(
     (response) => response.tasks.map(toTask),
   )
 }
@@ -202,12 +210,12 @@ export function getTask(id: string): Promise<Task> {
 
 /**
  * Создаёт новую задачу.
- * @param request boardId, columnId, title, description?, assigneeId?, dueDate?
+ * @param request projectId, columnId, title, description?, assigneeId?, dueDate?
  * @returns созданная задача
  */
 export function createTask(request: CreateTaskRequest): Promise<Task> {
   const body: Record<string, unknown> = {
-    board_id: request.boardId,
+    project_id: request.projectId,
     column_id: request.columnId,
     title: request.title,
   }
@@ -219,6 +227,12 @@ export function createTask(request: CreateTaskRequest): Promise<Task> {
   }
   if (request.dueDate !== undefined) {
     body['due_date'] = request.dueDate
+  }
+  if (request.priority !== undefined) {
+    body['priority'] = request.priority
+  }
+  if (request.userId !== undefined) {
+    body['user_id'] = request.userId
   }
   return post<RawTask>('/tasks', body).then(toTask)
 }
@@ -243,6 +257,12 @@ export function updateTask(id: string, request: UpdateTaskRequest): Promise<Task
   if (request.dueDate !== undefined) {
     body['due_date'] = request.dueDate
   }
+  if (request.priority !== undefined) {
+    body['priority'] = request.priority
+  }
+  if (request.userId !== undefined) {
+    body['user_id'] = request.userId
+  }
   return put<RawTask>(`/tasks/${encodeURIComponent(id)}`, body).then(toTask)
 }
 
@@ -253,10 +273,14 @@ export function updateTask(id: string, request: UpdateTaskRequest): Promise<Task
  * @returns перемещённая задача
  */
 export function moveTask(id: string, request: MoveTaskRequest): Promise<Task> {
-  return patch<RawTask>(`/tasks/${encodeURIComponent(id)}/move`, {
+  const body: Record<string, unknown> = {
     column_id: request.columnId,
     position: request.position,
-  }).then(toTask)
+  }
+  if (request.userId !== undefined) {
+    body['user_id'] = request.userId
+  }
+  return patch<RawTask>(`/tasks/${encodeURIComponent(id)}/move`, body).then(toTask)
 }
 
 /**

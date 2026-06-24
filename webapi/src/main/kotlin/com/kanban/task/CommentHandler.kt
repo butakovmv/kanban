@@ -36,7 +36,7 @@ internal class CommentHandler(
             )
         return when (result) {
             is CreateCommentOperation.Result.Success -> {
-                val boardId = resolveBoardId(result.comment.taskId.value)
+                val projectId = resolveProjectId(result.comment.taskId.value)
                 val eventData =
                     buildString {
                         append("""{"comment_id":"${result.comment.id.value}",""")
@@ -46,8 +46,8 @@ internal class CommentHandler(
                     SseEvent(
                         type = "comment_added",
                         data = eventData,
-                        boardId = boardId,
-                        projectId = null,
+                        boardId = null,
+                        projectId = projectId,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -73,7 +73,7 @@ internal class CommentHandler(
             )
         return when (result) {
             is UpdateCommentOperation.Result.Success -> {
-                val boardId = resolveBoardId(result.comment.taskId.value)
+                val projectId = resolveProjectId(result.comment.taskId.value)
                 val eventData =
                     buildString {
                         append("""{"comment_id":"${result.comment.id.value}",""")
@@ -83,8 +83,8 @@ internal class CommentHandler(
                     SseEvent(
                         type = "comment_updated",
                         data = eventData,
-                        boardId = boardId,
-                        projectId = null,
+                        boardId = null,
+                        projectId = projectId,
                         timestamp = Instant.now(),
                     ),
                 )
@@ -133,11 +133,11 @@ internal class CommentHandler(
         }
     }
 
-    private suspend fun resolveBoardId(taskId: String): String? {
+    private suspend fun resolveProjectId(taskId: String): String? {
         val taskResult =
             getTaskOperation.execute(GetTaskOperation.Arg(taskId = taskId))
         return when (taskResult) {
-            is GetTaskOperation.Result.Success -> taskResult.task.boardId.value
+            is GetTaskOperation.Result.Success -> taskResult.task.projectId.value
             GetTaskOperation.Result.NotFound -> null
         }
     }

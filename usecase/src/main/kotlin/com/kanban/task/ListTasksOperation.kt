@@ -3,18 +3,18 @@ package com.kanban.task
 import com.kanban.common.Operation
 
 /**
- * Операция получения списка задач доски.
+ * Операция получения списка задач проекта.
  * По умолчанию архивные задачи исключаются из результата.
  */
 interface ListTasksOperation : Operation<ListTasksOperation.Arg, ListTasksOperation.Result> {
     /**
      * Аргумент операции получения списка задач.
      *
-     * @property boardId идентификатор доски
+     * @property projectId идентификатор проекта
      * @property includeArchived включать ли архивные задачи
      */
     data class Arg(
-        val boardId: String,
+        val projectId: String,
         val includeArchived: Boolean = false,
     )
 

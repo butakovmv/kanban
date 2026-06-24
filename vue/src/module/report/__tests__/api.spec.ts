@@ -31,19 +31,18 @@ describe('report api', () => {
       expect(result).toEqual([])
     })
 
-    it('includes optional project_id and board_id', async () => {
+    it('includes optional project_id', async () => {
       vi.mocked(fetchModule.get).mockResolvedValue({ points: [] })
 
       await api.getCfd({
         projectId: 'proj-1',
-        boardId: 'board-2',
         from: '2025-01-01',
         to: '2025-01-31',
         interval: 'WEEK',
       })
 
       expect(fetchModule.get).toHaveBeenCalledWith(
-        '/reports/cfd?from=2025-01-01&to=2025-01-31&interval=WEEK&project_id=proj-1&board_id=board-2',
+        '/reports/cfd?from=2025-01-01&to=2025-01-31&interval=WEEK&project_id=proj-1',
       )
     })
   })

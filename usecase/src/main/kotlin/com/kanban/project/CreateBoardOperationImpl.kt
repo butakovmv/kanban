@@ -55,7 +55,7 @@ internal class CreateBoardOperationImpl(
             defaultColumnNames.mapIndexed { index, name ->
                 Column(
                     id = ColumnId(UUID.randomUUID().toString()),
-                    boardId = boardId,
+                    projectId = ProjectId(arg.projectId),
                     name = name,
                     position = index,
                     wipLimit = null,

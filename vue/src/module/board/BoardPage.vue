@@ -60,7 +60,7 @@ async function load() {
   }
   await boardStore.loadBoardByProjectId(projectId.value)
   if (currentBoard.value !== null) {
-    await taskStore.loadTasks(currentBoard.value.id)
+    await taskStore.loadTasks(projectId.value)
   }
 }
 
@@ -200,9 +200,8 @@ function onArchiveDrop(event: DragEvent) {
 
       <CreateTaskModal
         v-if="modalColumnId !== null && currentBoard !== null"
-        :board-id="currentBoard.id"
-        :column-id="modalColumnId"
         :project-id="projectId"
+        :column-id="modalColumnId"
         :loading="taskLoading"
         @submit="handleCreateTask"
         @cancel="closeModal"

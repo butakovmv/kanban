@@ -25,7 +25,7 @@ internal class BoardHandler(
 
     data class ColumnData(
         val id: String,
-        val boardId: String,
+        val projectId: String,
         val name: String,
         val position: Int,
         val wipLimit: Int?,
@@ -48,6 +48,16 @@ internal class BoardHandler(
                     view = result.view.toData(),
                 )
             GetBoardOperation.Result.NotFound -> GetBoardResult.NotFound
+        }
+    }
+
+    suspend fun getByProjectId(projectId: String): GetBoardResult {
+        val boards = listBoardsOperation.execute(ListBoardsOperation.Arg(projectId = projectId))
+        return when (boards) {
+            is ListBoardsOperation.Result.Success -> {
+                val board = boards.boards.firstOrNull() ?: return GetBoardResult.NotFound
+                get(board.id.value)
+            }
         }
     }
 
@@ -102,6 +112,18 @@ internal class BoardHandler(
         }
     }
 
+    private suspend fun resolveBoardId(projectId: String): String? {
+        val boards = listBoardsOperation.execute(ListBoardsOperation.Arg(projectId = projectId))
+        return when (boards) {
+            is ListBoardsOperation.Result.Success -> boards.boards.firstOrNull()?.id?.value
+        }
+    }
+
+    suspend fun updateByProjectId(projectId: String, name: String?): UpdateBoardResult {
+        val boardId = resolveBoardId(projectId) ?: return UpdateBoardResult.NotFound
+        return update(boardId, name)
+    }
+
     suspend fun delete(boardId: String): DeleteBoardResult {
         val result =
             deleteBoardOperation.execute(
@@ -111,6 +133,11 @@ internal class BoardHandler(
             DeleteBoardOperation.Result.Success -> DeleteBoardResult.Success
             DeleteBoardOperation.Result.NotFound -> DeleteBoardResult.NotFound
         }
+    }
+
+    suspend fun deleteByProjectId(projectId: String): DeleteBoardResult {
+        val boardId = resolveBoardId(projectId) ?: return DeleteBoardResult.NotFound
+        return delete(boardId)
     }
 
     suspend fun archive(boardId: String): ArchiveBoardResult {
@@ -133,6 +160,11 @@ internal class BoardHandler(
             }
             ArchiveBoardOperation.Result.NotFound -> ArchiveBoardResult.NotFound
         }
+    }
+
+    suspend fun archiveByProjectId(projectId: String): ArchiveBoardResult {
+        val boardId = resolveBoardId(projectId) ?: return ArchiveBoardResult.NotFound
+        return archive(boardId)
     }
 
     suspend fun reorderColumns(
@@ -166,6 +198,11 @@ internal class BoardHandler(
         }
     }
 
+    suspend fun reorderColumnsByProjectId(projectId: String, columnIds: List<String>): ReorderColumnsResult {
+        val boardId = resolveBoardId(projectId) ?: return ReorderColumnsResult.BoardNotFound
+        return reorderColumns(boardId, columnIds)
+    }
+
     private fun Board.toData(): BoardData =
         BoardData(
             id = id.value,
@@ -178,7 +215,7 @@ internal class BoardHandler(
     private fun Column.toData(): ColumnData =
         ColumnData(
             id = id.value,
-            boardId = boardId.value,
+            projectId = projectId.value,
             name = name,
             position = position,
             wipLimit = wipLimit,
@@ -190,20 +227,6 @@ internal class BoardHandler(
             board = board.toData(),
             columns = columns.map { it.toData() },
         )
-
-    suspend fun getByProjectId(projectId: String): GetBoardResult {
-        val listResult =
-            listBoardsOperation.execute(
-                ListBoardsOperation.Arg(projectId = projectId),
-            )
-        return when (val boards = listResult) {
-            is ListBoardsOperation.Result.Success -> {
-                val first = boards.boards.firstOrNull()
-                    ?: return GetBoardResult.NotFound
-                get(first.id.value)
-            }
-        }
-    }
 
     suspend fun listByProjectId(projectId: String): ListBoardsResult {
         val result =

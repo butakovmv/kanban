@@ -8,15 +8,15 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/boards/{boardId}/archive")
+@RequestMapping("/api/v1/projects/{projectId}/archive")
 internal class ListArchivedTasksController(
     private val handler: TaskHandler,
 ) {
     @GetMapping
     suspend fun listArchived(
-        @PathVariable("boardId") boardId: String,
+        @PathVariable("projectId") projectId: String,
     ): ResponseEntity<*> {
-        val result = handler.listArchivedTasks(boardId = boardId)
+        val result = handler.listArchivedTasks(projectId = projectId)
         return when (result) {
             is TaskHandler.ListArchivedTasksResult.Success ->
                 ResponseEntity.ok(
@@ -24,13 +24,14 @@ internal class ListArchivedTasksController(
                         "tasks" to result.tasks.map { task ->
                             TaskResponse(
                                 id = task.id,
-                                boardId = task.boardId,
+                                projectId = task.projectId,
                                 columnId = task.columnId,
                                 title = task.title,
                                 description = task.description,
                                 assigneeId = task.assigneeId,
                                 position = task.position,
                                 dueDate = task.dueDate,
+                                priority = task.priority,
                                 archived = task.archived,
                                 createdAt = task.createdAt,
                                 updatedAt = task.updatedAt,

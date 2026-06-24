@@ -1,5 +1,6 @@
 package com.kanban.http.auth
 
+import com.kanban.audit.LogAuditEventOperation
 import com.kanban.identity.AuthHandler
 import com.kanban.identity.LoginWithPasswordOperation
 import com.kanban.identity.LogoutOperation
@@ -24,6 +25,7 @@ internal abstract class BaseControllerTest {
     protected lateinit var refreshTokenOperation: RefreshTokenOperation
     protected lateinit var logoutOperation: LogoutOperation
     protected lateinit var recoveryOperation: RecoveryOperation
+    protected lateinit var logAuditEventOperation: LogAuditEventOperation
 
     /**
      * Создаёт WebTestClient привязанный к указанному контроллеру.
@@ -38,6 +40,7 @@ internal abstract class BaseControllerTest {
         refreshTokenOperation = mockk()
         logoutOperation = mockk()
         recoveryOperation = mockk()
+        logAuditEventOperation = mockk()
 
         val authHandler =
             AuthHandler(
@@ -45,6 +48,7 @@ internal abstract class BaseControllerTest {
                 loginWithPasswordOperation = loginWithPasswordOperation,
                 refreshTokenOperation = refreshTokenOperation,
                 logoutOperation = logoutOperation,
+                logAuditEventOperation = logAuditEventOperation,
             )
 
         val recoveryHandler =

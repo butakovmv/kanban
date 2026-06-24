@@ -17,7 +17,6 @@ internal class GetCfdReportController(
     @GetMapping("/cfd")
     suspend fun getCfd(
         @RequestParam("project_id") projectId: String?,
-        @RequestParam("board_id") boardId: String?,
         @RequestParam("from") from: String,
         @RequestParam("to") to: String,
         @RequestParam("interval", defaultValue = "DAY") interval: String,
@@ -25,7 +24,6 @@ internal class GetCfdReportController(
         val result =
             handler.getCfd(
                 projectId = projectId,
-                boardId = boardId,
                 from = Instant.parse(from),
                 to = Instant.parse(to),
                 interval = Interval.valueOf(interval.uppercase()),

@@ -1,5 +1,6 @@
 package com.kanban.project
 
+import com.kanban.audit.LogAuditEventOperation
 import java.time.Instant
 
 internal class ProjectHandler(
@@ -12,6 +13,7 @@ internal class ProjectHandler(
     private val addProjectMemberOperation: AddProjectMemberOperation,
     private val removeProjectMemberOperation: RemoveProjectMemberOperation,
     private val listMemberProjectsOperation: ListMemberProjectsOperation,
+    private val logAuditEventOperation: LogAuditEventOperation,
 ) {
     data class ProjectData(
         val id: String,
@@ -36,10 +38,20 @@ internal class ProjectHandler(
                 ),
             )
         return when (result) {
-            is CreateProjectOperation.Result.Success ->
+            is CreateProjectOperation.Result.Success -> {
+                logAuditEventOperation.execute(
+                    LogAuditEventOperation.Arg(
+                        projectId = result.project.id.value,
+                        documentId = null,
+                        userId = ownerId,
+                        action = "project.created",
+                        details = "{\"name\":\"${name}\"}",
+                    ),
+                )
                 CreateProjectResult.Success(
                     project = result.project.toData(),
                 )
+            }
             is CreateProjectOperation.Result.Failure ->
                 CreateProjectResult.Failure(reason = result.reason)
         }
@@ -86,10 +98,20 @@ internal class ProjectHandler(
                 ),
             )
         return when (result) {
-            is UpdateProjectOperation.Result.Success ->
+            is UpdateProjectOperation.Result.Success -> {
+                logAuditEventOperation.execute(
+                    LogAuditEventOperation.Arg(
+                        projectId = projectId,
+                        documentId = null,
+                        userId = result.project.ownerId.value,
+                        action = "project.updated",
+                        details = null,
+                    ),
+                )
                 UpdateProjectResult.Success(
                     project = result.project.toData(),
                 )
+            }
             UpdateProjectOperation.Result.NotFound -> UpdateProjectResult.NotFound
         }
     }
@@ -118,24 +140,46 @@ internal class ProjectHandler(
         }
     }
 
-    suspend fun addMember(projectId: String, userId: String): AddProjectMemberResult {
+    suspend fun addMember(projectId: String, userId: String, invitedBy: String): AddProjectMemberResult {
         val result =
             addProjectMemberOperation.execute(
                 AddProjectMemberOperation.Arg(projectId = projectId, userId = userId),
             )
         return when (result) {
-            AddProjectMemberOperation.Result.Success -> AddProjectMemberResult.Success
+            AddProjectMemberOperation.Result.Success -> {
+                logAuditEventOperation.execute(
+                    LogAuditEventOperation.Arg(
+                        projectId = projectId,
+                        documentId = null,
+                        userId = invitedBy,
+                        action = "project.member.invited",
+                        details = "{\"target_user_id\":\"${userId}\"}",
+                    ),
+                )
+                AddProjectMemberResult.Success
+            }
             AddProjectMemberOperation.Result.ProjectNotFound -> AddProjectMemberResult.ProjectNotFound
         }
     }
 
-    suspend fun removeMember(projectId: String, userId: String): RemoveProjectMemberResult {
+    suspend fun removeMember(projectId: String, userId: String, removedBy: String): RemoveProjectMemberResult {
         val result =
             removeProjectMemberOperation.execute(
                 RemoveProjectMemberOperation.Arg(projectId = projectId, userId = userId),
             )
         return when (result) {
-            RemoveProjectMemberOperation.Result.Success -> RemoveProjectMemberResult.Success
+            RemoveProjectMemberOperation.Result.Success -> {
+                logAuditEventOperation.execute(
+                    LogAuditEventOperation.Arg(
+                        projectId = projectId,
+                        documentId = null,
+                        userId = removedBy,
+                        action = "project.member.removed",
+                        details = "{\"target_user_id\":\"${userId}\"}",
+                    ),
+                )
+                RemoveProjectMemberResult.Success
+            }
             RemoveProjectMemberOperation.Result.ProjectNotFound -> RemoveProjectMemberResult.ProjectNotFound
         }
     }
