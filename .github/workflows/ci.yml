@@ -33,7 +33,7 @@ jobs:
         continue-on-error: false
 
       - name: Test with coverage
-        run: npx vitest run --coverage --reporter=verbose --reporter=json --outputFile=vitest-report.json
+        run: npx vitest run --coverage --reporter=verbose --reporter=junit --outputFile=junit-report.xml
 
       - name: Publish test results
         uses: dorny/test-reporter@v1
@@ -41,8 +41,8 @@ jobs:
         continue-on-error: true
         with:
           name: Frontend Tests
-          path: vue/vitest-report.json
-          reporter: vitest
+          path: vue/junit-report.xml
+          reporter: java-junit
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
