@@ -141,11 +141,6 @@ function handleCreateCancel() {
   showCreate.value = false
 }
 
-function startEdit(doc: Document) {
-  editingId.value = doc.id
-  editingDoc.value = { ...doc }
-}
-
 function cancelEdit() {
   editingId.value = null
   editingDoc.value = null

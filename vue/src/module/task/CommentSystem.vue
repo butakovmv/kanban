@@ -22,8 +22,6 @@ const newText = ref('')
 const editingId = ref<string | null>(null)
 const editDraft = ref('')
 
-const authorNames = ref<Record<string, string>>({})
-
 watch(
   () => props.taskId,
   () => {

@@ -8,7 +8,7 @@ import ProjectLayout from '../../component/ProjectLayout.vue'
 
 const route = useRoute()
 const projectStore = useProjectStore()
-const { currentProject, loading, error } = storeToRefs(projectStore)
+const { currentProject, loading } = storeToRefs(projectStore)
 
 const projectId = computed(() => {
   const id = route.params['id']

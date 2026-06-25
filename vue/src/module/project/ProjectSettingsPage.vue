@@ -6,13 +6,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from './store'
-import { useAuthStore } from '../auth/store'
 import ProjectLayout from '../../component/ProjectLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
 const projectStore = useProjectStore()
-const authStore = useAuthStore()
 const { currentProject, loading, error, projectMembers } = storeToRefs(projectStore)
 
 const editName = ref('')
