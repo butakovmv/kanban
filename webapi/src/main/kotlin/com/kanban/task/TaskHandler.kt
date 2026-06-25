@@ -4,8 +4,6 @@ import com.kanban.audit.LogAuditEventOperation
 import com.kanban.sse.SinkService
 import com.kanban.sse.SseEvent
 import java.time.Instant
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 
 @Suppress("LongParameterList")
 internal class TaskHandler(
@@ -272,7 +270,11 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun archive(taskId: String, userId: String?, projectId: String?): ArchiveTaskResult {
+    suspend fun archive(
+        taskId: String,
+        userId: String?,
+        projectId: String?,
+    ): ArchiveTaskResult {
         val result =
             archiveTaskOperation.execute(
                 ArchiveTaskOperation.Arg(taskId = taskId),
@@ -286,14 +288,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.archived",
-                            details = """{"task_id":"${taskId}"}""",
+                            details = """{"task_id":"$taskId"}""",
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_archived",
-                        data = """{"task_id":"${taskId}"}""",
+                        data = """{"task_id":"$taskId"}""",
                         boardId = null,
                         projectId = projectId,
                         timestamp = Instant.now(),
@@ -305,7 +307,11 @@ internal class TaskHandler(
         }
     }
 
-    suspend fun delete(taskId: String, userId: String?, projectId: String?): DeleteTaskResult {
+    suspend fun delete(
+        taskId: String,
+        userId: String?,
+        projectId: String?,
+    ): DeleteTaskResult {
         val result =
             deleteTaskOperation.execute(
                 DeleteTaskOperation.Arg(taskId = taskId),
@@ -319,14 +325,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.deleted",
-                            details = """{"task_id":"${taskId}"}""",
+                            details = """{"task_id":"$taskId"}""",
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_deleted",
-                        data = """{"task_id":"${taskId}"}""",
+                        data = """{"task_id":"$taskId"}""",
                         boardId = null,
                         projectId = projectId,
                         timestamp = Instant.now(),

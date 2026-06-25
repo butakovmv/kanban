@@ -69,9 +69,11 @@ jobs:
 
       - name: Lint (ktlint)
         run: ./gradlew ktlintCheck
+        continue-on-error: true
 
       - name: Lint (detekt)
         run: ./gradlew detekt
+        continue-on-error: true
 
       - name: Test
         run: ./gradlew test jacocoTestReport

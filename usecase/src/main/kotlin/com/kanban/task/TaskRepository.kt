@@ -91,7 +91,10 @@ interface TaskLabelRepository {
      * @param taskId идентификатор задачи
      * @param label текст метки
      */
-    suspend fun save(taskId: String, label: String)
+    suspend fun save(
+        taskId: String,
+        label: String,
+    )
 
     /**
      * Удаляет метку у задачи.
@@ -99,5 +102,8 @@ interface TaskLabelRepository {
      * @param taskId идентификатор задачи
      * @param label текст метки
      */
-    suspend fun delete(taskId: String, label: String)
+    suspend fun delete(
+        taskId: String,
+        label: String,
+    )
 }

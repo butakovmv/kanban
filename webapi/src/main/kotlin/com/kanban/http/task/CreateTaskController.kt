@@ -69,16 +69,17 @@ internal class CreateTaskController(
     suspend fun create(
         @RequestBody body: CreateTaskBody,
     ): ResponseEntity<*> {
-        val result = handler.create(
-            projectId = body.projectId,
-            columnId = body.columnId,
-            title = body.title,
-            description = body.description,
-            assigneeId = body.assigneeId,
-            dueDate = body.dueDate,
-            priority = body.priority,
-            userId = body.userId,
-        )
+        val result =
+            handler.create(
+                projectId = body.projectId,
+                columnId = body.columnId,
+                title = body.title,
+                description = body.description,
+                assigneeId = body.assigneeId,
+                dueDate = body.dueDate,
+                priority = body.priority,
+                userId = body.userId,
+            )
         return when (result) {
             is TaskHandler.CreateTaskResult.Success -> {
                 val task = result.task

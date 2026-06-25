@@ -9,19 +9,20 @@ import reactor.core.publisher.Mono
 
 @Component
 class DatabaseInitializer(
-    private val connectionFactory: ConnectionFactory
+    private val connectionFactory: ConnectionFactory,
 ) {
     @PostConstruct
     fun initialize() {
         val populator = ResourceDatabasePopulator()
         populator.addScript(ClassPathResource("schema.sql"))
         populator.setContinueOnError(true)
-        
-        Mono.from(connectionFactory.create())
+
+        Mono
+            .from(connectionFactory.create())
             .flatMap { connection ->
-                populator.populate(connection)
+                populator
+                    .populate(connection)
                     .then(Mono.from(connection.close()))
-            }
-            .block()
+            }.block()
     }
 }

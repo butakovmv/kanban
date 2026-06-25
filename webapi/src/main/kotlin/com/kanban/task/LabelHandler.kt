@@ -18,7 +18,7 @@ internal class LabelHandler(
         sinkService?.emit(
             SseEvent(
                 type = "label_added",
-                data = """{"task_id":"${taskId}","label":"${label}","project_id":"${projectId}"}""",
+                data = """{"task_id":"$taskId","label":"$label","project_id":"$projectId"}""",
                 boardId = null,
                 projectId = projectId,
                 timestamp = Instant.now(),
@@ -36,7 +36,7 @@ internal class LabelHandler(
         sinkService?.emit(
             SseEvent(
                 type = "label_removed",
-                data = """{"task_id":"${taskId}","label":"${label}","project_id":"${projectId}"}""",
+                data = """{"task_id":"$taskId","label":"$label","project_id":"$projectId"}""",
                 boardId = null,
                 projectId = projectId,
                 timestamp = Instant.now(),

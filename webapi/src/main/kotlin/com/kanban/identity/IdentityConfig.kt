@@ -54,6 +54,5 @@ internal class IdentityConfig {
         )
 
     @Bean
-    fun userHandler(findUsersOperation: FindUsersOperation): UserHandler =
-        UserHandler(findUsersOperation = findUsersOperation)
+    fun userHandler(findUsersOperation: FindUsersOperation): UserHandler = UserHandler(findUsersOperation = findUsersOperation)
 }

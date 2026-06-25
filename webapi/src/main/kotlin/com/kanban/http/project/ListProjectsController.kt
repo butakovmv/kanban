@@ -34,12 +34,17 @@ internal class ListProjectsController(
             is ProjectHandler.ListProjectsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "projects" to result.projects.map { p ->
-                            ProjectResponse(
-                                id = p.id, ownerId = p.ownerId, name = p.name,
-                                description = p.description, createdAt = p.createdAt, updatedAt = p.updatedAt,
-                            )
-                        },
+                        "projects" to
+                            result.projects.map { p ->
+                                ProjectResponse(
+                                    id = p.id,
+                                    ownerId = p.ownerId,
+                                    name = p.name,
+                                    description = p.description,
+                                    createdAt = p.createdAt,
+                                    updatedAt = p.updatedAt,
+                                )
+                            },
                     ),
                 )
         }

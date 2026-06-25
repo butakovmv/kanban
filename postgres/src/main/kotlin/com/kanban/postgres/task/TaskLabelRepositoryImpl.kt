@@ -2,7 +2,6 @@ package com.kanban.postgres.task
 
 import com.kanban.task.TaskLabelRepository
 import java.util.UUID
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
@@ -33,14 +32,16 @@ internal class TaskLabelRepositoryImpl(
                 val tid = row.get("task_id", String::class.java)!!
                 val label = row.get("label", String::class.java)!!
                 tid to label
-            }
-            .all()
+            }.all()
             .collectList()
             .awaitSingle()
             .groupBy({ it.first }, { it.second })
     }
 
-    override suspend fun save(taskId: String, label: String) {
+    override suspend fun save(
+        taskId: String,
+        label: String,
+    ) {
         db
             .sql("INSERT INTO task_labels (task_id, label) VALUES (:taskId, :label) ON CONFLICT DO NOTHING")
             .bind("taskId", UUID.fromString(taskId))
@@ -50,7 +51,10 @@ internal class TaskLabelRepositoryImpl(
             .awaitSingle()
     }
 
-    override suspend fun delete(taskId: String, label: String) {
+    override suspend fun delete(
+        taskId: String,
+        label: String,
+    ) {
         db
             .sql("DELETE FROM task_labels WHERE task_id = :taskId AND label = :label")
             .bind("taskId", UUID.fromString(taskId))

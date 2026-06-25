@@ -44,11 +44,12 @@ internal class RegisterController(
     suspend fun register(
         @RequestBody body: RegisterBody,
     ): ResponseEntity<*> {
-        val result = handler.register(
-            email = body.email,
-            password = body.password,
-            displayName = body.displayName,
-        )
+        val result =
+            handler.register(
+                email = body.email,
+                password = body.password,
+                displayName = body.displayName,
+            )
         return when (result) {
             is AuthHandler.AuthResult.Success ->
                 ResponseEntity
@@ -57,11 +58,12 @@ internal class RegisterController(
                         AuthResponse(
                             accessToken = result.accessToken,
                             refreshToken = result.refreshToken,
-                            user = UserResponse(
-                                id = result.userId,
-                                email = result.email,
-                                displayName = result.displayName,
-                            ),
+                            user =
+                                UserResponse(
+                                    id = result.userId,
+                                    email = result.email,
+                                    displayName = result.displayName,
+                                ),
                         ),
                     )
             is AuthHandler.AuthResult.Failure ->

@@ -135,12 +135,23 @@ internal class ProjectHandler(
         return when (result) {
             is ListProjectMembersOperation.Result.Success ->
                 ListProjectMembersResult.Success(
-                    members = result.members.map { ProjectMemberDto(userId = it.userId, displayName = it.displayName, addedAt = it.addedAt) },
+                    members =
+                        result.members.map {
+                            ProjectMemberDto(
+                                userId = it.userId,
+                                displayName = it.displayName,
+                                addedAt = it.addedAt,
+                            )
+                        },
                 )
         }
     }
 
-    suspend fun addMember(projectId: String, userId: String, invitedBy: String): AddProjectMemberResult {
+    suspend fun addMember(
+        projectId: String,
+        userId: String,
+        invitedBy: String,
+    ): AddProjectMemberResult {
         val result =
             addProjectMemberOperation.execute(
                 AddProjectMemberOperation.Arg(projectId = projectId, userId = userId),
@@ -162,7 +173,11 @@ internal class ProjectHandler(
         }
     }
 
-    suspend fun removeMember(projectId: String, userId: String, removedBy: String): RemoveProjectMemberResult {
+    suspend fun removeMember(
+        projectId: String,
+        userId: String,
+        removedBy: String,
+    ): RemoveProjectMemberResult {
         val result =
             removeProjectMemberOperation.execute(
                 RemoveProjectMemberOperation.Arg(projectId = projectId, userId = userId),
@@ -253,11 +268,13 @@ internal class ProjectHandler(
 
     sealed interface AddProjectMemberResult {
         data object Success : AddProjectMemberResult
+
         data object ProjectNotFound : AddProjectMemberResult
     }
 
     sealed interface RemoveProjectMemberResult {
         data object Success : RemoveProjectMemberResult
+
         data object ProjectNotFound : RemoveProjectMemberResult
     }
 

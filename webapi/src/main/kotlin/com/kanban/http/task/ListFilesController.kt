@@ -21,18 +21,19 @@ internal class ListFilesController(
             is FileHandler.ListFilesResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "files" to result.files.map { file ->
-                            FileAttachmentResponse(
-                                id = file.id,
-                                taskId = file.taskId,
-                                fileName = file.fileName,
-                                contentType = file.contentType,
-                                sizeBytes = file.sizeBytes,
-                                storageKey = file.storageKey,
-                                uploadedBy = file.uploadedBy,
-                                uploadedAt = file.uploadedAt,
-                            )
-                        },
+                        "files" to
+                            result.files.map { file ->
+                                FileAttachmentResponse(
+                                    id = file.id,
+                                    taskId = file.taskId,
+                                    fileName = file.fileName,
+                                    contentType = file.contentType,
+                                    sizeBytes = file.sizeBytes,
+                                    storageKey = file.storageKey,
+                                    uploadedBy = file.uploadedBy,
+                                    uploadedAt = file.uploadedAt,
+                                )
+                            },
                     ),
                 )
         }

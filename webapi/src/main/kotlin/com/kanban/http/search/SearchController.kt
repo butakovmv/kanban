@@ -67,23 +67,24 @@ internal class SearchController(
             )
         return ResponseEntity.ok(
             SearchResultWrapper(
-                results = result.results.map {
-                    SearchItemResponse(
-                        id = it.id,
-                        title = it.title,
-                        description = it.description,
-                        status = it.status,
-                        priority = it.priority,
-                        assigneeId = it.assigneeId,
-                        projectId = it.projectId,
-                        columnId = it.columnId,
-                        boardId = it.boardId,
-                        dueDate = it.dueDate,
-                        createdAt = it.createdAt,
-                        updatedAt = it.updatedAt,
-                        rank = it.rank,
-                    )
-                },
+                results =
+                    result.results.map {
+                        SearchItemResponse(
+                            id = it.id,
+                            title = it.title,
+                            description = it.description,
+                            status = it.status,
+                            priority = it.priority,
+                            assigneeId = it.assigneeId,
+                            projectId = it.projectId,
+                            columnId = it.columnId,
+                            boardId = it.boardId,
+                            dueDate = it.dueDate,
+                            createdAt = it.createdAt,
+                            updatedAt = it.updatedAt,
+                            rank = it.rank,
+                        )
+                    },
                 total = result.total,
             ),
         )

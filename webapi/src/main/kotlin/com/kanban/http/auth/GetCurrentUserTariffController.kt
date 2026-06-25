@@ -15,7 +15,9 @@ internal class GetCurrentUserTariffController(
     private val handler: ProfileHandler,
 ) {
     @GetMapping("/tariff")
-    suspend fun getTariff(@RequestParam("user_id") userId: String): ResponseEntity<TariffResponse> =
+    suspend fun getTariff(
+        @RequestParam("user_id") userId: String,
+    ): ResponseEntity<TariffResponse> =
         when (val result = handler.getTariff(userId)) {
             is TariffResult.Success -> ResponseEntity.ok(result.toResponse())
             is TariffResult.NotFound -> ResponseEntity.notFound().build()

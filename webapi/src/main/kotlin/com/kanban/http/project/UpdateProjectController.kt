@@ -23,18 +23,23 @@ internal class UpdateProjectController(
         @PathVariable("id") id: String,
         @RequestBody body: UpdateProjectBody,
     ): ResponseEntity<*> {
-        val result = handler.update(
-            projectId = id,
-            name = body.name,
-            description = body.description,
-        )
+        val result =
+            handler.update(
+                projectId = id,
+                name = body.name,
+                description = body.description,
+            )
         return when (result) {
             is ProjectHandler.UpdateProjectResult.Success -> {
                 val p = result.project
                 ResponseEntity.ok(
                     ProjectResponse(
-                        id = p.id, ownerId = p.ownerId, name = p.name,
-                        description = p.description, createdAt = p.createdAt, updatedAt = p.updatedAt,
+                        id = p.id,
+                        ownerId = p.ownerId,
+                        name = p.name,
+                        description = p.description,
+                        createdAt = p.createdAt,
+                        updatedAt = p.updatedAt,
                     ),
                 )
             }

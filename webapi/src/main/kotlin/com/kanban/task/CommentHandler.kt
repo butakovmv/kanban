@@ -108,7 +108,7 @@ internal class CommentHandler(
                 sinkService?.emit(
                     SseEvent(
                         type = "comment_deleted",
-                        data = """{"comment_id":"${commentId}"}""",
+                        data = """{"comment_id":"$commentId"}""",
                         boardId = null,
                         projectId = null,
                         timestamp = Instant.now(),

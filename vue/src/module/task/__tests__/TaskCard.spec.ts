@@ -97,15 +97,15 @@ describe('TaskCard', () => {
       props: { task, columns },
     })
 
-    const deleteButton = wrapper.findAll('.task-card__action').find((b) => b.text() === 'Delete')
-    expect(deleteButton).toBeDefined()
-    await deleteButton!.trigger('click')
+    const deleteButton = wrapper.find('.task-card__delete-btn')
+    expect(deleteButton.exists()).toBe(true)
+    await deleteButton.trigger('click')
 
-    expect(wrapper.find('.task-card__confirm').exists()).toBe(true)
+    expect(wrapper.find('.task-card__title-row--confirm').exists()).toBe(true)
 
-    const yes = wrapper.findAll('.task-card__action').find((b) => b.text() === 'Yes')
-    expect(yes).toBeDefined()
-    await yes!.trigger('click')
+    const yes = wrapper.find('.task-card__confirm-yes')
+    expect(yes.exists()).toBe(true)
+    await yes.trigger('click')
 
     expect(api.deleteTask).toHaveBeenCalledWith('t-1')
   })

@@ -22,25 +22,27 @@ internal data class AuditLogTable(
     @Column("created_at")
     val createdAt: java.time.LocalDateTime,
 ) {
-    fun toDomain(): AuditLog = AuditLog(
-        id = id,
-        projectId = projectId,
-        documentId = documentId,
-        userId = userId,
-        action = action,
-        details = details,
-        createdAt = createdAt.atZone(java.time.ZoneId.systemDefault()).toInstant(),
-    )
+    fun toDomain(): AuditLog =
+        AuditLog(
+            id = id,
+            projectId = projectId,
+            documentId = documentId,
+            userId = userId,
+            action = action,
+            details = details,
+            createdAt = createdAt.atZone(java.time.ZoneId.systemDefault()).toInstant(),
+        )
 
     companion object {
-        fun fromDomain(log: AuditLog): AuditLogTable = AuditLogTable(
-            id = log.id,
-            projectId = log.projectId,
-            documentId = log.documentId,
-            userId = log.userId,
-            action = log.action,
-            details = log.details,
-            createdAt = log.createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
-        )
+        fun fromDomain(log: AuditLog): AuditLogTable =
+            AuditLogTable(
+                id = log.id,
+                projectId = log.projectId,
+                documentId = log.documentId,
+                userId = log.userId,
+                action = log.action,
+                details = log.details,
+                createdAt = log.createdAt.atZone(java.time.ZoneId.systemDefault()).toLocalDateTime(),
+            )
     }
 }

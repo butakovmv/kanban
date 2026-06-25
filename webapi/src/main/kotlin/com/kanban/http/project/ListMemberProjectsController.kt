@@ -13,18 +13,25 @@ internal class ListMemberProjectsController(
     private val handler: ProjectHandler,
 ) {
     @GetMapping
-    suspend fun listMemberProjects(@RequestParam("user_id") userId: String): ResponseEntity<*> {
+    suspend fun listMemberProjects(
+        @RequestParam("user_id") userId: String,
+    ): ResponseEntity<*> {
         val result = handler.listMemberProjects(userId = userId)
         return when (result) {
             is ProjectHandler.ListMemberProjectsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "projects" to result.projects.map { p ->
-                            ProjectResponse(
-                                id = p.id, ownerId = p.ownerId, name = p.name,
-                                description = p.description, createdAt = p.createdAt, updatedAt = p.updatedAt,
-                            )
-                        },
+                        "projects" to
+                            result.projects.map { p ->
+                                ProjectResponse(
+                                    id = p.id,
+                                    ownerId = p.ownerId,
+                                    name = p.name,
+                                    description = p.description,
+                                    createdAt = p.createdAt,
+                                    updatedAt = p.updatedAt,
+                                )
+                            },
                     ),
                 )
         }

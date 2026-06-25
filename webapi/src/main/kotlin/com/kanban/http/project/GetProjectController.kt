@@ -13,15 +13,21 @@ internal class GetProjectController(
     private val handler: ProjectHandler,
 ) {
     @GetMapping
-    suspend fun get(@PathVariable("id") id: String): ResponseEntity<*> {
+    suspend fun get(
+        @PathVariable("id") id: String,
+    ): ResponseEntity<*> {
         val result = handler.get(projectId = id)
         return when (result) {
             is ProjectHandler.GetProjectResult.Success -> {
                 val p = result.project
                 ResponseEntity.ok(
                     ProjectResponse(
-                        id = p.id, ownerId = p.ownerId, name = p.name,
-                        description = p.description, createdAt = p.createdAt, updatedAt = p.updatedAt,
+                        id = p.id,
+                        ownerId = p.ownerId,
+                        name = p.name,
+                        description = p.description,
+                        createdAt = p.createdAt,
+                        updatedAt = p.updatedAt,
                     ),
                 )
             }

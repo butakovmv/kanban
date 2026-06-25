@@ -18,13 +18,14 @@ class RegisterUserOperationImplTest {
     private val tokenProvider = mockk<TokenProvider>()
     private val userTariffRepository = mockk<UserTariffRepository>()
     private val tariffRepository = mockk<TariffRepository>()
-    private val operation = RegisterUserOperationImpl(
-        userRepository = userRepository,
-        passwordHasher = passwordHasher,
-        tokenProvider = tokenProvider,
-        userTariffRepository = userTariffRepository,
-        tariffRepository = tariffRepository,
-    )
+    private val operation =
+        RegisterUserOperationImpl(
+            userRepository = userRepository,
+            passwordHasher = passwordHasher,
+            tokenProvider = tokenProvider,
+            userTariffRepository = userTariffRepository,
+            tariffRepository = tariffRepository,
+        )
 
     @Test
     fun `should register user and return tokens`() =

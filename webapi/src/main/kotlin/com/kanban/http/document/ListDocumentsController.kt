@@ -21,17 +21,18 @@ internal class ListDocumentsController(
             is DocumentHandler.ListDocumentsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "documents" to result.documents.map {
-                            DocumentResponse(
-                                id = it.id,
-                                projectId = it.projectId,
-                                path = it.path,
-                                title = it.title,
-                                description = it.description,
-                                createdAt = it.createdAt,
-                                updatedAt = it.updatedAt,
-                            )
-                        },
+                        "documents" to
+                            result.documents.map {
+                                DocumentResponse(
+                                    id = it.id,
+                                    projectId = it.projectId,
+                                    path = it.path,
+                                    title = it.title,
+                                    description = it.description,
+                                    createdAt = it.createdAt,
+                                    updatedAt = it.updatedAt,
+                                )
+                            },
                     ),
                 )
         }

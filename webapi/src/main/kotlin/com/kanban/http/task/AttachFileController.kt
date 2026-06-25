@@ -31,13 +31,14 @@ internal class AttachFileController(
         @PathVariable("taskId") taskId: String,
         @RequestBody body: AttachFileBody,
     ): ResponseEntity<*> {
-        val result = handler.attach(
-            taskId = taskId,
-            fileName = body.fileName,
-            contentType = body.contentType,
-            contentBase64 = body.contentBase64,
-            uploadedBy = body.uploadedBy,
-        )
+        val result =
+            handler.attach(
+                taskId = taskId,
+                fileName = body.fileName,
+                contentType = body.contentType,
+                contentBase64 = body.contentBase64,
+                uploadedBy = body.uploadedBy,
+            )
         return when (result) {
             is FileHandler.AttachFileResult.Success -> {
                 val file = result.file

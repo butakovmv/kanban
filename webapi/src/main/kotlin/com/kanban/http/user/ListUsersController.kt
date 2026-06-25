@@ -21,7 +21,8 @@ internal class ListUsersController(
     ): ResponseEntity<*> {
         val userIds = ids.split(",").map { it.trim() }.filter { it.isNotBlank() }
         val users = handler.findUsers(userIds)
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(2)))
             .body(mapOf("users" to users.map { it.toResponse() }))
     }

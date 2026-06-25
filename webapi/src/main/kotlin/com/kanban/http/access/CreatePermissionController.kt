@@ -23,7 +23,15 @@ internal class CreatePermissionController(
             is AccessHandler.CreatePermissionResult.Success ->
                 ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(PermissionResponse(id = result.permission.id, resource = result.permission.resource, action = result.permission.action, targetId = result.permission.targetId, createdAt = result.permission.createdAt))
+                    .body(
+                        PermissionResponse(
+                            id = result.permission.id,
+                            resource = result.permission.resource,
+                            action = result.permission.action,
+                            targetId = result.permission.targetId,
+                            createdAt = result.permission.createdAt,
+                        ),
+                    )
             is AccessHandler.CreatePermissionResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)

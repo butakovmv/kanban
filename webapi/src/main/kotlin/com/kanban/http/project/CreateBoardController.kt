@@ -24,25 +24,35 @@ internal class CreateBoardController(
     suspend fun create(
         @RequestBody body: CreateBoardBody,
     ): ResponseEntity<*> {
-        val result = handler.create(
-            projectId = body.projectId,
-            name = body.name,
-        )
+        val result =
+            handler.create(
+                projectId = body.projectId,
+                name = body.name,
+            )
         return when (result) {
             is BoardHandler.CreateBoardResult.Success -> {
                 val v = result.view
                 ResponseEntity.status(HttpStatus.CREATED).body(
                     BoardViewResponse(
-                        board = BoardResponse(
-                            id = v.board.id, projectId = v.board.projectId, name = v.board.name,
-                            position = v.board.position, createdAt = v.board.createdAt,
-                        ),
-                        columns = v.columns.map { c ->
-                            ColumnResponse(
-                                id = c.id, projectId = c.projectId, name = c.name,
-                                position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
-                            )
-                        },
+                        board =
+                            BoardResponse(
+                                id = v.board.id,
+                                projectId = v.board.projectId,
+                                name = v.board.name,
+                                position = v.board.position,
+                                createdAt = v.board.createdAt,
+                            ),
+                        columns =
+                            v.columns.map { c ->
+                                ColumnResponse(
+                                    id = c.id,
+                                    projectId = c.projectId,
+                                    name = c.name,
+                                    position = c.position,
+                                    wipLimit = c.wipLimit,
+                                    createdAt = c.createdAt,
+                                )
+                            },
                     ),
                 )
             }

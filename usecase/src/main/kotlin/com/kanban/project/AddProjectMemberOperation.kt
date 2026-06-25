@@ -10,6 +10,7 @@ interface AddProjectMemberOperation : Operation<AddProjectMemberOperation.Arg, A
 
     sealed interface Result {
         data object Success : Result
+
         data object ProjectNotFound : Result
     }
 }

@@ -14,7 +14,9 @@ internal class DeleteProjectController(
     private val handler: ProjectHandler,
 ) {
     @DeleteMapping
-    suspend fun delete(@PathVariable("id") id: String): ResponseEntity<*> {
+    suspend fun delete(
+        @PathVariable("id") id: String,
+    ): ResponseEntity<*> {
         val result = handler.delete(projectId = id)
         return when (result) {
             ProjectHandler.DeleteProjectResult.Success ->

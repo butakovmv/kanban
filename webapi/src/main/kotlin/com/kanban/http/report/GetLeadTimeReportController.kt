@@ -29,14 +29,15 @@ internal class GetLeadTimeReportController(
             is ReportHandler.LeadTimeResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "points" to result.points.map {
-                            LeadTimePointResponse(
-                                date = it.date,
-                                taskId = it.taskId,
-                                taskTitle = it.taskTitle,
-                                leadTimeHours = it.leadTimeHours,
-                            )
-                        },
+                        "points" to
+                            result.points.map {
+                                LeadTimePointResponse(
+                                    date = it.date,
+                                    taskId = it.taskId,
+                                    taskTitle = it.taskTitle,
+                                    leadTimeHours = it.leadTimeHours,
+                                )
+                            },
                     ),
                 )
         }

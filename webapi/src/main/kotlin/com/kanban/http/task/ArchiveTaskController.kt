@@ -47,10 +47,11 @@ internal class ArchiveTaskController(
         @RequestBody(required = false) body: ArchiveBody?,
     ): ResponseEntity<*> {
         val taskResult = handler.get(taskId = id)
-        val projectId = when (taskResult) {
-            is TaskHandler.GetTaskResult.Success -> taskResult.task.projectId
-            else -> null
-        }
+        val projectId =
+            when (taskResult) {
+                is TaskHandler.GetTaskResult.Success -> taskResult.task.projectId
+                else -> null
+            }
         val result = handler.archive(taskId = id, userId = body?.userId, projectId = projectId)
         return when (result) {
             TaskHandler.ArchiveTaskResult.Success ->

@@ -16,14 +16,19 @@ internal class AuditLogHandler(
         val createdAt: Instant,
     )
 
-    suspend fun list(projectId: String, page: Int, size: Int): ListAuditLogResult {
-        val result = listAuditLogOperation.execute(
-            ListAuditLogOperation.Arg(
-                projectId = projectId,
-                page = page,
-                size = size,
-            ),
-        )
+    suspend fun list(
+        projectId: String,
+        page: Int,
+        size: Int,
+    ): ListAuditLogResult {
+        val result =
+            listAuditLogOperation.execute(
+                ListAuditLogOperation.Arg(
+                    projectId = projectId,
+                    page = page,
+                    size = size,
+                ),
+            )
         return when (result) {
             is ListAuditLogOperation.Result.Success ->
                 ListAuditLogResult.Success(

@@ -303,7 +303,7 @@ describe('BoardPage', () => {
     await flushPromises()
     await nextTick()
 
-    expect(taskApi.listTasks).toHaveBeenCalledWith('b-1', false)
+    expect(taskApi.listTasks).toHaveBeenCalledWith('p-1', false)
     const cards = wrapper.findAllComponents({ name: 'TaskCard' })
     expect(cards).toHaveLength(3)
   })
@@ -412,6 +412,6 @@ describe('BoardPage', () => {
     await targetColumn!.vm.$emit('move-task', { taskId: 't-1', columnId: 'c-2' })
     await flushPromises()
 
-    expect(taskApi.moveTask).toHaveBeenCalledWith('t-1', { columnId: 'c-2', position: 0 })
+    expect(taskApi.moveTask).toHaveBeenCalledWith('t-1', { columnId: 'c-2', position: 0, userId: null })
   })
 })

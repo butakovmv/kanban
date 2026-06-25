@@ -9,8 +9,9 @@ internal class AuditLogConfig {
     fun auditLogHandler(
         listAuditLogOperation: ListAuditLogOperation,
         logAuditEventOperation: LogAuditEventOperation,
-    ): AuditLogHandler = AuditLogHandler(
-        listAuditLogOperation = listAuditLogOperation,
-        logAuditEventOperation = logAuditEventOperation,
-    )
+    ): AuditLogHandler =
+        AuditLogHandler(
+            listAuditLogOperation = listAuditLogOperation,
+            logAuditEventOperation = logAuditEventOperation,
+        )
 }

@@ -32,14 +32,15 @@ internal class GetCfdReportController(
             is ReportHandler.CfdResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "points" to result.points.map {
-                            CfdPointResponse(
-                                date = it.date,
-                                columnId = it.columnId,
-                                columnName = it.columnName,
-                                count = it.count,
-                            )
-                        },
+                        "points" to
+                            result.points.map {
+                                CfdPointResponse(
+                                    date = it.date,
+                                    columnId = it.columnId,
+                                    columnName = it.columnName,
+                                    count = it.count,
+                                )
+                            },
                     ),
                 )
         }

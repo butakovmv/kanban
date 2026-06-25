@@ -56,8 +56,9 @@ internal class TariffRepositoryImpl(
 
     override suspend fun save(tariff: Tariff): Tariff {
         val table = tariff.toTable()
-        db.sql(
-            """
+        db
+            .sql(
+                """
             INSERT INTO tariffs (id, name, max_projects, max_boards_per_project, max_tasks_per_board,
                                  max_file_size_mb, max_storage_mb, created_at)
             VALUES (:id, :name, :maxProjects, :maxBoardsPerProject, :maxTasksPerBoard,
@@ -70,8 +71,7 @@ internal class TariffRepositoryImpl(
                 max_file_size_mb = EXCLUDED.max_file_size_mb,
                 max_storage_mb = EXCLUDED.max_storage_mb
             """,
-        )
-            .bind("id", UUID.fromString(table.id))
+            ).bind("id", UUID.fromString(table.id))
             .bind("name", table.name)
             .bind("maxProjects", table.maxProjects)
             .bind("maxBoardsPerProject", table.maxBoardsPerProject)

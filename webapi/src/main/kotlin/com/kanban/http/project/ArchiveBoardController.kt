@@ -14,7 +14,9 @@ internal class ArchiveBoardController(
     private val handler: BoardHandler,
 ) {
     @PostMapping
-    suspend fun archive(@PathVariable("projectId") projectId: String): ResponseEntity<*> {
+    suspend fun archive(
+        @PathVariable("projectId") projectId: String,
+    ): ResponseEntity<*> {
         val result = handler.archiveByProjectId(projectId = projectId)
         return when (result) {
             BoardHandler.ArchiveBoardResult.Success ->

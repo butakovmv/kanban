@@ -73,20 +73,22 @@ internal class UpdateTaskController(
         @RequestBody body: UpdateTaskBody,
     ): ResponseEntity<*> {
         val taskResult = handler.get(taskId = id)
-        val taskProjectId = when (taskResult) {
-            is TaskHandler.GetTaskResult.Success -> taskResult.task.projectId
-            else -> null
-        }
-        val result = handler.update(
-            taskId = id,
-            title = body.title,
-            description = body.description,
-            assigneeId = body.assigneeId,
-            dueDate = body.dueDate,
-            priority = body.priority,
-            userId = body.userId,
-            projectId = taskProjectId,
-        )
+        val taskProjectId =
+            when (taskResult) {
+                is TaskHandler.GetTaskResult.Success -> taskResult.task.projectId
+                else -> null
+            }
+        val result =
+            handler.update(
+                taskId = id,
+                title = body.title,
+                description = body.description,
+                assigneeId = body.assigneeId,
+                dueDate = body.dueDate,
+                priority = body.priority,
+                userId = body.userId,
+                projectId = taskProjectId,
+            )
         return when (result) {
             is TaskHandler.UpdateTaskResult.Success -> {
                 val task = result.task

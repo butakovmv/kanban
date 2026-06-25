@@ -134,8 +134,8 @@ describe('ReportsPage', () => {
     await router.isReady()
 
     const ltData = [
-      { taskId: 't1', leadTimeHours: 24 },
-      { taskId: 't2', leadTimeHours: 48 },
+      { date: '2025-01-01', taskId: 't1', taskTitle: 'Task 1', leadTimeHours: 24 },
+      { date: '2025-01-01', taskId: 't2', taskTitle: 'Task 2', leadTimeHours: 48 },
     ]
     vi.mocked(api.getLeadTime).mockResolvedValue(ltData)
 

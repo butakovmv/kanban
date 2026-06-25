@@ -4,18 +4,20 @@ import ch.qos.logback.classic.pattern.ThrowableProxyConverter
 import ch.qos.logback.classic.spi.IThrowableProxy
 
 class CleanedThrowableConverter : ThrowableProxyConverter() {
-    private val allowedPackages = listOf(
-        "com.kanban",
-        "java.base",
-        "java.lang",
-        "java.util",
-        "org.springframework",
-        "kotlin.",
-    )
+    private val allowedPackages =
+        listOf(
+            "com.kanban",
+            "java.base",
+            "java.lang",
+            "java.util",
+            "org.springframework",
+            "kotlin.",
+        )
 
     override fun throwableProxyToString(tp: IThrowableProxy): String {
         val full = super.throwableProxyToString(tp)
-        return full.lines()
+        return full
+            .lines()
             .filter { line ->
                 val trimmed = line.trimStart()
                 when {
@@ -26,8 +28,7 @@ class CleanedThrowableConverter : ThrowableProxyConverter() {
                     trimmed == "Original Stack Trace:" -> false
                     else -> true
                 }
-            }
-            .joinToString("\n")
+            }.joinToString("\n")
             .trimEnd()
     }
 }

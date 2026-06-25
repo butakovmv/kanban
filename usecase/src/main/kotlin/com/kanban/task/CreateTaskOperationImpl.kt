@@ -1,7 +1,7 @@
 package com.kanban.task
 
-import com.kanban.common.ProjectId
 import com.kanban.common.ColumnId
+import com.kanban.common.ProjectId
 import com.kanban.common.TaskId
 import com.kanban.project.ColumnRepository
 import java.time.Instant

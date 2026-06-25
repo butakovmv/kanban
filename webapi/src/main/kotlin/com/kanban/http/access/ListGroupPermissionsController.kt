@@ -21,9 +21,16 @@ internal class ListGroupPermissionsController(
             is AccessHandler.ListGroupPermissionsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "permissions" to result.permissions.map {
-                            PermissionResponse(id = it.id, resource = it.resource, action = it.action, targetId = it.targetId, createdAt = it.createdAt)
-                        },
+                        "permissions" to
+                            result.permissions.map {
+                                PermissionResponse(
+                                    id = it.id,
+                                    resource = it.resource,
+                                    action = it.action,
+                                    targetId = it.targetId,
+                                    createdAt = it.createdAt,
+                                )
+                            },
                     ),
                 )
         }

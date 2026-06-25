@@ -18,31 +18,33 @@ internal class ListTasksController(
         @PathVariable("projectId") projectId: String,
         @RequestParam("include_archived", defaultValue = "false") includeArchived: Boolean,
     ): ResponseEntity<*> {
-        val result = handler.list(
-            projectId = projectId,
-            includeArchived = includeArchived,
-        )
+        val result =
+            handler.list(
+                projectId = projectId,
+                includeArchived = includeArchived,
+            )
         return when (result) {
             is TaskHandler.ListTasksResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "tasks" to result.tasks.map { task ->
-                            TaskResponse(
-                                id = task.id,
-                                projectId = task.projectId,
-                                columnId = task.columnId,
-                                title = task.title,
-                                description = task.description,
-                                assigneeId = task.assigneeId,
-                                position = task.position,
-                                dueDate = task.dueDate,
-                                priority = task.priority,
-                                archived = task.archived,
-                                createdAt = task.createdAt,
-                                updatedAt = task.updatedAt,
-                                labels = task.labels,
-                            )
-                        },
+                        "tasks" to
+                            result.tasks.map { task ->
+                                TaskResponse(
+                                    id = task.id,
+                                    projectId = task.projectId,
+                                    columnId = task.columnId,
+                                    title = task.title,
+                                    description = task.description,
+                                    assigneeId = task.assigneeId,
+                                    position = task.position,
+                                    dueDate = task.dueDate,
+                                    priority = task.priority,
+                                    archived = task.archived,
+                                    createdAt = task.createdAt,
+                                    updatedAt = task.updatedAt,
+                                    labels = task.labels,
+                                )
+                            },
                     ),
                 )
         }

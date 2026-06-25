@@ -21,7 +21,14 @@ internal class UpdateGroupController(
         val result = handler.updateGroup(groupId = id, name = body.name, description = body.description)
         return when (result) {
             is AccessHandler.UpdateGroupResult.Success ->
-                ResponseEntity.ok(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
+                ResponseEntity.ok(
+                    GroupResponse(
+                        id = result.group.id,
+                        name = result.group.name,
+                        description = result.group.description,
+                        createdAt = result.group.createdAt,
+                    ),
+                )
             AccessHandler.UpdateGroupResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
             is AccessHandler.UpdateGroupResult.Failure ->

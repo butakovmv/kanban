@@ -25,20 +25,26 @@ internal class ReorderColumnsController(
         @PathVariable("projectId") projectId: String,
         @RequestBody body: ReorderColumnsBody,
     ): ResponseEntity<*> {
-        val result = handler.reorderColumnsByProjectId(
-            projectId = projectId,
-            columnIds = body.columnIds,
-        )
+        val result =
+            handler.reorderColumnsByProjectId(
+                projectId = projectId,
+                columnIds = body.columnIds,
+            )
         return when (result) {
             is BoardHandler.ReorderColumnsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "columns" to result.columns.map { c ->
-                            ColumnResponse(
-                                id = c.id, projectId = c.projectId, name = c.name,
-                                position = c.position, wipLimit = c.wipLimit, createdAt = c.createdAt,
-                            )
-                        },
+                        "columns" to
+                            result.columns.map { c ->
+                                ColumnResponse(
+                                    id = c.id,
+                                    projectId = c.projectId,
+                                    name = c.name,
+                                    position = c.position,
+                                    wipLimit = c.wipLimit,
+                                    createdAt = c.createdAt,
+                                )
+                            },
                     ),
                 )
             BoardHandler.ReorderColumnsResult.BoardNotFound ->

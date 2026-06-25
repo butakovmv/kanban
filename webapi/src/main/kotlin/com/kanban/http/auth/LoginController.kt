@@ -55,11 +55,12 @@ internal class LoginController(
                     AuthResponse(
                         accessToken = result.accessToken,
                         refreshToken = result.refreshToken,
-                        user = UserResponse(
-                            id = result.userId,
-                            email = result.email,
-                            displayName = result.displayName,
-                        ),
+                        user =
+                            UserResponse(
+                                id = result.userId,
+                                email = result.email,
+                                displayName = result.displayName,
+                            ),
                     ),
                 )
             is AuthHandler.AuthResult.Failure ->

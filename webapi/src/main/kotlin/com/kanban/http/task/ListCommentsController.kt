@@ -21,16 +21,17 @@ internal class ListCommentsController(
             is CommentHandler.ListCommentsResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "comments" to result.comments.map { comment ->
-                            CommentResponse(
-                                id = comment.id,
-                                taskId = comment.taskId,
-                                authorId = comment.authorId,
-                                text = comment.text,
-                                createdAt = comment.createdAt,
-                                updatedAt = comment.updatedAt,
-                            )
-                        },
+                        "comments" to
+                            result.comments.map { comment ->
+                                CommentResponse(
+                                    id = comment.id,
+                                    taskId = comment.taskId,
+                                    authorId = comment.authorId,
+                                    text = comment.text,
+                                    createdAt = comment.createdAt,
+                                    updatedAt = comment.updatedAt,
+                                )
+                            },
                     ),
                 )
         }

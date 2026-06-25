@@ -21,23 +21,24 @@ internal class ListArchivedTasksController(
             is TaskHandler.ListArchivedTasksResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "tasks" to result.tasks.map { task ->
-                            TaskResponse(
-                                id = task.id,
-                                projectId = task.projectId,
-                                columnId = task.columnId,
-                                title = task.title,
-                                description = task.description,
-                                assigneeId = task.assigneeId,
-                                position = task.position,
-                                dueDate = task.dueDate,
-                                priority = task.priority,
-                                archived = task.archived,
-                                createdAt = task.createdAt,
-                                updatedAt = task.updatedAt,
-                                labels = task.labels,
-                            )
-                        },
+                        "tasks" to
+                            result.tasks.map { task ->
+                                TaskResponse(
+                                    id = task.id,
+                                    projectId = task.projectId,
+                                    columnId = task.columnId,
+                                    title = task.title,
+                                    description = task.description,
+                                    assigneeId = task.assigneeId,
+                                    position = task.position,
+                                    dueDate = task.dueDate,
+                                    priority = task.priority,
+                                    archived = task.archived,
+                                    createdAt = task.createdAt,
+                                    updatedAt = task.updatedAt,
+                                    labels = task.labels,
+                                )
+                            },
                     ),
                 )
         }

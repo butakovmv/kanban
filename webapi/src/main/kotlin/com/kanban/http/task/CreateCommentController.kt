@@ -26,11 +26,12 @@ internal class CreateCommentController(
         @PathVariable("taskId") taskId: String,
         @RequestBody body: CreateCommentBody,
     ): ResponseEntity<*> {
-        val result = handler.create(
-            taskId = taskId,
-            authorId = body.authorId,
-            text = body.text,
-        )
+        val result =
+            handler.create(
+                taskId = taskId,
+                authorId = body.authorId,
+                text = body.text,
+            )
         return when (result) {
             is CommentHandler.CreateCommentResult.Success -> {
                 val comment = result.comment

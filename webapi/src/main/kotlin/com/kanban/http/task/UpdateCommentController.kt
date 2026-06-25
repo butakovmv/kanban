@@ -23,10 +23,11 @@ internal class UpdateCommentController(
         @PathVariable("id") id: String,
         @RequestBody body: UpdateCommentBody,
     ): ResponseEntity<*> {
-        val result = handler.update(
-            commentId = id,
-            text = body.text,
-        )
+        val result =
+            handler.update(
+                commentId = id,
+                text = body.text,
+            )
         return when (result) {
             is CommentHandler.UpdateCommentResult.Success -> {
                 val comment = result.comment

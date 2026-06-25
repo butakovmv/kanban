@@ -51,18 +51,23 @@ internal class CreateProjectController(
     suspend fun create(
         @RequestBody body: CreateProjectBody,
     ): ResponseEntity<*> {
-        val result = handler.create(
-            ownerId = body.ownerId,
-            name = body.name,
-            description = body.description,
-        )
+        val result =
+            handler.create(
+                ownerId = body.ownerId,
+                name = body.name,
+                description = body.description,
+            )
         return when (result) {
             is ProjectHandler.CreateProjectResult.Success -> {
                 val p = result.project
                 ResponseEntity.status(HttpStatus.CREATED).body(
                     ProjectResponse(
-                        id = p.id, ownerId = p.ownerId, name = p.name,
-                        description = p.description, createdAt = p.createdAt, updatedAt = p.updatedAt,
+                        id = p.id,
+                        ownerId = p.ownerId,
+                        name = p.name,
+                        description = p.description,
+                        createdAt = p.createdAt,
+                        updatedAt = p.updatedAt,
                     ),
                 )
             }

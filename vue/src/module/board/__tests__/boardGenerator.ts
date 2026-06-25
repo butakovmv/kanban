@@ -65,8 +65,8 @@ export const boardGenerator = {
   },
 
   rawBoardView(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
-    const board = overrides.board ?? this.rawBoard()
-    const columns = overrides.columns ?? [this.rawColumn({ board_id: board.id }), this.rawColumn({ board_id: board.id, position: 1 })]
+    const board = (overrides.board ?? this.rawBoard()) as Record<string, unknown>
+    const columns = overrides.columns ?? [this.rawColumn({ board_id: board.id as string }), this.rawColumn({ board_id: board.id as string, position: 1 })]
     return { board, columns }
   },
 }

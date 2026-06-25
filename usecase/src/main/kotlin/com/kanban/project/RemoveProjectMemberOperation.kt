@@ -10,6 +10,7 @@ interface RemoveProjectMemberOperation : Operation<RemoveProjectMemberOperation.
 
     sealed interface Result {
         data object Success : Result
+
         data object ProjectNotFound : Result
     }
 }

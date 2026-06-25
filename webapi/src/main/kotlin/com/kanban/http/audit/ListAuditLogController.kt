@@ -40,17 +40,18 @@ internal class ListAuditLogController(
             is AuditLogHandler.ListAuditLogResult.Success ->
                 ResponseEntity.ok(
                     AuditLogListResponse(
-                        items = result.items.map { e ->
-                            AuditEntryResponse(
-                                id = e.id,
-                                projectId = e.projectId,
-                                documentId = e.documentId,
-                                userId = e.userId,
-                                action = e.action,
-                                details = e.details,
-                                createdAt = e.createdAt,
-                            )
-                        },
+                        items =
+                            result.items.map { e ->
+                                AuditEntryResponse(
+                                    id = e.id,
+                                    projectId = e.projectId,
+                                    documentId = e.documentId,
+                                    userId = e.userId,
+                                    action = e.action,
+                                    details = e.details,
+                                    createdAt = e.createdAt,
+                                )
+                            },
                         total = result.total,
                     ),
                 )

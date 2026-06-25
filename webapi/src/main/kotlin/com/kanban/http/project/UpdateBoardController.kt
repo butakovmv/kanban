@@ -28,8 +28,11 @@ internal class UpdateBoardController(
                 val b = result.board
                 ResponseEntity.ok(
                     BoardResponse(
-                        id = b.id, projectId = b.projectId, name = b.name,
-                        position = b.position, createdAt = b.createdAt,
+                        id = b.id,
+                        projectId = b.projectId,
+                        name = b.name,
+                        position = b.position,
+                        createdAt = b.createdAt,
                     ),
                 )
             }

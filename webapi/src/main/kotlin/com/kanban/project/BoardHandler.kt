@@ -115,11 +115,18 @@ internal class BoardHandler(
     private suspend fun resolveBoardId(projectId: String): String? {
         val boards = listBoardsOperation.execute(ListBoardsOperation.Arg(projectId = projectId))
         return when (boards) {
-            is ListBoardsOperation.Result.Success -> boards.boards.firstOrNull()?.id?.value
+            is ListBoardsOperation.Result.Success ->
+                boards.boards
+                    .firstOrNull()
+                    ?.id
+                    ?.value
         }
     }
 
-    suspend fun updateByProjectId(projectId: String, name: String?): UpdateBoardResult {
+    suspend fun updateByProjectId(
+        projectId: String,
+        name: String?,
+    ): UpdateBoardResult {
         val boardId = resolveBoardId(projectId) ?: return UpdateBoardResult.NotFound
         return update(boardId, name)
     }
@@ -150,7 +157,7 @@ internal class BoardHandler(
                 sinkService?.emit(
                     SseEvent(
                         type = "board_archived",
-                        data = """{"board_id":"${boardId}"}""",
+                        data = """{"board_id":"$boardId"}""",
                         boardId = boardId,
                         projectId = null,
                         timestamp = Instant.now(),
@@ -183,7 +190,7 @@ internal class BoardHandler(
                 sinkService?.emit(
                     SseEvent(
                         type = "columns_reordered",
-                        data = """{"board_id":"${boardId}"}""",
+                        data = """{"board_id":"$boardId"}""",
                         boardId = boardId,
                         projectId = null,
                         timestamp = Instant.now(),
@@ -198,7 +205,10 @@ internal class BoardHandler(
         }
     }
 
-    suspend fun reorderColumnsByProjectId(projectId: String, columnIds: List<String>): ReorderColumnsResult {
+    suspend fun reorderColumnsByProjectId(
+        projectId: String,
+        columnIds: List<String>,
+    ): ReorderColumnsResult {
         val boardId = resolveBoardId(projectId) ?: return ReorderColumnsResult.BoardNotFound
         return reorderColumns(boardId, columnIds)
     }

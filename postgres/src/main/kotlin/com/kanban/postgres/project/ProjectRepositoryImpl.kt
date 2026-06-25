@@ -3,7 +3,6 @@ package com.kanban.postgres.project
 import com.kanban.project.Project
 import com.kanban.project.ProjectMember
 import com.kanban.project.ProjectRepository
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.UUID
@@ -147,14 +146,15 @@ internal class ProjectRepositoryImpl(
 
     override suspend fun findMembers(projectId: String): List<ProjectMember> =
         db
-            .sql("""
+            .sql(
+                """
                 SELECT pm.user_id, u.display_name, pm.added_at
                 FROM project_members pm
                 JOIN users u ON u.id = pm.user_id
                 WHERE pm.project_id = :projectId
                 ORDER BY pm.added_at
-            """.trimIndent())
-            .bind("projectId", UUID.fromString(projectId))
+                """.trimIndent(),
+            ).bind("projectId", UUID.fromString(projectId))
             .map { row, _ ->
                 ProjectMember(
                     projectId = projectId,
@@ -166,7 +166,10 @@ internal class ProjectRepositoryImpl(
             .collectList()
             .awaitSingle()
 
-    override suspend fun addMember(projectId: String, userId: String) {
+    override suspend fun addMember(
+        projectId: String,
+        userId: String,
+    ) {
         db
             .sql("INSERT INTO project_members (project_id, user_id, added_at) VALUES (:projectId, :userId, :addedAt)")
             .bind("projectId", UUID.fromString(projectId))
@@ -177,7 +180,10 @@ internal class ProjectRepositoryImpl(
             .awaitSingle()
     }
 
-    override suspend fun removeMember(projectId: String, userId: String) {
+    override suspend fun removeMember(
+        projectId: String,
+        userId: String,
+    ) {
         db
             .sql("DELETE FROM project_members WHERE project_id = :projectId AND user_id = :userId")
             .bind("projectId", UUID.fromString(projectId))
@@ -189,13 +195,14 @@ internal class ProjectRepositoryImpl(
 
     override suspend fun listByMemberId(userId: String): List<Project> =
         db
-            .sql("""
+            .sql(
+                """
                 SELECT p.* FROM projects p
                 INNER JOIN project_members pm ON pm.project_id = p.id
                 WHERE pm.user_id = :userId AND p.owner_id != :userId
                 ORDER BY p.created_at
-            """)
-            .bind("userId", UUID.fromString(userId))
+            """,
+            ).bind("userId", UUID.fromString(userId))
             .map { row, _ -> row.toProject() }
             .all()
             .collectList()

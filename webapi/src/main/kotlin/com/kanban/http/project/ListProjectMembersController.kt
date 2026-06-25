@@ -24,13 +24,16 @@ internal class ListProjectMembersController(
     )
 
     @GetMapping
-    suspend fun listMembers(@PathVariable("id") projectId: String): ResponseEntity<*> {
+    suspend fun listMembers(
+        @PathVariable("id") projectId: String,
+    ): ResponseEntity<*> {
         val result = handler.listMembers(projectId = projectId)
         return when (result) {
             is ProjectHandler.ListProjectMembersResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "members" to result.members.map { MemberResponse(userId = it.userId, displayName = it.displayName, addedAt = it.addedAt) },
+                        "members" to
+                            result.members.map { MemberResponse(userId = it.userId, displayName = it.displayName, addedAt = it.addedAt) },
                     ),
                 )
         }

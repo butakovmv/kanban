@@ -63,12 +63,13 @@ internal class MoveTaskController(
         @Parameter(description = "Task ID") @PathVariable("id") id: String,
         @RequestBody body: MoveTaskBody,
     ): ResponseEntity<*> {
-        val result = handler.move(
-            taskId = id,
-            columnId = body.columnId,
-            position = body.position,
-            userId = body.userId,
-        )
+        val result =
+            handler.move(
+                taskId = id,
+                columnId = body.columnId,
+                position = body.position,
+                userId = body.userId,
+            )
         return when (result) {
             is TaskHandler.MoveTaskResult.Success -> {
                 val task = result.task

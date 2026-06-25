@@ -21,9 +21,10 @@ internal class ListMembersController(
             is AccessHandler.ListMembersResult.Success ->
                 ResponseEntity.ok(
                     mapOf(
-                        "members" to result.members.map {
-                            MemberResponse(groupId = it.groupId, userId = it.userId, addedAt = it.addedAt)
-                        },
+                        "members" to
+                            result.members.map {
+                                MemberResponse(groupId = it.groupId, userId = it.userId, addedAt = it.addedAt)
+                            },
                     ),
                 )
         }

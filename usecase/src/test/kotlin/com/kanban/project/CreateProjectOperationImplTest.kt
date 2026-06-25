@@ -14,12 +14,13 @@ class CreateProjectOperationImplTest {
     private val boardRepository = mockk<BoardRepository>()
     private val columnRepository = mockk<ColumnRepository>()
     private val checkTariffLimitsOperation = mockk<CheckTariffLimitsOperation>()
-    private val operation = CreateProjectOperationImpl(
-        projectRepository,
-        boardRepository,
-        columnRepository,
-        checkTariffLimitsOperation,
-    )
+    private val operation =
+        CreateProjectOperationImpl(
+            projectRepository,
+            boardRepository,
+            columnRepository,
+            checkTariffLimitsOperation,
+        )
 
     @Test
     fun `should create project with default board`() =

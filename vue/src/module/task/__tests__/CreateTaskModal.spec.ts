@@ -27,6 +27,7 @@ describe('CreateTaskModal', () => {
         columnId: 'c-1',
         title: 'New task',
         description: 'Description text',
+        userId: null,
       },
     ])
   })

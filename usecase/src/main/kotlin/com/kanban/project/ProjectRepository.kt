@@ -50,7 +50,10 @@ interface ProjectRepository {
      * @param projectId идентификатор проекта
      * @param userId идентификатор пользователя
      */
-    suspend fun addMember(projectId: String, userId: String)
+    suspend fun addMember(
+        projectId: String,
+        userId: String,
+    )
 
     /**
      * Удаляет пользователя из участников проекта.
@@ -58,7 +61,10 @@ interface ProjectRepository {
      * @param projectId идентификатор проекта
      * @param userId идентификатор пользователя
      */
-    suspend fun removeMember(projectId: String, userId: String)
+    suspend fun removeMember(
+        projectId: String,
+        userId: String,
+    )
 
     /**
      * Возвращает список проектов, в которых пользователь является участником (не владельцем).

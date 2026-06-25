@@ -75,7 +75,7 @@ describe('TaskDetailPage', () => {
     expect(api.getTask).toHaveBeenCalledWith('t-1')
     expect(wrapper.find('.task-detail__title').text()).toBe('Detail task')
     expect(wrapper.text()).toContain('Description')
-    expect(wrapper.text()).toContain('2025-12-31')
+    expect(wrapper.text()).toContain('31 декабря 2025 г.')
     expect(wrapper.find('.comments__list').exists()).toBe(true)
     expect(wrapper.find('.files__list').exists()).toBe(true)
   })
@@ -145,7 +145,7 @@ describe('TaskDetailPage', () => {
     await nextTick()
 
     expect(api.deleteTask).toHaveBeenCalledWith('t-1')
-    expect(pushSpy).toHaveBeenCalledWith('/projects/p-1')
+    expect(pushSpy).toHaveBeenCalledWith('/projects/p-1/board')
   })
 
   it('shows a not-found state when the task cannot be loaded', async () => {

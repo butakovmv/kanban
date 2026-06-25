@@ -1,7 +1,6 @@
 package com.kanban.identity
 
 import com.kanban.audit.LogAuditEventOperation
-import com.kanban.common.AuthTokens
 
 internal class AuthHandler(
     private val registerUserOperation: RegisterUserOperation,

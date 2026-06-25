@@ -19,7 +19,14 @@ internal class GetGroupController(
         val result = handler.getGroup(groupId = id)
         return when (result) {
             is AccessHandler.GetGroupResult.Success ->
-                ResponseEntity.ok(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
+                ResponseEntity.ok(
+                    GroupResponse(
+                        id = result.group.id,
+                        name = result.group.name,
+                        description = result.group.description,
+                        createdAt = result.group.createdAt,
+                    ),
+                )
             AccessHandler.GetGroupResult.NotFound ->
                 ResponseEntity.notFound().build<Any>()
         }

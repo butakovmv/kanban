@@ -22,7 +22,14 @@ internal class CreateGroupController(
             is AccessHandler.CreateGroupResult.Success ->
                 ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(GroupResponse(id = result.group.id, name = result.group.name, description = result.group.description, createdAt = result.group.createdAt))
+                    .body(
+                        GroupResponse(
+                            id = result.group.id,
+                            name = result.group.name,
+                            description = result.group.description,
+                            createdAt = result.group.createdAt,
+                        ),
+                    )
             is AccessHandler.CreateGroupResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
