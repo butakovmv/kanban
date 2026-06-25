@@ -9,10 +9,6 @@ spring:
     url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:kanban}
     username: ${DB_USER:kanban}
     password: ${DB_PASSWORD:kanban}
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
 
 kanban:
   jwt:

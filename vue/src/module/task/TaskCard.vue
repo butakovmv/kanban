@@ -130,7 +130,8 @@ function onDragEnd() {
     @dragend="onDragEnd"
     @click="openTask"
   >
-    <div v-if="!editing" class="task-card__title-row">
+    <div v-if="!editing && !showDeleteConfirm" class="task-card__title-row">
+      <span v-if="task.priority" class="task-card__priority" :class="`task-card__priority--${task.priority}`" :title="task.priority.charAt(0).toUpperCase() + task.priority.slice(1)" />
       <div class="task-card__title" @click.stop="openTask">{{ task.title }}</div>
       <button
         type="button"
@@ -140,6 +141,20 @@ function onDragEnd() {
       >
         ✎
       </button>
+      <button
+        v-if="isBacklogOrArchive"
+        type="button"
+        class="task-card__delete-btn"
+        aria-label="Delete task"
+        @click.stop="askDelete"
+      >
+        ✕
+      </button>
+    </div>
+    <div v-else-if="!editing && showDeleteConfirm" class="task-card__title-row task-card__title-row--confirm">
+      <span class="task-card__confirm-text">Delete?</span>
+      <button type="button" class="task-card__confirm-yes" @click.stop="confirmDelete">Yes</button>
+      <button type="button" class="task-card__confirm-no" @click.stop="cancelDelete">No</button>
     </div>
     <form v-else class="task-card__edit-form" @submit.prevent="commitEdit" @click.stop>
       <input
@@ -156,30 +171,15 @@ function onDragEnd() {
 
     <div v-if="descriptionPreview" class="task-card__description">{{ descriptionPreview }}</div>
 
+    <div v-if="task.labels.length > 0" class="task-card__labels">
+      <span v-for="label in task.labels" :key="label" class="task-card__label">{{ label }}</span>
+    </div>
+
     <div class="task-card__meta-row">
-      <span v-if="task.priority" class="task-card__priority" :class="`task-card__priority--${task.priority}`" :title="task.priority.charAt(0).toUpperCase() + task.priority.slice(1)" />
       <span v-if="assigneeName" class="task-card__assignee">{{ assigneeName }}</span>
     </div>
 
     <div v-if="formattedDueDate" class="task-card__due">Due: {{ formattedDueDate }}</div>
-
-    <div v-if="isBacklogOrArchive" class="task-card__actions" @click.stop>
-      <button
-        v-if="!showDeleteConfirm"
-        type="button"
-        class="task-card__action task-card__action--danger"
-        @click="askDelete"
-      >
-        Delete
-      </button>
-      <div v-else class="task-card__confirm">
-        <span>Delete?</span>
-        <button type="button" class="task-card__action task-card__action--danger" @click="confirmDelete">
-          Yes
-        </button>
-        <button type="button" class="task-card__action" @click="cancelDelete">No</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -224,6 +224,19 @@ function onDragEnd() {
   color: var(--color-primary);
   background: var(--color-surface);
 }
+.task-card__delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  padding: 0 0.25rem;
+  border-radius: var(--radius);
+  line-height: 1;
+}
+.task-card__delete-btn:hover {
+  color: var(--color-danger);
+  background: var(--color-surface);
+}
 .task-card__edit-form {
   display: flex;
   gap: 0.25rem;
@@ -256,6 +269,19 @@ function onDragEnd() {
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
+.task-card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.task-card__label {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: #fff;
+}
 .task-card__due {
   font-size: 0.7rem;
   color: var(--color-text-secondary);
@@ -284,14 +310,16 @@ function onDragEnd() {
 .task-card__priority--critical {
   background: #f44336;
 }
-.task-card__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-  position: relative;
+.task-card__title-row--confirm {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  gap: 0.4rem;
 }
-.task-card__action {
+.task-card__confirm-text {
+  flex: 1;
+}
+.task-card__confirm-yes,
+.task-card__confirm-no {
   padding: 0.15rem 0.5rem;
   font-size: 0.7rem;
   background: var(--color-surface);
@@ -299,22 +327,15 @@ function onDragEnd() {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
 }
-.task-card__action:hover {
-  background: var(--color-background);
-}
-.task-card__action--danger {
+.task-card__confirm-yes {
   color: var(--color-danger);
   border-color: var(--color-danger);
 }
-.task-card__action--danger:hover {
+.task-card__confirm-yes:hover {
   background: var(--color-danger);
   color: #fff;
 }
-.task-card__confirm {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.7rem;
-  color: var(--color-text-secondary);
+.task-card__confirm-no:hover {
+  background: var(--color-background);
 }
 </style>

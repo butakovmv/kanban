@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBoardStore } from './store'
 import { useTaskStore } from '../task/store'
+import { useProjectStore } from '../project/store'
+import { useUserStore } from '../user/store'
 import { useRealtime } from '../realtime/useRealtime'
 import ProjectLayout from '../../component/ProjectLayout.vue'
 import Column from './Column.vue'
@@ -16,6 +18,8 @@ const route = useRoute()
 const router = useRouter()
 const boardStore = useBoardStore()
 const taskStore = useTaskStore()
+const projectStore = useProjectStore()
+const userStore = useUserStore()
 const { currentBoard, columns, loading: boardLoading, error: boardError } = storeToRefs(boardStore)
 const { tasks, error: taskError, loading: taskLoading } = storeToRefs(taskStore)
 
@@ -24,6 +28,11 @@ const showBacklogAndArchive = ref(true)
 const modalColumnId = ref<string | null>(null)
 const dragOverColumnId = ref<string | null>(null)
 const dragOverArchive = ref(false)
+const showFilters = ref(false)
+const filterPriority = ref('')
+const filterAssignee = ref('')
+const filterLabel = ref('')
+const filterHasDeadline = ref('')
 
 const ARCHIVE_COL_ID = '__archive__'
 
@@ -47,18 +56,65 @@ const displayColumns = computed(() => {
   return cols
 })
 
+const allLabels = computed(() => {
+  const set = new Set<string>()
+  for (const t of tasks.value) {
+    for (const l of t.labels) {
+      set.add(l)
+    }
+  }
+  return [...set].sort()
+})
+
+const memberOptions = computed(() => {
+  const ids: string[] = []
+  const owner = projectStore.currentProject
+  if (owner) ids.push(owner.ownerId)
+  for (const m of projectStore.projectMembers) {
+    if (!ids.includes(m.userId)) ids.push(m.userId)
+  }
+  if (ids.length > 0) userStore.ensureUsers(ids)
+  return ids.map(id => ({
+    id,
+    name: userStore.getDisplayName(id) || id,
+  }))
+})
+
+const filteredTasks = computed(() => {
+  let result = tasks.value
+  if (filterPriority.value) {
+    result = result.filter(t => t.priority === filterPriority.value)
+  }
+  if (filterAssignee.value) {
+    result = result.filter(t => t.assigneeId === filterAssignee.value)
+  }
+  if (filterLabel.value) {
+    result = result.filter(t => t.labels.includes(filterLabel.value))
+  }
+  if (filterHasDeadline.value === 'yes') {
+    result = result.filter(t => t.dueDate !== null)
+  } else if (filterHasDeadline.value === 'no') {
+    result = result.filter(t => t.dueDate === null)
+  }
+  return result
+})
+
 function tasksForDisplayColumn(columnId: string): Task[] {
   if (columnId === ARCHIVE_COL_ID) {
-    return tasks.value.filter(t => t.archived)
+    return filteredTasks.value.filter(t => t.archived)
   }
-  return taskStore.tasksForColumn(columnId)
+  return filteredTasks.value.filter(t => t.columnId === columnId && !t.archived)
 }
 
 async function load() {
   if (projectId.value === undefined) {
     return
   }
-  await boardStore.loadBoardByProjectId(projectId.value)
+  await Promise.all([
+    boardStore.loadBoardByProjectId(projectId.value),
+    projectStore.loadProject(projectId.value),
+    projectStore.loadProjectMembers(projectId.value),
+  ])
   if (currentBoard.value !== null) {
     await taskStore.loadTasks(projectId.value)
   }
@@ -67,7 +123,7 @@ async function load() {
 onMounted(load)
 watch(projectId, load)
 
-useRealtime(computed(() => currentBoard.value?.id ?? ''))
+useRealtime(undefined, projectId.value)
 
 function toggleSwimlanes() {
   swimlanesEnabled.value = !swimlanesEnabled.value
@@ -146,6 +202,32 @@ function onArchiveDrop(event: DragEvent) {
           Swimlanes: {{ swimlanesEnabled ? 'on' : 'off' }}
         </button>
         <button type="button" class="board__add-column">+ Add column</button>
+        <button type="button" class="board__filter-toggle" :class="{ 'board__filter-toggle--on': showFilters }" @click="showFilters = !showFilters">
+          Filters
+        </button>
+      </div>
+
+      <div v-if="showFilters" class="board__filters">
+        <select v-model="filterPriority" class="board__filter-select">
+          <option value="">Any priority</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+        <select v-model="filterAssignee" class="board__filter-select">
+          <option value="">Any assignee</option>
+          <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </select>
+        <select v-model="filterLabel" class="board__filter-select">
+          <option value="">Any label</option>
+          <option v-for="l in allLabels" :key="l" :value="l">{{ l }}</option>
+        </select>
+        <select v-model="filterHasDeadline" class="board__filter-select">
+          <option value="">Deadline: any</option>
+          <option value="yes">With deadline</option>
+          <option value="no">Without deadline</option>
+        </select>
       </div>
 
       <div v-if="error" class="board__error">{{ error }}</div>
@@ -270,6 +352,40 @@ function onArchiveDrop(event: DragEvent) {
 }
 .board__toggle--on:hover {
   background: var(--color-primary-hover);
+}
+.board__filter-toggle {
+  padding: 0.5rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+.board__filter-toggle--on {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.board__filter-toggle:hover {
+  background: var(--color-background);
+}
+.board__filter-toggle--on:hover {
+  background: var(--color-primary-hover);
+}
+.board__filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.board__filter-select {
+  padding: 0.4rem 0.75rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  min-width: 10rem;
 }
 .board__error {
   padding: 0.75rem 1rem;

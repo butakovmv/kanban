@@ -36,4 +36,6 @@ data class TaskResponse(
     @JsonProperty("updated_at")
     @field:Schema(description = "Last update timestamp")
     val updatedAt: Instant,
+    @field:Schema(description = "Task labels", example = "[\"bug\", \"frontend\"]")
+    val labels: List<String>,
 )

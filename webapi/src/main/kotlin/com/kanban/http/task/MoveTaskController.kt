@@ -86,6 +86,7 @@ internal class MoveTaskController(
                         archived = task.archived,
                         createdAt = task.createdAt,
                         updatedAt = task.updatedAt,
+                        labels = task.labels,
                     ),
                 )
             }

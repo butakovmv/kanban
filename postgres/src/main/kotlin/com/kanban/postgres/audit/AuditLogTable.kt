@@ -2,16 +2,24 @@ package com.kanban.postgres.audit
 
 import com.kanban.audit.AuditLog
 import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
 @Table("audit_log")
 internal data class AuditLogTable(
-    @Id val id: String,
+    @Id
+    val id: String,
+    @Column("project_id")
     val projectId: String?,
+    @Column("document_id")
     val documentId: String?,
+    @Column("user_id")
     val userId: String,
+    @Column("action")
     val action: String,
+    @Column("details")
     val details: String?,
+    @Column("created_at")
     val createdAt: java.time.LocalDateTime,
 ) {
     fun toDomain(): AuditLog = AuditLog(

@@ -1,6 +1,7 @@
 package com.kanban.postgres.task
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
 /**
@@ -11,11 +12,18 @@ import org.springframework.data.relational.core.mapping.Table
 internal data class FileAttachmentTable(
     @Id
     val id: String,
+    @Column("task_id")
     val taskId: String,
+    @Column("file_name")
     val fileName: String,
+    @Column("content_type")
     val contentType: String,
+    @Column("size_bytes")
     val sizeBytes: Long,
+    @Column("storage_key")
     val storageKey: String,
+    @Column("uploaded_by")
     val uploadedBy: String,
+    @Column("uploaded_at")
     val uploadedAt: java.time.LocalDateTime,
 )

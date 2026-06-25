@@ -4,6 +4,8 @@ import com.kanban.audit.LogAuditEventOperation
 import com.kanban.sse.SinkService
 import com.kanban.sse.SseEvent
 import java.time.Instant
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 @Suppress("LongParameterList")
 internal class TaskHandler(
@@ -18,6 +20,7 @@ internal class TaskHandler(
     private val deleteTaskOperation: DeleteTaskOperation,
     private val logAuditEventOperation: LogAuditEventOperation,
     private val sinkService: SinkService? = null,
+    private val taskLabelRepository: TaskLabelRepository,
 ) {
     data class TaskData(
         val id: String,
@@ -32,6 +35,7 @@ internal class TaskHandler(
         val archived: Boolean,
         val createdAt: Instant,
         val updatedAt: Instant,
+        val labels: List<String>,
     )
 
     suspend fun create(
@@ -79,7 +83,7 @@ internal class TaskHandler(
                     ),
                 )
                 CreateTaskResult.Success(
-                    task = result.task.toData(),
+                    task = result.task.toData(emptyList()),
                 )
             }
             is CreateTaskOperation.Result.Failure ->
@@ -93,10 +97,12 @@ internal class TaskHandler(
                 GetTaskOperation.Arg(taskId = taskId),
             )
         return when (result) {
-            is GetTaskOperation.Result.Success ->
+            is GetTaskOperation.Result.Success -> {
+                val labels = taskLabelRepository.findByTaskId(taskId)
                 GetTaskResult.Success(
-                    task = result.task.toData(),
+                    task = result.task.toData(labels),
                 )
+            }
             GetTaskOperation.Result.NotFound -> GetTaskResult.NotFound
         }
     }
@@ -113,11 +119,18 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is ListTasksOperation.Result.Success ->
+            is ListTasksOperation.Result.Success -> {
+                val labelMap = loadLabels(result.tasks.map { it.id.value })
                 ListTasksResult.Success(
-                    tasks = result.tasks.map { it.toData() },
+                    tasks = result.tasks.map { it.toData(labelMap[it.id.value] ?: emptyList()) },
                 )
+            }
         }
+    }
+
+    private suspend fun loadLabels(taskIds: List<String>): Map<String, List<String>> {
+        if (taskIds.isEmpty()) return emptyMap()
+        return taskLabelRepository.findByTaskIds(taskIds)
     }
 
     suspend fun listBoardBacklog(projectId: String): ListBoardBacklogResult {
@@ -128,10 +141,12 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is ListBoardBacklogOperation.Result.Success ->
+            is ListBoardBacklogOperation.Result.Success -> {
+                val labelMap = loadLabels(result.tasks.map { it.id.value })
                 ListBoardBacklogResult.Success(
-                    tasks = result.tasks.map { it.toData() },
+                    tasks = result.tasks.map { it.toData(labelMap[it.id.value] ?: emptyList()) },
                 )
+            }
         }
     }
 
@@ -143,10 +158,12 @@ internal class TaskHandler(
                 ),
             )
         return when (result) {
-            is ListArchivedTasksOperation.Result.Success ->
+            is ListArchivedTasksOperation.Result.Success -> {
+                val labelMap = loadLabels(result.tasks.map { it.id.value })
                 ListArchivedTasksResult.Success(
-                    tasks = result.tasks.map { it.toData() },
+                    tasks = result.tasks.map { it.toData(labelMap[it.id.value] ?: emptyList()) },
                 )
+            }
         }
     }
 
@@ -187,14 +204,15 @@ internal class TaskHandler(
                 sinkService?.emit(
                     SseEvent(
                         type = "task_updated",
-                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}""",
+                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}"}""",
                         boardId = null,
                         projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
                     ),
                 )
+                val labels = taskLabelRepository.findByTaskId(result.task.id.value)
                 UpdateTaskResult.Success(
-                    task = result.task.toData(),
+                    task = result.task.toData(labels),
                 )
             }
             UpdateTaskOperation.Result.NotFound -> UpdateTaskResult.NotFound
@@ -245,8 +263,9 @@ internal class TaskHandler(
                         timestamp = Instant.now(),
                     ),
                 )
+                val labels = taskLabelRepository.findByTaskId(result.task.id.value)
                 MoveTaskResult.Success(
-                    task = result.task.toData(),
+                    task = result.task.toData(labels),
                 )
             }
             MoveTaskOperation.Result.NotFound -> MoveTaskResult.NotFound
@@ -319,7 +338,7 @@ internal class TaskHandler(
         }
     }
 
-    private fun Task.toData(): TaskData =
+    private fun Task.toData(labels: List<String> = emptyList()): TaskData =
         TaskData(
             id = id.value,
             projectId = projectId.value,
@@ -333,6 +352,7 @@ internal class TaskHandler(
             archived = archived,
             createdAt = createdAt,
             updatedAt = updatedAt,
+            labels = labels,
         )
 
     sealed interface CreateTaskResult {

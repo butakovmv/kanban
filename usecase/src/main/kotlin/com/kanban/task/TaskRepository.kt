@@ -64,3 +64,40 @@ interface TaskRepository {
      */
     suspend fun archive(id: String)
 }
+
+/**
+ * Репозиторий для доступа к меткам задач.
+ */
+interface TaskLabelRepository {
+    /**
+     * Возвращает список меток задачи.
+     *
+     * @param taskId идентификатор задачи
+     * @return список строк-меток
+     */
+    suspend fun findByTaskId(taskId: String): List<String>
+
+    /**
+     * Возвращает метки для нескольких задач, сгруппированные по taskId.
+     *
+     * @param taskIds список идентификаторов задач
+     * @return карта taskId -> список меток
+     */
+    suspend fun findByTaskIds(taskIds: List<String>): Map<String, List<String>>
+
+    /**
+     * Добавляет метку задаче.
+     *
+     * @param taskId идентификатор задачи
+     * @param label текст метки
+     */
+    suspend fun save(taskId: String, label: String)
+
+    /**
+     * Удаляет метку у задачи.
+     *
+     * @param taskId идентификатор задачи
+     * @param label текст метки
+     */
+    suspend fun delete(taskId: String, label: String)
+}

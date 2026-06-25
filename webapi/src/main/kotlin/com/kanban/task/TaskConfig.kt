@@ -41,6 +41,7 @@ internal class TaskConfig {
         deleteTaskOperation: DeleteTaskOperation,
         logAuditEventOperation: LogAuditEventOperation,
         sinkService: SinkService,
+        taskLabelRepository: TaskLabelRepository,
     ): TaskHandler =
         TaskHandler(
             createTaskOperation = createTaskOperation,
@@ -54,6 +55,7 @@ internal class TaskConfig {
             deleteTaskOperation = deleteTaskOperation,
             logAuditEventOperation = logAuditEventOperation,
             sinkService = sinkService,
+            taskLabelRepository = taskLabelRepository,
         )
 
     /**
@@ -104,5 +106,25 @@ internal class TaskConfig {
             deleteFileOperation = deleteFileOperation,
             listFilesOperation = listFilesOperation,
             getFileDownloadUrlOperation = getFileDownloadUrlOperation,
+        )
+
+    /**
+     * Создаёт обработчик запросов меток задач.
+     *
+     * @param taskLabelRepository репозиторий меток задач
+     * @param getTaskOperation операция получения задачи
+     * @param sinkService сервис отправки SSE-событий
+     * @return экземпляр [LabelHandler]
+     */
+    @Bean
+    fun labelHandler(
+        taskLabelRepository: TaskLabelRepository,
+        getTaskOperation: GetTaskOperation,
+        sinkService: SinkService,
+    ): LabelHandler =
+        LabelHandler(
+            taskLabelRepository = taskLabelRepository,
+            getTaskOperation = getTaskOperation,
+            sinkService = sinkService,
         )
 }

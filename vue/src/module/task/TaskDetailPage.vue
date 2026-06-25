@@ -14,6 +14,7 @@ import { useProjectStore } from '../project/store'
 import CommentSystem from './CommentSystem.vue'
 import FileUpload from './FileUpload.vue'
 import { useUserStore } from '../user/store'
+import * as boardApi from '../board/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,10 +33,29 @@ const draftDueDate = ref('')
 const draftPriority = ref('')
 const showDeleteConfirm = ref(false)
 const memberOptions = ref<{ id: string; name: string }[]>([])
+const newLabelText = ref('')
+const columns = ref<boardApi.Column[]>([])
 
 const taskId = computed(() => {
   const id = route.params['id']
   return Array.isArray(id) ? id[0] : id
+})
+
+const columnName = computed(() => {
+  if (!currentTask.value) return ''
+  const col = columns.value.find(c => c.id === currentTask.value!.columnId)
+  return col?.name ?? currentTask.value!.columnId
+})
+
+const formattedDeadline = computed(() => {
+  if (!currentTask.value?.dueDate) return ''
+  const date = new Date(currentTask.value.dueDate)
+  if (Number.isNaN(date.getTime())) return currentTask.value.dueDate
+  return date.toLocaleDateString('ru-RU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 })
 
 async function loadMembers(pid: string) {
@@ -80,6 +100,15 @@ async function resolveProjectAndLoadMembers() {
   await loadMembers(projectId)
 }
 
+async function loadColumns(projectId: string) {
+  try {
+    const view = await boardApi.getBoardByProjectId(projectId)
+    columns.value = view.columns
+  } catch {
+    columns.value = []
+  }
+}
+
 async function load() {
   if (taskId.value === undefined) {
     return
@@ -91,6 +120,7 @@ async function load() {
     await Promise.all([
       taskStore.loadComments(taskId.value),
       taskStore.loadFiles(taskId.value),
+      currentTask.value?.projectId ? loadColumns(currentTask.value.projectId) : Promise.resolve(),
     ])
     await resolveProjectAndLoadMembers()
   }
@@ -103,6 +133,19 @@ function backToBoard() {
   router.back()
 }
 
+function toDateInputValue(iso: string | null): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return date.toISOString().slice(0, 10)
+}
+
+function toIsoInstant(dateStr: string): string {
+  if (!dateStr) return ''
+  if (dateStr.includes('T')) return dateStr
+  return `${dateStr}T00:00:00Z`
+}
+
 function startEdit() {
   if (currentTask.value === null) {
     return
@@ -110,7 +153,7 @@ function startEdit() {
   draftTitle.value = currentTask.value.title
   draftDescription.value = currentTask.value.description ?? ''
   draftAssigneeId.value = currentTask.value.assigneeId ?? ''
-  draftDueDate.value = currentTask.value.dueDate ?? ''
+  draftDueDate.value = toDateInputValue(currentTask.value.dueDate)
   draftPriority.value = currentTask.value.priority ?? ''
   editing.value = true
 }
@@ -129,7 +172,7 @@ async function commitEdit() {
   }
   const description = draftDescription.value.trim()
   const assigneeId = draftAssigneeId.value.trim()
-  const dueDate = draftDueDate.value.trim()
+  const dueDate = toIsoInstant(draftDueDate.value.trim())
   const priority = draftPriority.value.trim()
   await taskStore.updateTask(taskId.value, {
     title,
@@ -175,6 +218,18 @@ function isAssigneeMe(): boolean {
   return (
     authStore.user !== null && currentTask.value.assigneeId === authStore.user.id
   )
+}
+
+async function addLabel() {
+  const label = newLabelText.value.trim()
+  if (!label || taskId.value === undefined) return
+  newLabelText.value = ''
+  await taskStore.addLabel(taskId.value, label)
+}
+
+async function removeLabel(label: string) {
+  if (taskId.value === undefined) return
+  await taskStore.removeLabel(taskId.value, label)
 }
 
 const assigneeDisplayName = computed(() => {
@@ -290,9 +345,9 @@ watch(() => currentTask.value?.assigneeId, (id) => {
           <dt>Description</dt>
           <dd class="task-detail__description">{{ currentTask.description }}</dd>
         </div>
-        <div v-if="currentTask.dueDate" class="task-detail__field">
-          <dt>Due date</dt>
-          <dd>{{ currentTask.dueDate }}</dd>
+        <div v-if="formattedDeadline" class="task-detail__field">
+          <dt>Deadline</dt>
+          <dd>{{ formattedDeadline }}</dd>
         </div>
         <div class="task-detail__field">
           <dt>Priority</dt>
@@ -303,7 +358,7 @@ watch(() => currentTask.value?.assigneeId, (id) => {
         </div>
         <div class="task-detail__field">
           <dt>Column</dt>
-          <dd>{{ currentTask.columnId }}</dd>
+          <dd>{{ columnName }}</dd>
         </div>
         <div class="task-detail__field">
           <dt>Assignee</dt>
@@ -314,6 +369,22 @@ watch(() => currentTask.value?.assigneeId, (id) => {
               <span v-if="isAssigneeMe()"> (you)</span>
             </template>
             <span v-else>—</span>
+          </dd>
+        </div>
+        <div class="task-detail__field">
+          <dt>Labels</dt>
+          <dd>
+            <div class="task-detail__labels">
+              <span v-for="label in currentTask.labels" :key="label" class="task-detail__label">
+                {{ label }}
+                <button type="button" class="task-detail__label-remove" aria-label="Remove label" @click="removeLabel(label)">&times;</button>
+              </span>
+              <span v-if="currentTask.labels.length === 0">—</span>
+            </div>
+            <form class="task-detail__add-label" @submit.prevent="addLabel">
+              <input v-model="newLabelText" type="text" placeholder="Add label" maxlength="100" class="task-detail__label-input" />
+              <button type="submit" class="task-detail__action" :disabled="!newLabelText.trim()">Add</button>
+            </form>
           </dd>
         </div>
         <div class="task-detail__field">
@@ -558,6 +629,49 @@ watch(() => currentTask.value?.assigneeId, (id) => {
   gap: 0.5rem;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+.task-detail__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+.task-detail__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: #fff;
+}
+.task-detail__label-remove {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.task-detail__label-remove:hover {
+  color: #fff;
+}
+.task-detail__add-label {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+.task-detail__label-input {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  background: var(--color-background);
+  color: var(--color-text);
+  min-width: 6rem;
 }
 .task-detail__divider {
   border: 0;

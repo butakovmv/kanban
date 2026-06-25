@@ -331,6 +331,52 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   /**
+   * Добавляет метку задаче и обновляет локальное состояние.
+   * @param taskId идентификатор задачи
+   * @param label текст метки
+   * @returns true при успехе, false при ошибке
+   */
+  async function addLabel(taskId: string, label: string): Promise<boolean> {
+    error.value = null
+    try {
+      await taskApi.addTaskLabel(taskId, label)
+      tasks.value = tasks.value.map((t) =>
+        t.id === taskId ? { ...t, labels: [...t.labels, label] } : t,
+      )
+      if (currentTask.value !== null && currentTask.value.id === taskId) {
+        currentTask.value = { ...currentTask.value, labels: [...currentTask.value.labels, label] }
+      }
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to add label'
+      return false
+    }
+  }
+
+  /**
+   * Удаляет метку у задачи и обновляет локальное состояние.
+   * @param taskId идентификатор задачи
+   * @param label текст метки
+   * @returns true при успехе, false при ошибке
+   */
+  async function removeLabel(taskId: string, label: string): Promise<boolean> {
+    error.value = null
+    try {
+      await taskApi.removeTaskLabel(taskId, label)
+      tasks.value = tasks.value.map((t) =>
+        t.id === taskId ? { ...t, labels: t.labels.filter((l) => l !== label) } : t,
+      )
+      if (currentTask.value !== null && currentTask.value.id === taskId) {
+        currentTask.value = { ...currentTask.value, labels: currentTask.value.labels.filter((l) => l !== label) }
+      }
+      return true
+    } catch (e: unknown) {
+      error.value = e instanceof Error ? e.message : 'Failed to remove label'
+      return false
+    }
+  }
+
+  /**
    * Очищает состояние выбранной задачи и связанных с ней комментариев/файлов.
    */
   function clearCurrent(): void {
@@ -452,6 +498,8 @@ export const useTaskStore = defineStore('task', () => {
     deleteComment,
     loadFiles,
     deleteFile,
+    addLabel,
+    removeLabel,
     clearCurrent,
     clearTasks,
     handleTaskMoved,

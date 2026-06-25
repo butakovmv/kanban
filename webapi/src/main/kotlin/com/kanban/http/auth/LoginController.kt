@@ -65,7 +65,7 @@ internal class LoginController(
             is AuthHandler.AuthResult.Failure ->
                 ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(mapOf("reason" to result.reason))
+                    .body(mapOf("message" to result.reason, "reason" to result.reason))
         }
     }
 }

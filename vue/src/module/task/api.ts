@@ -16,6 +16,7 @@ export interface Task {
   archived: boolean
   createdAt: string
   updatedAt: string
+  labels: string[]
 }
 
 interface RawTask {
@@ -31,6 +32,7 @@ interface RawTask {
   archived: boolean
   created_at: string | number
   updated_at: string | number
+  labels: string[]
 }
 
 interface RawTasksResponse {
@@ -160,6 +162,7 @@ function toTask(raw: RawTask): Task {
     archived: raw.archived,
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
+    labels: raw.labels ?? [],
   }
 }
 
@@ -370,4 +373,12 @@ export function deleteFile(id: string): Promise<void> {
  */
 export function getFileDownloadUrl(id: string): string {
   return `/api/v1/files/${encodeURIComponent(id)}/download`
+}
+
+export function addTaskLabel(taskId: string, label: string): Promise<void> {
+  return post<void>(`/tasks/${encodeURIComponent(taskId)}/labels`, { label })
+}
+
+export function removeTaskLabel(taskId: string, label: string): Promise<void> {
+  return del<void>(`/tasks/${encodeURIComponent(taskId)}/labels/${encodeURIComponent(label)}`)
 }

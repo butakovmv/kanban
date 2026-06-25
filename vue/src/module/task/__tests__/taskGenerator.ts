@@ -31,6 +31,7 @@ export const taskGenerator = {
       dueDate: null,
       priority: null,
       archived: false,
+      labels: [],
       createdAt: new Date('2025-01-01T00:00:00Z').toISOString(),
       updatedAt: new Date('2025-01-02T00:00:00Z').toISOString(),
       ...overrides,
