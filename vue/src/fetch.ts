@@ -4,6 +4,16 @@ const BASE_URL = '/api/v1'
 /** Текущий access-токен для авторизации запросов. */
 let accessToken: string | null = null
 
+/** Функция обновления токена, устанавливается из auth store. */
+let refreshFn: (() => Promise<boolean>) | null = null
+
+/** Таймаут запроса по умолчанию (30 с). */
+const REQUEST_TIMEOUT_MS = 30_000
+
+/** Флаг предотвращения одновременного обновления токена несколькими запросами. */
+let isRefreshing = false
+let refreshPromise: Promise<boolean> | null = null
+
 /**
  * Устанавливает access-токен для последующих запросов к API.
  * @param token - токен или null для сброса
@@ -21,27 +31,77 @@ export function getAccessToken(): string | null {
 }
 
 /**
+ * Устанавливает функцию для обновления токена при 401.
+ * @param fn - асинхронная функция, возвращающая true при успешном обновлении
+ */
+export function setRefreshFn(fn: (() => Promise<boolean>) | null) {
+  refreshFn = fn
+}
+
+async function doFetch(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(id)
+  }
+}
+
+/**
+ * Парсит ответ как JSON с безопасной обработкой ошибки.
+ */
+async function parseJson<T>(response: Response): Promise<T> {
+  try {
+    return await (response.json() as Promise<T>)
+  } catch {
+    const text = await response.text().catch(() => '')
+    throw new Error(`Invalid JSON response: ${text.slice(0, 200)}`)
+  }
+}
+
+/**
  * Базовый HTTP-запрос с автоматической подстановкой заголовков и токена.
+ * Поддерживает автоматическое обновление токена при 401.
  * @param url - относительный путь (добавляется к BASE_URL)
  * @param options - стандартные опции fetch
  * @returns ответ, преобразованный в JSON типом T
  * @throws Error при статусе ответа не из диапазона 2xx
  */
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'X-Request-Id': crypto.randomUUID(),
-    ...(options.headers as Record<string, string>),
+  async function buildHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Request-Id': crypto.randomUUID(),
+      ...(options.headers as Record<string, string>),
+    }
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+    }
+    return headers
   }
 
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`
-  }
-
-  const response = await fetch(`${BASE_URL}${url}`, {
+  let response = await doFetch(`${BASE_URL}${url}`, {
     ...options,
-    headers,
+    headers: await buildHeaders(),
   })
+
+  if (response.status === 401 && refreshFn) {
+    if (!isRefreshing) {
+      isRefreshing = true
+      refreshPromise = refreshFn().finally(() => {
+        isRefreshing = false
+        refreshPromise = null
+      })
+    }
+    const refreshed = await refreshPromise
+    if (refreshed) {
+      response = await doFetch(`${BASE_URL}${url}`, {
+        ...options,
+        headers: await buildHeaders(),
+      })
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }))
@@ -52,7 +112,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     return undefined as T
   }
 
-  return response.json()
+  return parseJson<T>(response)
 }
 
 /**

@@ -17,15 +17,24 @@ export function useTheme() {
 
   function toggleTheme() {
     isDark.value = !isDark.value
-    localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
+    try {
+      localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
+    } catch {
+      /* localStorage may be unavailable */
+    }
     applyTheme()
   }
 
   function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY)
-    if (saved) {
-      isDark.value = saved === 'dark'
-    } else {
+    try {
+      const saved = localStorage.getItem(THEME_KEY)
+      if (saved) {
+        isDark.value = saved === 'dark'
+      } else {
+        isDark.value = prefersDark.matches
+      }
+    } catch {
+      /* localStorage may be unavailable */
       isDark.value = prefersDark.matches
     }
     applyTheme()
@@ -34,7 +43,13 @@ export function useTheme() {
   initTheme()
 
   prefersDark.addEventListener('change', (e) => {
-    if (!localStorage.getItem(THEME_KEY)) {
+    try {
+      if (!localStorage.getItem(THEME_KEY)) {
+        isDark.value = e.matches
+        applyTheme()
+      }
+    } catch {
+      /* localStorage may be unavailable */
       isDark.value = e.matches
       applyTheme()
     }

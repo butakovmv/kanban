@@ -8,8 +8,8 @@ import com.kanban.identity.EmailService
 import com.kanban.identity.PasswordHasher
 import com.kanban.identity.TokenProvider
 import com.kanban.task.FileStorage
-import java.security.MessageDigest
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.beans.factory.support.AbstractBeanDefinition
 import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
@@ -42,18 +42,13 @@ internal class OperationBeanRegistrar : BeanDefinitionRegistryPostProcessor {
 @Configuration
 internal class InfrastructureConfig {
     @Bean
-    fun passwordHasher(): PasswordHasher =
-        object : PasswordHasher {
-            override fun hash(password: String): String {
-                val digest = MessageDigest.getInstance("SHA-256")
-                return digest.digest(password.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
-            }
-
-            override fun verify(
-                password: String,
-                hash: String,
-            ): Boolean = hash(password) == hash
+    fun passwordHasher(): PasswordHasher {
+        val encoder = BCryptPasswordEncoder()
+        return object : PasswordHasher {
+            override fun hash(password: String): String = encoder.encode(password)
+            override fun verify(password: String, hash: String): Boolean = encoder.matches(password, hash)
         }
+    }
 
     @Bean
     fun tokenProvider(): TokenProvider =

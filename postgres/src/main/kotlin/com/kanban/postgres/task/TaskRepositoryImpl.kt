@@ -9,6 +9,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Mono
 
 /**
  * Реализация [TaskRepository] через R2DBC и DatabaseClient.
@@ -251,24 +252,20 @@ internal class TaskRepositoryImpl(
     override suspend fun updatePositions(tasks: List<Task>) {
         if (tasks.isEmpty()) return
         val z = ZoneId.systemDefault()
-        tasks.forEachIndexed { index, task ->
-            db
-                .sql(
-                    """
-                    UPDATE tasks SET
-                        project_id = :projectId, column_id = :columnId,
-                        position = :position, updated_at = :updatedAt
-                    WHERE id = :id
-                    """,
-                ).bind("id", UUID.fromString(task.id.value))
-                .bind("projectId", UUID.fromString(task.projectId.value))
-                .bind("columnId", UUID.fromString(task.columnId.value))
-                .bind("position", index)
-                .bind("updatedAt", LocalDateTime.now(z))
-                .fetch()
-                .rowsUpdated()
-                .awaitSingle()
-        }
+        db.inConnection { connection ->
+            val batch = connection.createBatch()
+            tasks.forEachIndexed { index, task ->
+                val id = UUID.fromString(task.id.value)
+                val projectId = UUID.fromString(task.projectId.value)
+                val columnId = UUID.fromString(task.columnId.value)
+                batch.add(
+                    "UPDATE tasks SET project_id = '$projectId', " +
+                    "column_id = '$columnId', position = $index, " +
+                    "updated_at = '${LocalDateTime.now(z)}' WHERE id = '$id'",
+                )
+            }
+            Mono.from(batch.execute()).then()
+        }.awaitSingle()
     }
 
     /**

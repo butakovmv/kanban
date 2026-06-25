@@ -61,7 +61,7 @@ async function handleLogout() {
         <span class="nav__project-name">/ {{ projectStore.currentProject.name }}</span>
         <span class="nav__page-name">/ {{ currentPageName }}</span>
       </template>
-      <span class="nav__spacer"></span>
+      <span class="nav__spacer" />
       <div class="nav__links">
         <template v-if="isAuthenticated">
           <RouterLink to="/projects">Projects</RouterLink>
@@ -72,7 +72,7 @@ async function handleLogout() {
           <RouterLink to="/login">Login</RouterLink>
           <RouterLink to="/register">Register</RouterLink>
         </template>
-        <button class="nav__theme" @click="toggleTheme" :title="isDark ? 'Switch to light theme' : 'Switch to dark theme'">
+        <button class="nav__theme" :title="isDark ? 'Switch to light theme' : 'Switch to dark theme'" @click="toggleTheme">
           {{ isDark ? '☀️' : '🌙' }}
         </button>
       </div>

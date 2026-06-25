@@ -67,14 +67,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.created",
-                            details = """{"task_id":"${result.task.id.value}","title":"${result.task.title}"}""",
+                            details = jsonObject("task_id" to result.task.id.value, "title" to result.task.title),
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_created",
-                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}"}""",
+                        data = jsonObject("task_id" to result.task.id.value, "project_id" to result.task.projectId.value),
                         boardId = null,
                         projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
@@ -195,14 +195,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.updated",
-                            details = """{"task_id":"${result.task.id.value}"}""",
+                            details = jsonObject("task_id" to result.task.id.value),
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_updated",
-                        data = """{"task_id":"${result.task.id.value}","project_id":"${result.task.projectId.value}"}""",
+                        data = jsonObject("task_id" to result.task.id.value, "project_id" to result.task.projectId.value),
                         boardId = null,
                         projectId = result.task.projectId.value,
                         timestamp = Instant.now(),
@@ -242,16 +242,11 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.moved",
-                            details = """{"task_id":"${result.task.id.value}","column_id":"${result.task.columnId.value}"}""",
+                            details = jsonObject("task_id" to result.task.id.value, "column_id" to result.task.columnId.value),
                         ),
                     )
                 }
-                val eventData =
-                    buildString {
-                        append("""{"task_id":"${result.task.id.value}",""")
-                        append(""""project_id":"${result.task.projectId.value}",""")
-                        append(""""column_id":"${result.task.columnId.value}"}""")
-                    }
+                val eventData = jsonObject("task_id" to result.task.id.value, "project_id" to result.task.projectId.value, "column_id" to result.task.columnId.value)
                 sinkService?.emit(
                     SseEvent(
                         type = "task_moved",
@@ -288,14 +283,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.archived",
-                            details = """{"task_id":"$taskId"}""",
+                            details = jsonObject("task_id" to taskId),
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_archived",
-                        data = """{"task_id":"$taskId"}""",
+                        data = jsonObject("task_id" to taskId),
                         boardId = null,
                         projectId = projectId,
                         timestamp = Instant.now(),
@@ -325,14 +320,14 @@ internal class TaskHandler(
                             documentId = null,
                             userId = userId,
                             action = "task.deleted",
-                            details = """{"task_id":"$taskId"}""",
+                            details = jsonObject("task_id" to taskId),
                         ),
                     )
                 }
                 sinkService?.emit(
                     SseEvent(
                         type = "task_deleted",
-                        data = """{"task_id":"$taskId"}""",
+                        data = jsonObject("task_id" to taskId),
                         boardId = null,
                         projectId = projectId,
                         timestamp = Instant.now(),
@@ -343,6 +338,14 @@ internal class TaskHandler(
             DeleteTaskOperation.Result.NotFound -> DeleteTaskResult.NotFound
         }
     }
+
+    private fun jsonObject(vararg pairs: Pair<String, String>): String =
+        pairs.joinToString(",", "{", "}") { (k, v) ->
+            "\"${k.escapeJson()}\":\"${v.escapeJson()}\""
+        }
+
+    private fun String.escapeJson(): String =
+        replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
 
     private fun Task.toData(labels: List<String> = emptyList()): TaskData =
         TaskData(

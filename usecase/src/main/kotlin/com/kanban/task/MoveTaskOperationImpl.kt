@@ -11,6 +11,12 @@ import java.time.Instant
 internal class MoveTaskOperationImpl(
     private val taskRepository: TaskRepository,
 ) : MoveTaskOperation {
+    /**
+     * NOTE: существует TOCTOU-гонка между чтением списков задач (listByColumnId)
+     * и записью (updatePositions). Для полного устранения требуется
+     * SELECT ... FOR UPDATE в методах репозитория, что подразумевает
+     * изменение контракта TaskRepository.
+     */
     override suspend fun execute(arg: MoveTaskOperation.Arg): MoveTaskOperation.Result {
         val task = taskRepository.findById(arg.taskId) ?: return MoveTaskOperation.Result.NotFound
         val sourceColumnId = task.columnId.value

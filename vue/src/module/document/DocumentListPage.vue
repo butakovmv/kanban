@@ -216,7 +216,7 @@ async function handleDelete(doc: Document) {
           <div v-else-if="editingDoc" class="document-list__edit-form">
             <label>Title <input v-model="editingDoc.title" type="text" required maxlength="200" /></label>
             <label>Path <input v-model="editingDoc.path" type="text" required /></label>
-            <label>Description <textarea :value="editingDoc.description ?? ''" @input="editingDoc.description = ($event.target as HTMLTextAreaElement).value" rows="2" /></label>
+            <label>Description <textarea :value="editingDoc.description ?? ''" rows="2" @input="editingDoc.description = ($event.target as HTMLTextAreaElement).value" /></label>
             <div class="document-list__edit-actions">
               <button :disabled="loading" @click="saveEdit">Save</button>
               <button @click="cancelEdit">Cancel</button>

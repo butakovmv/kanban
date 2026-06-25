@@ -23,7 +23,7 @@ watch-front:
 
 # Запустить Docker Compose в режиме слежения
 dev:
-	docker compose up --watch
+	docker compose -f docker-compose.dev.yml up --watch
 
 # Запустить Docker Compose в режиме слежения
 e2e:

@@ -9,6 +9,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Mono
 
 /**
  * Реализация [ColumnRepository] через R2DBC и DatabaseClient.
@@ -145,30 +146,21 @@ internal class ColumnRepositoryImpl(
     override suspend fun updatePositions(columns: List<Column>) {
         if (columns.isEmpty()) return
         val z = ZoneId.systemDefault()
-        columns.forEachIndexed { index, column ->
-            db
-                .sql(
-                    """
-                    UPDATE columns SET
-                        project_id = :projectId, name = :name,
-                        position = :position, wip_limit = :wipLimit
-                    WHERE id = :id
-                    """,
-                ).bind("id", UUID.fromString(column.id.value))
-                .bind("projectId", UUID.fromString(column.projectId.value))
-                .bind("name", column.name)
-                .bind("position", index)
-                .let { spec ->
-                    val wipLimit = column.wipLimit
-                    if (wipLimit != null) {
-                        spec.bind("wipLimit", wipLimit)
-                    } else {
-                        spec.bindNull("wipLimit", Integer::class.java)
-                    }
-                }.fetch()
-                .rowsUpdated()
-                .awaitSingle()
-        }
+        db.inConnection { connection ->
+            val batch = connection.createBatch()
+            columns.forEachIndexed { index, column ->
+                val id = UUID.fromString(column.id.value)
+                val projectId = UUID.fromString(column.projectId.value)
+                val name = column.name.replace("'", "''")
+                val wipLimit = column.wipLimit?.toString() ?: "NULL"
+                batch.add(
+                    "UPDATE columns SET project_id = '$projectId', " +
+                    "name = '$name', position = $index, " +
+                    "wip_limit = $wipLimit WHERE id = '$id'",
+                )
+            }
+            Mono.from(batch.execute()).then()
+        }.awaitSingle()
     }
 
     /**

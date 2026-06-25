@@ -77,10 +77,10 @@ const renderedContent = computed(() => {
     <div class="document-detail">
       <header class="document-detail__header">
         <button class="document-detail__back" @click="back">&larr; Back to documents</button>
-        <div class="document-detail__header-actions" v-if="!editing">
+        <div v-if="!editing" class="document-detail__header-actions">
           <button class="document-detail__edit-btn" @click="startEdit">Edit</button>
         </div>
-        <div class="document-detail__header-actions" v-else>
+        <div v-else class="document-detail__header-actions">
           <button class="document-detail__save-btn" :disabled="loading" @click="saveEdit">Save</button>
           <button class="document-detail__cancel-btn" @click="cancelEdit">Cancel</button>
         </div>
@@ -97,7 +97,7 @@ const renderedContent = computed(() => {
             <span class="document-detail__updated">Updated: {{ currentDocument.updatedAt }}</span>
             <span v-if="currentDocument.description" class="document-detail__desc">{{ currentDocument.description }}</span>
           </div>
-          <div class="document-detail__content" v-html="renderedContent"></div>
+          <div class="document-detail__content" v-html="renderedContent" />
         </div>
 
         <div v-else class="document-detail__edit">
@@ -111,11 +111,11 @@ const renderedContent = computed(() => {
           </label>
           <label class="document-detail__field">
             Description
-            <textarea v-model="draftDescription" rows="2"></textarea>
+            <textarea v-model="draftDescription" rows="2" />
           </label>
           <label class="document-detail__field document-detail__field--content">
             Content (Markdown)
-            <textarea v-model="draftContent" rows="20" class="document-detail__content-input"></textarea>
+            <textarea v-model="draftContent" rows="20" class="document-detail__content-input" />
           </label>
         </div>
       </template>

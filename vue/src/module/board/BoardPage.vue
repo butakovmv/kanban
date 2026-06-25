@@ -99,11 +99,24 @@ const filteredTasks = computed(() => {
   return result
 })
 
-function tasksForDisplayColumn(columnId: string): Task[] {
-  if (columnId === ARCHIVE_COL_ID) {
-    return filteredTasks.value.filter(t => t.archived)
+const tasksByColumn = computed(() => {
+  const map = new Map<string, Task[]>()
+  for (const col of displayColumns.value) {
+    map.set(col.id, [])
   }
-  return filteredTasks.value.filter(t => t.columnId === columnId && !t.archived)
+  for (const t of filteredTasks.value) {
+    const colId = t.archived ? ARCHIVE_COL_ID : t.columnId
+    const arr = map.get(colId)
+    if (arr) arr.push(t)
+  }
+  for (const [, arr] of map) {
+    arr.sort((a, b) => a.position - b.position)
+  }
+  return map
+})
+
+function tasksForCol(columnId: string): Task[] {
+  return tasksByColumn.value.get(columnId) ?? []
 }
 
 async function load() {
@@ -123,7 +136,7 @@ async function load() {
 onMounted(load)
 watch(projectId, load)
 
-useRealtime(undefined, projectId.value)
+useRealtime(undefined, projectId)
 
 function toggleSwimlanes() {
   swimlanesEnabled.value = !swimlanesEnabled.value
@@ -239,7 +252,7 @@ function onArchiveDrop(event: DragEvent) {
           <Column
             v-if="column.id !== ARCHIVE_COL_ID"
             :column="column"
-            :tasks="tasksForDisplayColumn(column.id)"
+            :tasks="tasksForCol(column.id)"
             :all-columns="columns"
             :board-id="currentBoard.id"
             :drag-over="dragOverColumnId === column.id"
@@ -259,17 +272,17 @@ function onArchiveDrop(event: DragEvent) {
           >
             <header class="column__header">
               <h3 class="column__name">Archive</h3>
-              <span class="column__count">{{ tasksForDisplayColumn(ARCHIVE_COL_ID).length }}</span>
+              <span class="column__count">{{ tasksForCol(ARCHIVE_COL_ID).length }}</span>
             </header>
             <div class="column__body">
               <TaskCard
-                v-for="task in tasksForDisplayColumn(ARCHIVE_COL_ID)"
+                v-for="task in tasksForCol(ARCHIVE_COL_ID)"
                 :key="task.id"
                 :task="task"
                 :columns="columns"
                 @open="openTask"
               />
-              <div v-if="tasksForDisplayColumn(ARCHIVE_COL_ID).length === 0" class="column__placeholder">
+              <div v-if="tasksForCol(ARCHIVE_COL_ID).length === 0" class="column__placeholder">
                 No archived tasks
               </div>
             </div>

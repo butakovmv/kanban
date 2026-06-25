@@ -18,6 +18,7 @@ export const useTaskStore = defineStore('task', () => {
   const error = ref<string | null>(null)
   const authStore = useAuthStore()
 
+  const lastProjectId = ref<string | null>(null)
   const hasTasks = computed(() => tasks.value.length > 0)
   const hasComments = computed(() => comments.value.length > 0)
   const hasFiles = computed(() => files.value.length > 0)
@@ -43,6 +44,7 @@ export const useTaskStore = defineStore('task', () => {
   async function loadTasks(projectId: string, includeArchived = false): Promise<boolean> {
     loading.value = true
     error.value = null
+    lastProjectId.value = projectId
     try {
       tasks.value = await taskApi.listTasks(projectId, includeArchived)
       return true
@@ -451,11 +453,16 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   /**
-   * Планирует перезагрузку списка задач при SSE-событии создания задачи.
-   * Выполняется с небольшой задержкой, чтобы сервер успел завершить обработку.
+   * Планирует перезагрузку списка задач при SSE-событии создания/обновления задачи.
    */
   function scheduleRefresh(): void {
-    error.value = null
+    if (lastProjectId.value) {
+      taskApi.listTasks(lastProjectId.value).then((updated) => {
+        tasks.value = updated
+      }).catch(() => {
+        /* ignore refresh errors */
+      })
+    }
   }
 
   /**

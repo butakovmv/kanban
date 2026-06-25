@@ -185,208 +185,207 @@ const ltYAxisLabels = computed(() => {
 <template>
   <ProjectLayout v-if="projectId" :project-id="projectId">
     <div class="reports-page">
-
-    <div class="reports-page__tabs">
-      <button
-        :class="['reports-page__tab', { 'reports-page__tab--active': activeTab === 'cfd' }]"
-        @click="activeTab = 'cfd'"
-      >
-        CFD Chart
-      </button>
-      <button
-        :class="['reports-page__tab', { 'reports-page__tab--active': activeTab === 'leadtime' }]"
-        @click="activeTab = 'leadtime'"
-      >
-        Lead Time
-      </button>
-    </div>
-
-    <div v-if="error" class="reports-page__error">{{ error }}</div>
-
-    <!-- CFD Chart -->
-    <div v-if="activeTab === 'cfd'" class="reports-page__section">
-      <div class="reports-page__filters">
-        <label>
-          From
-          <input v-model="cfdFrom" type="date" />
-        </label>
-        <label>
-          To
-          <input v-model="cfdTo" type="date" />
-        </label>
-        <label>
-          Interval
-          <select v-model="cfdInterval">
-            <option value="DAY">Day</option>
-            <option value="WEEK">Week</option>
-            <option value="MONTH">Month</option>
-          </select>
-        </label>
-        <button class="reports-page__load-btn" :disabled="loading" @click="loadCfdChart">
-          Load
+      <div class="reports-page__tabs">
+        <button
+          :class="['reports-page__tab', { 'reports-page__tab--active': activeTab === 'cfd' }]"
+          @click="activeTab = 'cfd'"
+        >
+          CFD Chart
+        </button>
+        <button
+          :class="['reports-page__tab', { 'reports-page__tab--active': activeTab === 'leadtime' }]"
+          @click="activeTab = 'leadtime'"
+        >
+          Lead Time
         </button>
       </div>
 
-      <div v-if="loading" class="reports-page__loading">Loading...</div>
+      <div v-if="error" class="reports-page__error">{{ error }}</div>
 
-      <div v-else-if="cfdData.length === 0" class="reports-page__empty">
-        No CFD data. Adjust filters and click Load.
-      </div>
+      <!-- CFD Chart -->
+      <div v-if="activeTab === 'cfd'" class="reports-page__section">
+        <div class="reports-page__filters">
+          <label>
+            From
+            <input v-model="cfdFrom" type="date" />
+          </label>
+          <label>
+            To
+            <input v-model="cfdTo" type="date" />
+          </label>
+          <label>
+            Interval
+            <select v-model="cfdInterval">
+              <option value="DAY">Day</option>
+              <option value="WEEK">Week</option>
+              <option value="MONTH">Month</option>
+            </select>
+          </label>
+          <button class="reports-page__load-btn" :disabled="loading" @click="loadCfdChart">
+            Load
+          </button>
+        </div>
 
-      <div v-else class="reports-page__chart-wrapper">
-        <svg :viewBox="`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`" class="reports-page__svg">
-          <!-- Y axis grid lines -->
-          <line
-            v-for="t in yTicks"
-            :key="'grid-' + t"
-            :x1="PAD_LEFT"
-            :y1="cfdY(t)"
-            :x2="PAD_LEFT + PLOT_W"
-            :y2="cfdY(t)"
-            stroke="var(--color-border)"
-            stroke-width="1"
-          />
-          <!-- Y axis labels -->
-          <text
-            v-for="t in yTicks"
-            :key="'yl-' + t"
-            :x="PAD_LEFT - 8"
-            :y="cfdY(t) + 4"
-            text-anchor="end"
-            font-size="10"
-            fill="var(--color-text-secondary)"
-          >
-            {{ t }}
-          </text>
-          <!-- X axis labels (show every nth label) -->
-          <text
-            v-for="(label, i) in allDateLabels"
-            v-show="allDateLabels.length <= 20 || i % Math.ceil(allDateLabels.length / 10) === 0"
-            :key="'xl-' + i"
-            :x="cfdX(label)"
-            :y="SVG_HEIGHT - 8"
-            text-anchor="middle"
-            font-size="9"
-            fill="var(--color-text-secondary)"
-          >
-            {{ label.slice(5) }}
-          </text>
-          <!-- Lines -->
-          <path
-            v-for="series in cfdSeries"
-            :key="series.columnId"
-            :d="buildCfdLinePath(series.points)"
-            :stroke="series.color"
-            stroke-width="2"
-            fill="none"
-          />
-          <!-- Legend -->
-          <g v-for="(series, i) in cfdSeries" :key="'leg-' + series.columnId">
-            <rect
-              :x="10"
-              :y="SVG_HEIGHT - 70 + i * 18"
-              width="10"
-              height="10"
-              :fill="series.color"
-              rx="2"
+        <div v-if="loading" class="reports-page__loading">Loading...</div>
+
+        <div v-else-if="cfdData.length === 0" class="reports-page__empty">
+          No CFD data. Adjust filters and click Load.
+        </div>
+
+        <div v-else class="reports-page__chart-wrapper">
+          <svg :viewBox="`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`" class="reports-page__svg">
+            <!-- Y axis grid lines -->
+            <line
+              v-for="t in yTicks"
+              :key="'grid-' + t"
+              :x1="PAD_LEFT"
+              :y1="cfdY(t)"
+              :x2="PAD_LEFT + PLOT_W"
+              :y2="cfdY(t)"
+              stroke="var(--color-border)"
+              stroke-width="1"
             />
+            <!-- Y axis labels -->
             <text
-              :x="24"
-              :y="SVG_HEIGHT - 61 + i * 18"
+              v-for="t in yTicks"
+              :key="'yl-' + t"
+              :x="PAD_LEFT - 8"
+              :y="cfdY(t) + 4"
+              text-anchor="end"
               font-size="10"
               fill="var(--color-text-secondary)"
             >
-              {{ series.columnName }}
+              {{ t }}
             </text>
-          </g>
-        </svg>
+            <!-- X axis labels (show every nth label) -->
+            <text
+              v-for="(label, i) in allDateLabels"
+              v-show="allDateLabels.length <= 20 || i % Math.ceil(allDateLabels.length / 10) === 0"
+              :key="'xl-' + i"
+              :x="cfdX(label)"
+              :y="SVG_HEIGHT - 8"
+              text-anchor="middle"
+              font-size="9"
+              fill="var(--color-text-secondary)"
+            >
+              {{ label.slice(5) }}
+            </text>
+            <!-- Lines -->
+            <path
+              v-for="series in cfdSeries"
+              :key="series.columnId"
+              :d="buildCfdLinePath(series.points)"
+              :stroke="series.color"
+              stroke-width="2"
+              fill="none"
+            />
+            <!-- Legend -->
+            <g v-for="(series, i) in cfdSeries" :key="'leg-' + series.columnId">
+              <rect
+                :x="10"
+                :y="SVG_HEIGHT - 70 + i * 18"
+                width="10"
+                height="10"
+                :fill="series.color"
+                rx="2"
+              />
+              <text
+                :x="24"
+                :y="SVG_HEIGHT - 61 + i * 18"
+                font-size="10"
+                fill="var(--color-text-secondary)"
+              >
+                {{ series.columnName }}
+              </text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Lead Time Chart -->
+      <div v-if="activeTab === 'leadtime'" class="reports-page__section">
+        <div class="reports-page__filters">
+          <label>
+            From
+            <input v-model="ltFrom" type="date" />
+          </label>
+          <label>
+            To
+            <input v-model="ltTo" type="date" />
+          </label>
+          <button class="reports-page__load-btn" :disabled="loading" @click="loadLeadTimeChart">
+            Load
+          </button>
+        </div>
+
+        <div v-if="loading" class="reports-page__loading">Loading...</div>
+
+        <div v-else-if="leadTimeData.length === 0" class="reports-page__empty">
+          No lead time data. Adjust filters and click Load.
+        </div>
+
+        <div v-else class="reports-page__chart-wrapper">
+          <div class="reports-page__avg">Average lead time: {{ avgLabel }} hours</div>
+          <svg :viewBox="`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`" class="reports-page__svg">
+            <!-- Y axis grid -->
+            <line
+              v-for="t in ltYAxisLabels"
+              :key="'ltg-' + t"
+              :x1="PAD_LEFT"
+              :y1="ltY(t)"
+              :x2="PAD_LEFT + PLOT_W"
+              :y2="ltY(t)"
+              stroke="var(--color-border)"
+              stroke-width="1"
+            />
+            <!-- Y axis labels -->
+            <text
+              v-for="t in ltYAxisLabels"
+              :key="'lty-' + t"
+              :x="PAD_LEFT - 8"
+              :y="ltY(t) + 4"
+              text-anchor="end"
+              font-size="10"
+              fill="var(--color-text-secondary)"
+            >
+              {{ t }}
+            </text>
+            <!-- Average line -->
+            <line
+              :x1="PAD_LEFT"
+              :y1="ltY(avgLeadTime)"
+              :x2="PAD_LEFT + PLOT_W"
+              :y2="ltY(avgLeadTime)"
+              stroke="#ef4444"
+              stroke-width="1.5"
+              stroke-dasharray="4,4"
+            />
+            <text
+              :x="PAD_LEFT + PLOT_W - 4"
+              :y="ltY(avgLeadTime) - 4"
+              text-anchor="end"
+              font-size="10"
+              fill="#ef4444"
+            >
+              Avg: {{ avgLabel }}h
+            </text>
+            <!-- Bars -->
+            <rect
+              v-for="(d, i) in leadTimeData"
+              :key="d.taskId"
+              :x="ltX(i) - 3"
+              :y="ltY(d.leadTimeHours)"
+              width="6"
+              :height="ltBarHeight(d.leadTimeHours)"
+              fill="var(--color-primary)"
+              opacity="0.7"
+              rx="1"
+            />
+          </svg>
+        </div>
       </div>
     </div>
-
-    <!-- Lead Time Chart -->
-    <div v-if="activeTab === 'leadtime'" class="reports-page__section">
-      <div class="reports-page__filters">
-        <label>
-          From
-          <input v-model="ltFrom" type="date" />
-        </label>
-        <label>
-          To
-          <input v-model="ltTo" type="date" />
-        </label>
-        <button class="reports-page__load-btn" :disabled="loading" @click="loadLeadTimeChart">
-          Load
-        </button>
-      </div>
-
-      <div v-if="loading" class="reports-page__loading">Loading...</div>
-
-      <div v-else-if="leadTimeData.length === 0" class="reports-page__empty">
-        No lead time data. Adjust filters and click Load.
-      </div>
-
-      <div v-else class="reports-page__chart-wrapper">
-        <div class="reports-page__avg">Average lead time: {{ avgLabel }} hours</div>
-        <svg :viewBox="`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`" class="reports-page__svg">
-          <!-- Y axis grid -->
-          <line
-            v-for="t in ltYAxisLabels"
-            :key="'ltg-' + t"
-            :x1="PAD_LEFT"
-            :y1="ltY(t)"
-            :x2="PAD_LEFT + PLOT_W"
-            :y2="ltY(t)"
-            stroke="var(--color-border)"
-            stroke-width="1"
-          />
-          <!-- Y axis labels -->
-          <text
-            v-for="t in ltYAxisLabels"
-            :key="'lty-' + t"
-            :x="PAD_LEFT - 8"
-            :y="ltY(t) + 4"
-            text-anchor="end"
-            font-size="10"
-            fill="var(--color-text-secondary)"
-          >
-            {{ t }}
-          </text>
-          <!-- Average line -->
-          <line
-            :x1="PAD_LEFT"
-            :y1="ltY(avgLeadTime)"
-            :x2="PAD_LEFT + PLOT_W"
-            :y2="ltY(avgLeadTime)"
-            stroke="#ef4444"
-            stroke-width="1.5"
-            stroke-dasharray="4,4"
-          />
-          <text
-            :x="PAD_LEFT + PLOT_W - 4"
-            :y="ltY(avgLeadTime) - 4"
-            text-anchor="end"
-            font-size="10"
-            fill="#ef4444"
-          >
-            Avg: {{ avgLabel }}h
-          </text>
-          <!-- Bars -->
-          <rect
-            v-for="(d, i) in leadTimeData"
-            :key="d.taskId"
-            :x="ltX(i) - 3"
-            :y="ltY(d.leadTimeHours)"
-            width="6"
-            :height="ltBarHeight(d.leadTimeHours)"
-            fill="var(--color-primary)"
-            opacity="0.7"
-            rx="1"
-          />
-        </svg>
-      </div>
-    </div>
-  </div>
-</ProjectLayout>
+  </ProjectLayout>
 </template>
 
 <style scoped>

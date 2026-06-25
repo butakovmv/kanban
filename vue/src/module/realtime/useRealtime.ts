@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, unref, watch } from 'vue'
+import { onMounted, onUnmounted, unref, watch, isRef } from 'vue'
 import type { Ref } from 'vue'
 import { sseService } from './sseService'
 import { useBoardStore } from '../board/store'
@@ -9,7 +9,10 @@ function toValue(r: string | Ref<string | undefined> | undefined): string | unde
   return unref(r) ?? undefined
 }
 
-export function useRealtime(boardId?: string | Ref<string | undefined>, projectId?: string) {
+export function useRealtime(
+  boardId?: string | Ref<string | undefined>,
+  projectId?: string | Ref<string | undefined>,
+) {
   const boardStore = useBoardStore()
   const taskStore = useTaskStore()
 
@@ -80,7 +83,8 @@ export function useRealtime(boardId?: string | Ref<string | undefined>, projectI
 
   function connect() {
     const bid = toValue(boardId)
-    sseService.connect(bid, projectId)
+    const pid = toValue(projectId)
+    sseService.connect(bid, pid)
     sseService.on('task_created', handleTaskCreated)
     sseService.on('task_updated', handleTaskUpdated)
     sseService.on('task_moved', handleTaskMoved)
@@ -108,8 +112,11 @@ export function useRealtime(boardId?: string | Ref<string | undefined>, projectI
   onMounted(connect)
   onUnmounted(disconnect)
 
-  if (typeof boardId === 'object' && boardId !== null) {
-    watch(boardId, () => {
+  const watchSources: Ref[] = []
+  if (isRef(boardId)) watchSources.push(boardId)
+  if (isRef(projectId)) watchSources.push(projectId)
+  if (watchSources.length > 0) {
+    watch(watchSources, () => {
       disconnect()
       connect()
     })

@@ -13,4 +13,4 @@ pluginManagement {
     }
 }
 
-include(":spring", ":usecase", ":webapi", ":postgres", ":nats")
+include(":spring", ":usecase", ":webapi", ":postgres")

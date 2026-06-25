@@ -15,6 +15,10 @@ internal class AttachFileOperationImpl(
     private val fileAttachmentRepository: FileAttachmentRepository,
     private val fileStorage: FileStorage,
 ) : AttachFileOperation {
+    companion object {
+        private const val MAX_SIZE_BYTES = 50 * 1024 * 1024
+    }
+
     override suspend fun execute(arg: AttachFileOperation.Arg): AttachFileOperation.Result {
         val validation = validate(arg)
         if (validation != null) return validation
@@ -46,6 +50,8 @@ internal class AttachFileOperationImpl(
                 AttachFileOperation.Result.Failure("Content type must not be blank")
             arg.sizeBytes < 0 ->
                 AttachFileOperation.Result.Failure("File size must not be negative")
+            arg.sizeBytes > MAX_SIZE_BYTES ->
+                AttachFileOperation.Result.Failure("File size exceeds maximum allowed size of $MAX_SIZE_BYTES bytes")
             taskRepository.findById(arg.taskId) == null ->
                 AttachFileOperation.Result.Failure("Task not found")
             else -> null

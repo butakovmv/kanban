@@ -1,5 +1,6 @@
 package com.kanban.sse
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -7,9 +8,9 @@ import org.springframework.stereotype.Service
 
 @Service
 internal class SinkService {
-    private val globalSinks = mutableListOf<Sink>()
-    private val boardSinks = mutableMapOf<String, MutableList<Sink>>()
-    private val projectSinks = mutableMapOf<String, MutableList<Sink>>()
+    private val globalSinks = ConcurrentHashMap.newKeySet<Sink>()
+    private val boardSinks = ConcurrentHashMap<String, MutableSet<Sink>>()
+    private val projectSinks = ConcurrentHashMap<String, MutableSet<Sink>>()
 
     fun register(
         boardId: String? = null,
@@ -17,9 +18,9 @@ internal class SinkService {
     ): Sink {
         val sink = Sink()
         if (boardId != null) {
-            boardSinks.getOrPut(boardId) { mutableListOf() }.add(sink)
+            boardSinks.computeIfAbsent(boardId) { ConcurrentHashMap.newKeySet() }.add(sink)
         } else if (projectId != null) {
-            projectSinks.getOrPut(projectId) { mutableListOf() }.add(sink)
+            projectSinks.computeIfAbsent(projectId) { ConcurrentHashMap.newKeySet() }.add(sink)
         } else {
             globalSinks.add(sink)
         }

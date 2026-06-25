@@ -16,11 +16,28 @@ const email = ref('')
 const password = ref('')
 const displayName = ref('')
 
+const displayNameError = ref('')
+
+function validateDisplayName(name: string): boolean {
+  const trimmed = name.trim()
+  if (trimmed.length < 2) {
+    displayNameError.value = 'Name must be at least 2 characters'
+    return false
+  }
+  if (trimmed.length > 100) {
+    displayNameError.value = 'Name must be at most 100 characters'
+    return false
+  }
+  displayNameError.value = ''
+  return true
+}
+
 async function handleSubmit() {
+  if (!validateDisplayName(displayName.value)) return
   const success = await authStore.register({
     email: email.value,
     password: password.value,
-    displayName: displayName.value,
+    displayName: displayName.value.trim(),
   })
   if (success) {
     await router.push('/login')
@@ -35,7 +52,8 @@ async function handleSubmit() {
       <div v-if="error" class="register__error">{{ error }}</div>
       <label>
         Name
-        <input v-model="displayName" type="text" required />
+        <input v-model="displayName" type="text" required minlength="2" maxlength="100" />
+        <span v-if="displayNameError" class="register__error register__error--field">{{ displayNameError }}</span>
       </label>
       <label>
         Email

@@ -20,9 +20,6 @@ kanban:
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket: kanban
-  nats:
-    enabled: false
-
 springdoc:
   api-docs:
     path: /api/contract.yaml

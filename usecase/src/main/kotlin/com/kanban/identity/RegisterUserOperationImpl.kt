@@ -5,6 +5,8 @@ import com.kanban.common.PasswordHash
 import com.kanban.common.UserId
 import java.time.Instant
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Реализация операции регистрации пользователя.
@@ -47,17 +49,22 @@ internal class RegisterUserOperationImpl(
         return RegisterUserOperation.Result.Success(tokens = tokens, user = saved)
     }
 
+    private val freeTariffMutex = Mutex()
+
     private suspend fun assignFreeTariff(userId: String) {
-        var freeTariff = tariffRepository.findByName("Free")
-        if (freeTariff == null) {
-            freeTariff =
-                Tariff(
-                    id = com.kanban.common.TariffId(UUID.randomUUID().toString()),
-                    name = "Free",
-                    limits = TariffLimits(5, 3, 50, 10, 100),
-                    createdAt = Instant.now(),
-                )
-            tariffRepository.save(freeTariff)
+        val freeTariff = freeTariffMutex.withLock {
+            var tariff = tariffRepository.findByName("Free")
+            if (tariff == null) {
+                tariff =
+                    Tariff(
+                        id = com.kanban.common.TariffId(UUID.randomUUID().toString()),
+                        name = "Free",
+                        limits = TariffLimits(5, 3, 50, 10, 100),
+                        createdAt = Instant.now(),
+                    )
+                tariffRepository.save(tariff)
+            }
+            tariff
         }
 
         val userTariff =
