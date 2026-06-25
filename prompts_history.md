@@ -1272,3 +1272,19 @@ Continue if you have next steps, or stop and ask for clarification if you are un
 
 Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
 
+## Prompt 314
+
+проведи ревью кода фронтенда
+
+## Prompt 315
+
+Continue if you have next steps, or stop and ask for clarification if you are unsure how to proceed.
+
+## Prompt 316
+
+создай в корне проекта файл ARCHITECTURE.md с описанием архитектуры и плана разработки. используй ссылки на файлы в docs/*
+
+## Prompt 317
+
+замени диаграммы с псевдографикой в этом файле на mermaid диаграммы
+
